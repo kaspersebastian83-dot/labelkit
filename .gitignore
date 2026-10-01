@@ -1,0 +1,22 @@
+# Frühere lokale Arbeitskopien
+/LabelKit_v*.html
+
+# Projektdaten und erzeugte Dokumente gehören nicht in den Quellcode
+*.json
+*.xls
+*.xlsx
+*.docx
+*.rtf
+*.pdf
+/exports/
+/projects/
+
+# Temporäre Dateien und lokale Einstellungen
+node_modules/
+*.log
+*.tmp
+~$*
+.DS_Store
+Thumbs.db
+/.codex/
+/.agents/
