@@ -17,6 +17,8 @@ const url = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   await page.goto(url);
+  // Browser ohne Ordner-Zugriff (WebKit/Safari) zeigen verzögert den Browserhinweis; erst abwarten, dann schließen.
+  await page.waitForSelector('#modal-browser-hinweis[open]', {timeout: 3000}).catch(() => {});
   await page.evaluate(() => {
     document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
     document.querySelectorAll('dialog[open]').forEach(d => d.close());
