@@ -20,7 +20,7 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
   const page = await ctx.newPage();
   const errors = [], dialoge = [];
   page.on('pageerror', e => errors.push(e.message));
-  page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+  page.on('console', m => { if (m.type() === 'error' && !(url.startsWith('file:') && /Access-Control-Allow-Origin/.test(m.text()))) errors.push('console: ' + m.text()); });
   page.on('dialog', d => { dialoge.push(d.message()); d.accept(d.type() === 'prompt' ? 'falscher Bogen' : undefined); });
   await page.goto(url);
   await page.waitForSelector('#modal-browser-hinweis[open]', {timeout: 3000}).catch(() => {});
