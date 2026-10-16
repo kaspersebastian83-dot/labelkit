@@ -1,5 +1,13 @@
 # Änderungen
 
+## 4.26.0 – Oktober 2026
+
+- Neuer Unterreiter „Erfassen & Scans“ im Reiter „Feldbögen Raumluft“: ausgefüllte Feldbögen am Schreibtisch übertragen, Eingabemaske in der Reihenfolge des Papierbogens, Scan daneben (JPEG/PNG direkt, PDF im eigenen Fenster).
+- Scans werden in den Unterordner „Feldprotokolle“ des Projektordners kopiert: Dateiname aus Formular-ID und Datum (ERVV-tauglich), nie überschreibend, SHA-256-Prüfsumme der zurückgelesenen Kopie, fortlaufendes `_Ablage-Protokoll.txt`; Projektdaten werden danach gespeichert. „Ablage prüfen“ vergleicht die Prüfsummen erneut; falsche Scans werden als ungültig vermerkt statt gelöscht.
+- Werte bleiben Text wie auf dem Bogen; leere Felder bleiben leer; Vermerk „unleserlich“ je Feld. Plausibilitätshinweise (Volumen gegen Volumenstrom × Dauer, Schließzeit vor Messbeginn, Luftfeuchte, Sammelhöhe, Versandtag) ändern keine Werte.
+- „Erfassung abschließen“: danach wird jede Änderung mit altem und neuem Wert, Kürzel und Zeit protokolliert. „Übertragung geprüft“ durch eine zweite Person; eine spätere Änderung hebt die Prüfung auf. Messtechniker lt. Bogen und Erfasser werden getrennt geführt.
+- Erfasste Feldprotokolle sind Teil der Projektdatei (`feldprotokolle` in `…_Daten.json`), inklusive Rückgängig.
+
 ## 4.25.0 – Oktober 2026
 
 - Neuer Reiter „Feldbögen Raumluft“: druckfertige Feldprotokolle zum Ausfüllen von Hand für Raumluftmessungen auf Asbest/KMF (VDI 3492, TRGS 519) und auf Schimmelpilze (in Anlehnung an DIN ISO 16000-18/-19 und UBA-Schimmelleitfaden, Stand 2024).
