@@ -55,7 +55,7 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
   // Zum Unterreiter „Erfassen & Scans“
   await page.locator('#main-feldboegen').click();
   await page.locator('#fb-preview .fb-page').first().waitFor();
-  await page.waitForFunction(() => document.getElementById('fb-nr').value !== '');
+  if (kannAblegen) await page.waitForFunction(() => document.getElementById('fb-nr').value !== '');
   await page.locator('#sub-tabs-feldboegen .sub-tab', {hasText: 'Erfassen'}).click();
   await page.locator('#fbe-neu-id').waitFor();
 
