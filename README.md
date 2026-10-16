@@ -9,6 +9,7 @@ Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben
 - Brandgeruch-Bewertungen erfassen
 - PN-98-Probenahmeprotokolle und Textbausteine erstellen
 - Feldbögen für Raumluftmessungen (Asbest/KMF, Schimmelpilze) zum Ausdrucken und Ausfüllen von Hand, mit Projektdaten vorgedruckt (ab 4.25)
+- Ausgefüllte Feldbögen am Schreibtisch erfassen, Scans mit Prüfsumme im Projektordner unter „Feldprotokolle“ ablegen, Prüfung der Übertragung durch eine zweite Person und Änderungsprotokoll (ab 4.26)
 - Projektdaten als JSON speichern und wieder importieren
 - Gemeinsamer Export der Laborübergaben, Projektdatei und freigegebenen Textbausteine
 
@@ -64,19 +65,22 @@ Mit Node.js aus dem Repository-Ordner ausführen:
 node tests/export-flow.cjs
 node tests/browser-hint.cjs
 node tests/feldboegen.cjs
+node tests/feldprotokolle.cjs
 ```
 
-Zusätzlich gibt es einen Browsertest für die Feldbögen (Vorschau, Blattüberlauf, Druckfenster mit Schrift und Logo). Er braucht Playwright, das nicht im Repository geführt wird:
+Zusätzlich gibt es Browsertests für die Feldbögen (Vorschau, Blattüberlauf, Druckfenster mit Schrift und Logo) und für die Erfassung mit Scan-Ablage (in Chromium mit nachgebildetem Projektordner, in WebKit nur die Erfassung). Er braucht Playwright, das nicht im Repository geführt wird:
 
 ```sh
 npm install --no-save playwright && npx playwright install chromium webkit
 node tests/feldboegen-browser.cjs chromium
 node tests/feldboegen-browser.cjs webkit
+node tests/feldprotokolle-browser.cjs chromium
+node tests/feldprotokolle-browser.cjs webkit
 ```
 
 GitHub führt alle Prüfungen bei jedem Pull Request automatisch aus (`.github/workflows/tests.yml`, Chromium und WebKit).
 
-Die Prüfungen decken den Sammel-Export mit simulierten Browser-Schnittstellen, Abbruch, Schreibfehler und Browserhinweise sowie die Feldbögen (Blattzahl, Formular-ID, Vorbelegung, Maskierung von Eingaben, Leerformular) ab. Echte Ordnerdialoge, Druckausgaben und die Darstellung in Office müssen zusätzlich praktisch geprüft werden.
+Die Prüfungen decken den Sammel-Export mit simulierten Browser-Schnittstellen, Abbruch, Schreibfehler und Browserhinweise sowie die Feldbögen (Blattzahl, Formular-ID, Vorbelegung, Maskierung von Eingaben, Leerformular) und die Erfassung (Änderungsprotokoll, Prüfung, Plausibilitätshinweise, Scan-Dateinamen, Prüfsummen) ab. Echte Ordnerdialoge, Druckausgaben und die Darstellung in Office müssen zusätzlich praktisch geprüft werden.
 
 ## Firmenspezifische Inhalte und Lizenz
 

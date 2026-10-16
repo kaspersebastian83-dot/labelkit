@@ -1553,7 +1553,7 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
       style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:white;font-family:var(--sans);font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;transition:background .15s"
       onmouseover="this.style.background='rgba(255,255,255,0.25)'"
       onmouseout="this.style.background='rgba(255,255,255,0.15)'"
-      title="Version und Änderungen anzeigen">v4.25.0</button>
+      title="Version und Änderungen anzeigen">v4.26.0</button>
     <button id="projekt-ordner" class="projekt-ordner" title="Projektordner wählen (z. B. „26.0123 Köln“) – LabelKit speichert dann direkt in dessen Ordner „Laboraufträge“" hidden>📁 Projekt</button><span id="projekt-kennung" class="projekt-kennung" hidden></span>
     <span class="header-badge" id="header-projekt">Kein Projekt geladen</span>
     <span class="header-status unsaved" id="header-save-status" title="Speicherstatus">Ungespeichert</span>
@@ -1606,6 +1606,7 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
 </div>
 <div class="sub-tabs" id="sub-tabs-feldboegen" style="display:none">
   <button class="sub-tab active" onclick="switchTab('feldboegen',this)">Feldbögen drucken</button>
+  <button class="sub-tab" onclick="switchTab('feldboegen-erfassen',this)">Erfassen &amp; Scans</button>
 </div>
 <div class="sub-tabs" id="sub-tabs-auftrag" style="display:none">
 </div>
@@ -2339,6 +2340,22 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
     <div id="fb-preview" class="fb-preview" aria-label="Druckvorschau der Feldbögen"></div>
   </div>
 </div>
+<!-- TAB: FELDPROTOKOLLE ERFASSEN & SCANS (v4.26.0) -->
+<div id="tab-feldboegen-erfassen" class="tab-content">
+  <div class="container">
+    <div class="projekt-bar" style="margin-bottom:10px;flex-wrap:wrap">
+      <label for="fbe-wahl">Feldprotokoll</label>
+      <select id="fbe-wahl" onchange="fbeWaehle(this.value)" style="min-width:280px"></select>
+      <button class="btn btn-secondary btn-sm" onclick="fbeNeuDialog()">+ Neues Feldprotokoll erfassen</button>
+      <div class="bar-sep"></div>
+      <label for="fbe-kuerzel" title="Steht bei jeder Erfassung, Prüfung, Änderung und Scan-Ablage im Protokoll">Ihr Kürzel</label>
+      <input type="text" id="fbe-kuerzel" maxlength="12" style="width:80px;font-family:var(--mono)" oninput="fbeKuerzelSetzen(this.value)" placeholder="z. B. SK">
+      <div class="bar-sep"></div>
+      <button class="btn btn-secondary btn-sm" onclick="schnellSpeichern()" title="Projektdaten speichern (Strg+S)">💾 Speichern</button>
+    </div>
+    <div id="fbe-inhalt"></div>
+  </div>
+</div>
 <!-- TAB: PN 98 PROBENAHMEPROTOKOLL -->
 <div id="tab-pn98" class="tab-content">
   <div class="container">
@@ -2702,6 +2719,17 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
     <div style="display:flex;flex-direction:column;gap:16px">
 
       <div style="border-left:3px solid #2f6fbf;padding-left:14px">
+        <div style="font-family:var(--mono);font-size:11px;color:#2f6fbf;margin-bottom:4px">v4.26.0 · Oktober 2026 · Feldprotokolle erfassen</div>
+        <div style="font-weight:600;font-size:13px;margin-bottom:6px">Ausgefüllte Feldbögen übertragen und Scans ablegen</div>
+        <ul style="font-size:12px;color:var(--text-muted);line-height:1.8;padding-left:16px">
+          <li>Unterreiter „Erfassen &amp; Scans“: Eingabemaske in der Reihenfolge des Papierbogens, Scan daneben</li>
+          <li>Scans werden in „Feldprotokolle“ des Projektordners kopiert – nie überschrieben, mit SHA-256-Prüfsumme und Ablage-Protokoll</li>
+          <li>Vermerk „unleserlich“ je Feld, Plausibilitätshinweise ohne Änderung der Werte</li>
+          <li>Erfassung abschließen, Prüfung der Übertragung durch eine zweite Person, Änderungsprotokoll mit Kürzel und Zeit</li>
+        </ul>
+      </div>
+
+      <div style="border-left:3px solid #c9d6e6;padding-left:14px">
         <div style="font-family:var(--mono);font-size:11px;color:#2f6fbf;margin-bottom:4px">v4.25.0 · Oktober 2026 · Feldbögen</div>
         <div style="font-weight:600;font-size:13px;margin-bottom:6px">Feldbögen Raumluft zum Ausdrucken</div>
         <ul style="font-size:12px;color:var(--text-muted);line-height:1.8;padding-left:16px">
@@ -3531,7 +3559,7 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
 <div id="flash" style="display:none" class="flash"></div>
 
 <script>
-const APP_VERSION='4.25.0';
+const APP_VERSION='4.26.0';
 const MATRICES=['Wischprobe','Bauschutt','Material (hoher org. Anteil)','Material (mineralisch)','Luft (Raumluft)','Sonstige'];
 const BEAUFSCHLAGUNG=['gereinigt','mit Belag','leicht verrußt','verrußt','mit Ruß','mit Kondensat','mit Staub'];
 const OBERFLAECHEN=['Aufsicht','Ansicht','Untersicht'];
@@ -3551,6 +3579,7 @@ let bgUnlocked=new Set(); // ids fertiger Zeilen, die zum Korrigieren entsperrt 
 
 // ── PN 98 PROBENAHMEPROTOKOLL ────────────────────────────────
 let pn98Proben=[];
+var feldprotokolle=[]; // Erfasste Feldprotokolle Raumluft (v4.26.0)
 let pn98NextId=1;
 let pn98Projekt={
   schaden:'',         // Schadennr. / Projektnr.
@@ -3763,6 +3792,7 @@ function switchTab(name,el){
   if(name==='pn98-rechner')renderPn98Rechner();
   if(name==='pn98-export')renderPn98Export();
   if(name==='auftragsschein')renderAuftragsschein();
+  if(name==='feldboegen-erfassen')fbeRender();
 }
 
 function switchMainTab(group){
@@ -3805,6 +3835,7 @@ function switchMainTab(group){
   } else if(group==='feldboegen'){
     const btn=document.querySelector('#sub-tabs-feldboegen .sub-tab');
     switchTab('feldboegen',btn);
+    document.querySelectorAll('#sub-tabs-feldboegen .sub-tab').forEach(t=>t.classList.remove('active'));
     btn.classList.add('active');
     fbVorbelegen(false);
   } else if(group==='pn98'){
@@ -4701,7 +4732,7 @@ function importProjektJSON(e){
   r.onload=ev=>{
     try{
       const data=JSON.parse(ev.target.result);
-      const aktuelleProben=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length;
+      const aktuelleProben=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length;
       if(aktuelleProben>0&&!confirm('Diese JSON ersetzt alle Reiter vollständig:\nPAK, Chlorid, Asbest, Sonstige, Brandgeruch und PN 98.\n\nAktuelle Projektdaten wirklich ersetzen?'))return;
       undoSnapshot();
       applyProjektData(data);
@@ -4717,7 +4748,7 @@ function importProjektJSON(e){
 
 function applyProjektData(data,fallbackNr){
   if(!data||typeof data!=='object') throw new Error('Ungültige Projektdatei');
-  const hasAnyList=['proben','chloridProben','asbestProben','sonstigeProben','brandgeruchProben','pn98Proben'].some(k=>Array.isArray(data[k]));
+  const hasAnyList=['proben','chloridProben','asbestProben','sonstigeProben','brandgeruchProben','pn98Proben','feldprotokolle'].some(k=>Array.isArray(data[k]));
   if(!hasAnyList) throw new Error('Keine Probendaten in Projektdatei');
 
   proben=Array.isArray(data.proben)?data.proben:[];
@@ -4745,6 +4776,7 @@ function applyProjektData(data,fallbackNr){
   pn98Proben=Array.isArray(data.pn98Proben)?data.pn98Proben:[];
   pn98NextId=data.pn98NextId||((pn98Proben.length?Math.max(...pn98Proben.map(p=>p.id||0)):0)+1);
   pn98Projekt=Object.assign({schaden:'',schadendatum:'',pndatum:'',ort:'',grund:'',probenehmer:'',labor:''}, data.pn98Projekt||{});
+  feldprotokolle=Array.isArray(data.feldprotokolle)?data.feldprotokolle:[];
 
   projektUiStateAnwenden(data);
   if(fallbackNr&&!document.getElementById('proj-nr').value) document.getElementById('proj-nr').value=fallbackNr;
@@ -4755,6 +4787,7 @@ function applyProjektData(data,fallbackNr){
   renderTable();renderChloridTable();renderAsbestTable();renderSonstigeTable();
   renderBrandgeruchTable();renderBrandgeruchExport();
   renderPn98Cards();renderPn98Export();
+  if(typeof fbeRender==='function')fbeRender();
 }
 function clearAll(){
   if(proben.length&&!bestaetigeLoeschen('Alle '+proben.length+' PAK-Proben löschen?'))return;
@@ -6073,7 +6106,8 @@ function buildProjektSaveData(){
     proben, chloridProben, asbestProben, sonstigeProben, brandgeruchProben, pn98Proben,
     nextId, sonstigeNextId, asbestNextId, probenStartNr,
     brandgeruchNextId, brandgeruchOrt, brandgeruchDatum, bgBlind,
-    pn98NextId, pn98Projekt
+    pn98NextId, pn98Projekt,
+    feldprotokolle
   };
   return {
     content: JSON.stringify(saveData, null, 2),
@@ -7308,7 +7342,7 @@ function undoSnapshot(){
     ui:projektUiState(),
     proben,chloridProben,asbestProben,sonstigeProben,brandgeruchProben,pn98Proben,
     nextId,sonstigeNextId,asbestNextId,probenStartNr,brandgeruchNextId,brandgeruchOrt,brandgeruchDatum,bgBlind,
-    pn98NextId,pn98Projekt
+    pn98NextId,pn98Projekt,feldprotokolle
   }));
   if(undoStack.length>20) undoStack.shift();
 }
@@ -7321,6 +7355,7 @@ function undoLetzteAktion(){
   nextId=snap.nextId||1;sonstigeNextId=snap.sonstigeNextId||1;
   asbestNextId=snap.asbestNextId||1;probenStartNr=snap.probenStartNr||1;brandgeruchNextId=snap.brandgeruchNextId||1;brandgeruchOrt=snap.brandgeruchOrt||'';brandgeruchDatum=snap.brandgeruchDatum||'';bgBlind=!!snap.bgBlind;
   pn98NextId=snap.pn98NextId||1;pn98Projekt=snap.pn98Projekt||{schaden:'',schadendatum:'',pndatum:'',ort:'',grund:'',probenehmer:'',labor:''};
+  feldprotokolle=snap.feldprotokolle||[];if(typeof fbeRender==='function')fbeRender();
   syncProbeStartNrInput();
   if(snap.ui||snap.projektNr!==undefined) projektUiStateAnwenden({projekt:{nr:snap.projektNr||''},ui:snap.ui||{}});
   const bgDatEl=document.getElementById('bg-datum');if(bgDatEl)bgDatEl.value=brandgeruchDatum;
@@ -7354,7 +7389,7 @@ function updateMainTabBadges(){
 // ── CTRL+S SPEICHERN ─────────────────────────────────
 let letzterSpeicherOrdner=null;
 async function schnellSpeichern(){
-  const gesamt=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length;
+  const gesamt=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length;
   if(!gesamt){flash('Keine Proben zum Speichern');return;}
   if(window.showDirectoryPicker){
     try{
@@ -7502,10 +7537,10 @@ function pruefeAufDuplikate(liste){
 
 // ── PROJEKT ZURÜCKSETZEN ──────────────────────────────
 function projektZuruecksetzen(){
-  const gesamt=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length;
+  const gesamt=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length;
   if(!bestaetigeLoeschen('Gesamtes Projekt zurücksetzen?\n\n'+gesamt+' Proben werden gelöscht.')) return;
   undoSnapshot();
-  proben=[];chloridProben=[];asbestProben=[];sonstigeProben=[];brandgeruchProben=[];pn98Proben=[];
+  proben=[];chloridProben=[];asbestProben=[];sonstigeProben=[];brandgeruchProben=[];pn98Proben=[];feldprotokolle=[];if(typeof fbeRender==='function')fbeRender();
   nextId=1;sonstigeNextId=1;asbestNextId=1;probenStartNr=1;brandgeruchNextId=1;brandgeruchOrt='';brandgeruchDatum='';bgBlind=true;bgUnlocked=new Set();
   pn98NextId=1;pn98Projekt={schaden:'',schadendatum:'',pndatum:'',ort:'',grund:'',probenehmer:'',labor:''};
   document.getElementById('proj-nr').value='';
@@ -7573,7 +7608,7 @@ function projektArchivOeffnen(idx){
   try{
     const arch=JSON.parse(localStorage.getItem('projekt-archiv')||'[]');
     const a=arch[idx];if(!a)return;
-    const aktuelleProben=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length;
+    const aktuelleProben=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length;
     if(aktuelleProben>0&&!confirm('Aktuelles Projekt verwerfen und "'+a.nr+'" laden?'))return;
     const d=JSON.parse(a.data);
     applyProjektData(d,a.nr);
@@ -9941,7 +9976,7 @@ const PROJEKTORDNER=(function(){
     const p=parse(dir.name);if(!p){flash('„'+dir.name+'“ ist kein Projektordner (erwartet z. B. „26.0123 Köln“).');return;}
     let lab=await subdir(dir,LAB_DIR,false);
     if(!lab){if(!confirm('Im Projekt „'+dir.name+'“ gibt es keinen Unterordner „'+LAB_DIR+'“. Jetzt anlegen?'))return;lab=await subdir(dir,LAB_DIR,true);}
-    const vorhanden=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length;
+    const vorhanden=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length;
     const datei=await neuesteDaten(lab);
     if(datei){
       if(vorhanden&&projektStatus.dirty&&!confirm('In „'+LAB_DIR+'“ liegt „'+datei.name+'“.\nDie aktuell erfassten, nicht gespeicherten Proben werden dadurch ersetzt.\n\nProjektdatei laden?'))return;
@@ -10185,6 +10220,644 @@ function fbDrucken(){
     +'<scr'+'ipt>window.onload=function(){(document.fonts&&document.fonts.ready||Promise.resolve()).then(function(){setTimeout(function(){window.print()},300)})};</scr'+'ipt></body></html>');
   win.document.close();
 }
+</script>
+<script>
+/* ---------- Feldprotokolle erfassen & Scans ablegen (v4.26.0) ----------
+   Übertragung der handschriftlich ausgefüllten Feldbögen am Schreibtisch. Gerichtsfest gedacht:
+   • Werte werden so gespeichert, wie sie auf dem Bogen stehen (Text, keine Umrechnung); Prüfungen geben nur Hinweise.
+   • Leer bleibt leer; „unleserlich“ ist ein eigener Vermerk je Feld.
+   • Nach „Erfassung abschließen“ wird jede Änderung mit altem/neuem Wert, Kürzel und Zeit protokolliert;
+     eine bereits erfolgte Prüfung wird durch eine Änderung aufgehoben (ebenfalls protokolliert).
+   • Scans werden in „Feldprotokolle“ des Projektordners kopiert, nie überschrieben, mit SHA-256 und Ablage-Protokoll.
+   Der Teil zwischen FBE-LOGIK-START und FBE-LOGIK-ENDE ist ohne DOM lauffähig (tests/feldprotokolle.cjs). */
+/* FBE-LOGIK-START */
+const FBE_SCAN_ORDNER='Feldprotokolle';
+const FBE_SCAN_ENDUNGEN=['pdf','jpg','jpeg','png','tif','tiff'];
+/** Feldtypen: text, lang (mehrzeilig), zahl, zeit, datum, wahl (eine Option), mehr (mehrere), ja (Kästchen), tabelle. */
+const FBE_SCHEMA={
+  asbest:{
+    person:'messtechniker',mpName:'Messpunkt',
+    kopf:[
+      {titel:'A · Projekt',felder:[
+        {k:'projektNr',l:'Projekt-Nr.',vor:1},{k:'auftragsNr',l:'Auftrags-Nr. Messung'},
+        {k:'objekt',l:'Objekt',vor:1,breit:1},{k:'auftraggeber',l:'Auftraggeber',vor:1,breit:1},
+        {k:'ortstermin',l:'Ortstermin',t:'datum',vor:1},{k:'messtechniker',l:'Messtechniker (lt. Bogen)'},
+        {k:'ansprechpartner',l:'Ansprechpartner vor Ort',breit:1}]},
+      {titel:'B · Ziel der Messung und Analyse',felder:[
+        {k:'zielFreisetzung',l:'Feststellung der Freisetzung lungengängiger faserförmiger Partikel aus Bauprodukten',t:'ja',breit:1},
+        {k:'zielFreigabe',l:'Freigabemessung nach Asbestsanierung (TRGS 519)',t:'ja',breit:1},
+        {k:'zielSonstiges',l:'Sonstiges',breit:1},
+        {k:'labor',l:'Analyse: akkreditiertes Fremdlabor',breit:1}]},
+      {titel:'C · Messbedingungen (gilt für alle MP)',felder:[
+        {k:'geschlossenSeit',l:'Fenster und Türen geschlossen seit',t:'zeit',e:'Uhr'},
+        {k:'geschlossenQuelle',l:'Angabe',t:'wahl',o:['lt. Ansprechpartner','selbst festgestellt']},
+        {k:'weiterVerschlossen',l:'während der Probenahme weiter verschlossen (DIN EN ISO 16000-1)',t:'ja',breit:1},
+        {k:'nutzung',l:'Nutzung',t:'wahl',o:['außerhalb der Nutzung','während der Nutzung']},
+        {k:'anblasen',l:'Stoßartige Belastung durch Anblasen',t:'wahl',o:['ja','nein']},
+        {k:'filter',l:'Filter',t:'wahl',o:['goldbedampfter Kernporenfilter ø 25 mm, 0,8 µm','anderer Filter'],breit:1},
+        {k:'filterAnders',l:'anderer Filter',breit:1}]},
+      {titel:'Unterschrift (Blatt 1)',felder:[
+        {k:'ortDatum',l:'Ort, Datum'},{k:'unterschrift',l:'Unterschrift auf dem Bogen vorhanden',t:'ja'}]}
+    ],
+    mp:[
+      {k:'raum',l:'Raum / Bezeichnung',breit:1},{k:'foto',l:'Foto-Nr.'},{k:'probe',l:'Probenbezeichnung (Filter)'},
+      {k:'ort',l:'Ort der Messung',t:'wahl',o:['Raummitte, > 1,5 m von Wandflächen','anders'],breit:1},
+      {k:'ortAnders',l:'Ort anders',breit:1},
+      {k:'geraet',l:'Gerät (nach „APC PNA“)'},{k:'invNr',l:'Inv.-Nr. [P …]'},
+      {k:'start',l:'Start',t:'zeit',e:'Uhr'},{k:'ende',l:'Ende',t:'zeit',e:'Uhr'},
+      {k:'flussStart',l:'Volumenstrom Start',t:'zahl',e:'l/min'},{k:'flussEnde',l:'Volumenstrom Ende',t:'zahl',e:'l/min'},
+      {k:'volumen',l:'Probenvolumen',t:'zahl',e:'m³'},
+      {k:'volumenQuelle',l:'Volumen',t:'wahl',o:['vom Gaszähler','berechnet']},
+      {k:'temp',l:'Lufttemperatur (Start)',t:'zahl',e:'°C'},{k:'rf',l:'Rel. Luftfeuchte (Start)',t:'zahl',e:'% rF'},
+      {k:'lueftung',l:'Lüftung / Nutzung',t:'wahl',o:['wie Blatt 1','abweichend']},
+      {k:'anmerkung',l:'Anmerkungen',t:'lang',breit:1}
+    ]
+  },
+  schimmel:{
+    person:'probenehmer',mpName:'Messstelle',
+    kopf:[
+      {titel:'A · Projekt',felder:[
+        {k:'projektNr',l:'Projekt-Nr.',vor:1},{k:'datum',l:'Datum',t:'datum',vor:1},
+        {k:'objekt',l:'Objekt',vor:1,breit:1},
+        {k:'probenehmer',l:'Probenehmer (lt. Bogen)'},{k:'ansprechpartner',l:'Ansprechpartner / Nutzer'}]},
+      {titel:'B · Anlass',felder:[
+        {k:'anlass',l:'Anlass',t:'mehr',o:['Verdacht auf verdeckten Befall','Abklärung nach Wasser-/Feuchteschaden','Sanierungskontrolle / Freimessung','Beschwerden der Nutzer'],breit:1},
+        {k:'anlassSonstiges',l:'Sonstiges',breit:1}]},
+      {titel:'C · Vorbereitung',felder:[
+        {k:'geschlossenSeit',l:'Fenster und Türen geschlossen seit',t:'zeit',e:'Uhr'},
+        {k:'geschlossenQuelle',l:'Angabe',t:'wahl',o:['lt. Nutzer','selbst festgestellt']},
+        {k:'sporenquellen',l:'Sporenquellen entfernt, Haustiere aus dem Raum',t:'wahl',o:['ja','nein']},
+        {k:'reinigung',l:'Letzte Reinigung / Staubsaugen'},
+        {k:'bauarbeiten',l:'Bau- oder Sanierungsarbeiten im Gebäude',t:'wahl',o:['nein','ja']},
+        {k:'bauarbeitenText',l:'Bauarbeiten: welche'},
+        {k:'heizung',l:'Heizung',t:'wahl',o:['an','aus']},
+        {k:'lueftungsanlage',l:'Lüftungsanlage',t:'wahl',o:['keine','in Betrieb','aus']},
+        {k:'befall',l:'Sichtbarer Befall / Geruch im Gebäude',breit:1},
+        {k:'desinfiziert',l:'Sammler vor der Messung und zwischen den Messstellen desinfiziert',t:'ja',breit:1}]},
+      {titel:'D · Referenz: Außenluft oder Referenzraum',felder:[
+        {k:'referenz',l:'Referenz',t:'wahl',o:['Außenluft (Luvseite)','Referenzraum','entfällt (Sanierungskontrolle)'],breit:1},
+        {k:'referenzraum',l:'Referenzraum'},{k:'refOrt',l:'Ort'},
+        {k:'refQuellen',l:'Quellen in der Nähe',t:'wahl',o:['nein','ja']},
+        {k:'wetter',l:'Wetter',t:'mehr',o:['sonnig','bewölkt','Regen','Nebel','Schnee / Frost'],breit:1},
+        {k:'wind',l:'Wind',t:'wahl',o:['windstill','schwach','stark']},{k:'windRichtung',l:'Windrichtung'},
+        {k:'refTemp',l:'Temperatur',t:'zahl',e:'°C'},{k:'refRf',l:'Rel. Luftfeuchte',t:'zahl',e:'%'},
+        {k:'refProben',l:'Referenzproben',t:'tabelle',zeilen:3,breit:1}]},
+      {titel:'E · Versand',felder:[
+        {k:'labor',l:'Labor'},{k:'versandAm',l:'Versand am',t:'datum'},{k:'gekuehlt',l:'gekühlt',t:'ja'}]},
+      {titel:'Unterschrift (Blatt 1)',felder:[
+        {k:'ortDatum',l:'Ort, Datum'},{k:'unterschrift',l:'Unterschrift auf dem Bogen vorhanden',t:'ja'}]}
+    ],
+    mp:[
+      {k:'raum',l:'Raum / Ort',breit:1},{k:'foto',l:'Foto-Nr.'},
+      {k:'raummitte',l:'Raummitte',t:'ja'},{k:'hoehe',l:'Höhe',t:'zahl',e:'m'},
+      {k:'temp',l:'Temperatur',t:'zahl',e:'°C'},{k:'rf',l:'Rel. Luftfeuchte',t:'zahl',e:'%'},
+      {k:'nutzung',l:'Nutzung während Messung',t:'wahl',o:['Ruhe','normale Aktivität']},{k:'personen',l:'Personen im Raum',t:'zahl'},
+      {k:'sichtbefund',l:'Sichtbefund / Geruch / Feuchte',breit:1},
+      {k:'proben',l:'Proben',t:'tabelle',zeilen:6,breit:1},
+      {k:'anmerkung',l:'Anmerkungen (Abweichungen von Blatt 1, besondere Vorkommnisse)',t:'lang',breit:1}
+    ]
+  }
+};
+/** Spalten der Probentabellen (Schimmel: Messstellen und Referenz) – wie auf dem Papierbogen. */
+const FBE_TABELLE=[{k:'verfahren',l:'Verfahren / Medium'},{k:'geraet',l:'Gerät / Nr.'},{k:'volumen',l:'Volumen l',t:'zahl'},{k:'uhrzeit',l:'Uhrzeit',t:'zeit'},{k:'probenNr',l:'Proben- / Platten-Nr.'}];
+
+function fbeLeererWert(f){return f.t==='ja'?false:f.t==='mehr'?[]:f.t==='tabelle'?Array.from({length:f.zeilen},()=>({})):'';}
+function fbeLeereWerte(felder){const w={};for(const f of felder)w[f.k]=fbeLeererWert(f);return w;}
+/** Neues Feldprotokoll. o: {typ, formularId, n, vor:{projektNr,objekt,auftraggeber,ortstermin|datum}, von, jetzt} */
+function fbeNeu(o){
+  const s=FBE_SCHEMA[o.typ];if(!s)throw new Error('Unbekannter Formulartyp: '+o.typ);
+  const kopf=fbeLeereWerte(s.kopf.flatMap(a=>a.felder));
+  for(const [k,v] of Object.entries(o.vor||{}))if(k in kopf&&v)kopf[k]=String(v);
+  const n=Math.max(1,Math.min(40,Math.floor(Number(o.n))||1));
+  return {id:'fp-'+Date.parse(o.jetzt||new Date().toISOString())+'-'+Math.random().toString(36).slice(2,7),
+    typ:o.typ,formularId:String(o.formularId||'').trim(),
+    erfasstVon:o.von||'',erfasstAm:o.jetzt||new Date().toISOString(),
+    kopf,mp:Array.from({length:n},(_,i)=>({nr:i+1,w:fbeLeereWerte(s.mp)})),
+    unl:{},scans:[],abgeschlossen:null,pruefung:null,aenderungen:[]};
+}
+function fbeFeld(typ,pfad){
+  const s=FBE_SCHEMA[typ],t=String(pfad).split('.');
+  let f=null;
+  if(t[0]==='kopf')f=s.kopf.flatMap(a=>a.felder).find(x=>x.k===t[1]);
+  else if(t[0]==='mp')f=s.mp.find(x=>x.k===t[2]);
+  if(f&&f.t==='tabelle'){const sp=FBE_TABELLE.find(x=>x.k===t[t.length-1]);return sp&&t.length>=(t[0]==='mp'?5:4)?sp:f;}
+  return f;
+}
+/** Lesbare Bezeichnung eines Feldpfads, z. B. „MP 2 · Probenvolumen“ oder „Messstelle 1 · Proben Zeile 3 · Volumen l“. */
+function fbeFeldLabel(rec,pfad){
+  const s=FBE_SCHEMA[rec.typ],t=String(pfad).split('.');
+  if(t[0]==='kopf'){const f=s.kopf.flatMap(a=>a.felder).find(x=>x.k===t[1]);if(!f)return pfad;
+    if(f.t==='tabelle'&&t.length>=4)return f.l+' Zeile '+(Number(t[2])+1)+' · '+(FBE_TABELLE.find(x=>x.k===t[3])||{l:t[3]}).l;return f.l;}
+  if(t[0]==='mp'){const m=rec.mp[Number(t[1])],f=s.mp.find(x=>x.k===t[2]);const vor=(rec.typ==='asbest'?'MP ':'Messstelle ')+(m?m.nr:Number(t[1])+1);if(!f)return vor;
+    if(f.t==='tabelle'&&t.length>=5)return vor+' · '+f.l+' Zeile '+(Number(t[3])+1)+' · '+(FBE_TABELLE.find(x=>x.k===t[4])||{l:t[4]}).l;return vor+' · '+f.l;}
+  return pfad;
+}
+/** Feldpfad → Speicherpfad: „mp.0.temp“ liegt in rec.mp[0].w.temp. */
+function fbeTeile(pfad){const t=String(pfad).split('.');if(t[0]==='mp'&&t.length>2)t.splice(2,0,'w');return t;}
+function fbeLesen(rec,pfad){
+  const t=fbeTeile(pfad);let o=rec;
+  for(const x of t){if(o==null)return undefined;o=o[x];}
+  return o;
+}
+function fbeSchreibenRoh(rec,pfad,wert){
+  const t=fbeTeile(pfad);let o=rec;
+  for(let i=0;i<t.length-1;i++){if(o[t[i]]==null)o[t[i]]=/^\d+$/.test(t[i+1])?[]:{};o=o[t[i]];}
+  o[t[t.length-1]]=wert;
+}
+function fbeWertText(v){if(v===true)return 'ja';if(v===false)return 'nein';if(Array.isArray(v))return v.join(', ');return v==null?'':String(v);}
+function fbeGleich(a,b){return JSON.stringify(a===undefined?'':a)===JSON.stringify(b===undefined?'':b);}
+/** Protokolleintrag; nach dem Abschluss hebt jede Änderung eine Prüfung auf. */
+function fbeProtokoll(rec,feld,alt,neu,ctx){
+  if(!rec.abgeschlossen)return;
+  rec.aenderungen.push({am:ctx.jetzt||new Date().toISOString(),von:ctx.von||'',feld,alt,neu});
+  if(rec.pruefung){
+    rec.aenderungen.push({am:ctx.jetzt||new Date().toISOString(),von:ctx.von||'',feld:'Prüfung der Übertragung',alt:'geprüft von '+rec.pruefung.von+' am '+rec.pruefung.am,neu:'aufgehoben wegen Änderung'});
+    rec.pruefung=null;
+  }
+}
+/** Wert setzen; protokolliert nach dem Abschluss. Liefert true, wenn sich etwas geändert hat. */
+function fbeSetze(rec,pfad,wert,ctx){
+  const alt=fbeLesen(rec,pfad);if(fbeGleich(alt,wert))return false;
+  fbeProtokoll(rec,fbeFeldLabel(rec,pfad),fbeWertText(alt),fbeWertText(wert),ctx||{});
+  fbeSchreibenRoh(rec,pfad,wert);return true;
+}
+function fbeSetzeUnleserlich(rec,pfad,an,ctx){
+  const alt=!!rec.unl[pfad];if(alt===!!an)return false;
+  fbeProtokoll(rec,fbeFeldLabel(rec,pfad)+' (Vermerk)',alt?'unleserlich':'—',an?'unleserlich':'—',ctx||{});
+  if(an)rec.unl[pfad]=true;else delete rec.unl[pfad];return true;
+}
+function fbeAbschliessen(rec,ctx){if(rec.abgeschlossen)return false;rec.abgeschlossen={von:ctx.von||'',am:ctx.jetzt||new Date().toISOString()};return true;}
+/** Prüfung der Übertragung (Vier-Augen). selbst=true, wenn dieselbe Person wie bei der Erfassung prüft. */
+function fbePruefen(rec,ctx){
+  if(!rec.abgeschlossen)throw new Error('Erst die Erfassung abschließen');
+  rec.pruefung={von:ctx.von||'',am:ctx.jetzt||new Date().toISOString(),selbst:!!ctx.von&&ctx.von.toLowerCase()===String(rec.erfasstVon||'').toLowerCase()};
+  return true;
+}
+function fbeMpHinzu(rec,ctx){
+  const s=FBE_SCHEMA[rec.typ],nr=Math.max(0,...rec.mp.map(m=>m.nr))+1;
+  rec.mp.push({nr,w:fbeLeereWerte(s.mp)});
+  fbeProtokoll(rec,s.mpName+' '+nr,'—','hinzugefügt',ctx||{});return nr;
+}
+function fbeMpLeer(rec,i){const m=rec.mp[i];if(!m)return true;return Object.values(m.w).every(v=>v===''||v===false||(Array.isArray(v)&&v.every(z=>typeof z!=='object'||Object.values(z).every(x=>!x))))&&!Object.keys(rec.unl).some(p=>p.startsWith('mp.'+i+'.'));}
+function fbeMpEntfernen(rec,ctx){
+  if(rec.mp.length<=1)return false;
+  const i=rec.mp.length-1,m=rec.mp[i];
+  fbeProtokoll(rec,FBE_SCHEMA[rec.typ].mpName+' '+m.nr,fbeMpLeer(rec,i)?'leer':JSON.stringify(m.w),'entfernt',ctx||{});
+  rec.mp.pop();return true;
+}
+/** Zahl wie auf dem Bogen („3,839“, „8“, „-2,5“) für Prüfungen lesen; Tausenderpunkte sind nicht vorgesehen. */
+function fbeZahl(s){const t=String(s==null?'':s).trim().replace(/\s/g,'').replace(',','.');if(!t)return null;return /^[-+]?\d+(\.\d+)?$/.test(t)?Number(t):NaN;}
+/** Uhrzeit „8:15“, „08.15“, „0815“ → Minuten seit Mitternacht. */
+function fbeZeit(s){const t=String(s==null?'':s).trim();if(!t)return null;const m=/^(\d{1,2})[:.,h]?(\d{2})(?:\s*Uhr)?$/i.exec(t);if(!m)return NaN;const h=+m[1],mi=+m[2];return h<24&&mi<60?h*60+mi:NaN;}
+/** Datum „21.10.2026“, „21.10.26“ oder ISO → Date (UTC-Mitternacht). */
+function fbeDatumLesen(s){const t=String(s==null?'':s).trim();if(!t)return null;let m=/^(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})$/.exec(t);
+  if(m){const j=m[3].length===2?2000+Number(m[3]):Number(m[3]);const d=new Date(Date.UTC(j,m[2]-1,m[1]));return d.getUTCDate()===Number(m[1])?d:NaN;}
+  m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(t);if(m)return new Date(Date.UTC(m[1],m[2]-1,m[3]));return NaN;}
+function fbeFmt(x,st){return (Math.round(x*Math.pow(10,st))/Math.pow(10,st)).toFixed(st).replace('.',',');}
+/** Plausibilitätshinweise; ändern nie einen Wert. Rückgabe: [{pfad, text}] */
+function fbePlausi(rec){
+  const s=FBE_SCHEMA[rec.typ],h=[],add=(pfad,text)=>h.push({pfad,text});
+  const pruefeFeld=(f,pfad,v)=>{
+    if(rec.unl[pfad])return;
+    if(f.t==='zahl'&&Number.isNaN(fbeZahl(v)))add(pfad,'Keine Zahl erkannt – bitte so übernehmen, wie es auf dem Bogen steht, und ggf. „unleserlich“ vermerken.');
+    if(f.t==='zeit'&&Number.isNaN(fbeZeit(v)))add(pfad,'Uhrzeit nicht erkannt (z. B. 08:15).');
+    if(f.t==='datum'&&Number.isNaN(fbeDatumLesen(v)))add(pfad,'Datum nicht erkannt (z. B. 21.10.2026).');
+  };
+  const prTabelle=(basis,rows)=>(rows||[]).forEach((r,i)=>FBE_TABELLE.forEach(sp=>pruefeFeld(sp,basis+'.'+i+'.'+sp.k,(r||{})[sp.k])));
+  for(const f of s.kopf.flatMap(a=>a.felder)){if(f.t==='tabelle')prTabelle('kopf.'+f.k,rec.kopf[f.k]);else pruefeFeld(f,'kopf.'+f.k,rec.kopf[f.k]);}
+  rec.mp.forEach((m,i)=>{for(const f of s.mp){if(f.t==='tabelle')prTabelle('mp.'+i+'.'+f.k,m.w[f.k]);else pruefeFeld(f,'mp.'+i+'.'+f.k,m.w[f.k]);}});
+  const k=rec.kopf,P=(p)=>!rec.unl[p];
+  if(!String(k[s.person]||'').trim()&&P('kopf.'+s.person))add('kopf.'+s.person,(rec.typ==='asbest'?'Messtechniker':'Probenehmer')+' ist nicht eingetragen.');
+  if(!k.unterschrift&&P('kopf.unterschrift'))add('kopf.unterschrift','Unterschrift auf Blatt 1 nicht bestätigt.');
+  const feuchte=(pfad,v)=>{const x=fbeZahl(v);if(x!=null&&!Number.isNaN(x)&&(x<0||x>100)&&P(pfad))add(pfad,'Relative Luftfeuchte außerhalb 0–100 %.');};
+  const temp=(pfad,v)=>{const x=fbeZahl(v);if(x!=null&&!Number.isNaN(x)&&(x<-30||x>50)&&P(pfad))add(pfad,'Temperatur ungewöhnlich ('+fbeFmt(x,1)+' °C).');};
+  // Geschlossene Fenster/Türen vor Messbeginn (Uhrzeit ohne Datum: liegt sie nach dem Beginn, gilt der Vortag)
+  const zu=fbeZeit(k.geschlossenSeit);
+  const starts=rec.typ==='asbest'?rec.mp.map(m=>fbeZeit(m.w.start)):rec.mp.flatMap(m=>(m.w.proben||[]).map(r=>fbeZeit((r||{}).uhrzeit)));
+  const ersterStart=starts.filter(x=>x!=null&&!Number.isNaN(x)).sort((a,b)=>a-b)[0];
+  if(zu!=null&&!Number.isNaN(zu)&&ersterStart!=null&&P('kopf.geschlossenSeit')){
+    let d=ersterStart-zu;if(d<=0)d+=1440;
+    if(d<480)add('kopf.geschlossenSeit','Nur '+fbeFmt(d/60,1)+' h zwischen „geschlossen seit“ und dem ersten Messbeginn (Soll ≥ 8 h'+(rec.typ==='schimmel'?', üblich 8–12 h':'')+').');
+  }
+  rec.mp.forEach((m,i)=>{
+    const w=m.w,p=x=>'mp.'+i+'.'+x;
+    feuchte(p('rf'),w.rf);temp(p('temp'),w.temp);
+    if(rec.typ==='asbest'){
+      const a=fbeZeit(w.start),e=fbeZeit(w.ende);let dauer=null;
+      if(a!=null&&e!=null&&!Number.isNaN(a)&&!Number.isNaN(e)){dauer=e-a;if(dauer<=0){dauer+=1440;if(P(p('ende')))add(p('ende'),'Ende liegt vor dem Start – Messung über Mitternacht?');}}
+      const fs=fbeZahl(w.flussStart),fe=fbeZahl(w.flussEnde),vol=fbeZahl(w.volumen);
+      const ok=x=>x!=null&&!Number.isNaN(x);
+      if(ok(fs)&&ok(fe)&&fs>0&&Math.abs(fe-fs)/fs>0.1&&P(p('flussEnde')))add(p('flussEnde'),'Volumenstrom Start/Ende weichen um '+fbeFmt(Math.abs(fe-fs)/fs*100,0)+' % voneinander ab.');
+      if(ok(vol)&&dauer&&ok(fs)&&P(p('volumen'))){
+        const erw=(ok(fe)?(fs+fe)/2:fs)*dauer/1000;
+        if(erw>0&&Math.abs(vol-erw)/erw>0.1)add(p('volumen'),'Probenvolumen '+String(w.volumen).trim()+' m³ passt nicht zu Volumenstrom × Dauer (≈ '+fbeFmt(erw,3)+' m³ bei '+dauer+' min).');
+      }
+      if(String(w.ort)==='anders'&&!String(w.ortAnders||'').trim()&&P(p('ortAnders')))add(p('ortAnders'),'„anders“ angekreuzt, aber kein Ort angegeben.');
+    }else{
+      const hh=fbeZahl(w.hoehe);if(hh!=null&&!Number.isNaN(hh)&&(hh<1.2||hh>1.5)&&P(p('hoehe')))add(p('hoehe'),'Sammelhöhe '+fbeFmt(hh,2)+' m (üblich 1,2–1,5 m).');
+    }
+  });
+  if(rec.typ==='asbest'){
+    if(k.filter==='anderer Filter'&&!String(k.filterAnders||'').trim()&&P('kopf.filterAnders'))add('kopf.filterAnders','„anderer Filter“ angekreuzt, aber nicht bezeichnet.');
+  }else{
+    feuchte('kopf.refRf',k.refRf);temp('kopf.refTemp',k.refTemp);
+    const md=fbeDatumLesen(k.datum),vd=fbeDatumLesen(k.versandAm);
+    if(md instanceof Date&&!Number.isNaN(md.getTime())&&vd instanceof Date&&!Number.isNaN(vd.getTime())&&P('kopf.versandAm')){
+      const tage=Math.round((vd-md)/864e5);
+      if(tage<0)add('kopf.versandAm','Versand vor dem Messdatum?');
+      else if(tage>2)add('kopf.versandAm','Versand '+tage+' Tage nach der Messung (Labor: in der Regel innerhalb von 24–48 h).');
+      const wt=vd.getUTCDay();if(wt===5||wt===6)add('kopf.versandAm','Versand an einem '+(wt===5?'Freitag':'Samstag')+' – Laufzeit über das Wochenende.');
+    }
+    if(k.referenz==='Referenzraum'&&!String(k.referenzraum||'').trim()&&P('kopf.referenzraum'))add('kopf.referenzraum','„Referenzraum“ angekreuzt, aber nicht bezeichnet.');
+  }
+  return h;
+}
+/** Dateiname für einen abgelegten Scan: ERVV-tauglich (Buchstaben, Ziffern, _ und -, ein Punkt, ≤ 90 Zeichen), nie überschreibend. */
+function fbeScanName(formularId,datumIso,ext,vorhanden){
+  const e=String(ext||'').toLowerCase().replace(/^\./,'');
+  if(!FBE_SCAN_ENDUNGEN.includes(e))throw new Error('Dateityp .'+e+' wird nicht abgelegt (erlaubt: '+FBE_SCAN_ENDUNGEN.join(', ')+')');
+  const basis=(String(formularId||'Feldprotokoll').normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9_-]+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'')||'Feldprotokoll').slice(0,60)+'_Scan_'+String(datumIso||'').slice(0,10);
+  const belegt=new Set([...(vorhanden||[])].map(n=>String(n).toLowerCase()));
+  for(let i=1;i<1000;i++){const n=basis+(i>1?'_'+i:'')+'.'+e;if(!belegt.has(n.toLowerCase()))return n;}
+  throw new Error('Zu viele Scans mit gleichem Namen');
+}
+function fbeHex(buf){return Array.from(new Uint8Array(buf),b=>b.toString(16).padStart(2,'0')).join('');}
+/** Zeile für das Ablage-Protokoll (Text, eine Zeile je abgelegter Datei). */
+function fbeAblageZeile(sc,formularId){return [sc.abgelegtAm,formularId,sc.datei,'SHA-256 '+sc.sha256,sc.bytes+' Byte','Original: '+sc.original,'abgelegt von: '+(sc.abgelegtVon||'—')].join(' | ');}
+function fbeStatus(rec){
+  if(!rec.abgeschlossen)return {kurz:'in Erfassung',klasse:'offen'};
+  if(rec.pruefung)return {kurz:'geprüft'+(rec.pruefung.selbst?' (durch Erfasser)':''),klasse:'geprueft'};
+  return {kurz:'abgeschlossen, Übertragung nicht geprüft',klasse:'abgeschlossen'};
+}
+/* FBE-LOGIK-ENDE */
+
+const FBE_CSS=`
+.fbe-kopf{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin:4px 0 12px;padding:10px 14px;background:var(--surface,#fff);border:1px solid var(--border,#dce3ea);border-radius:var(--radius,10px)}
+.fbe-id{font-family:var(--mono,monospace);font-size:16px;font-weight:600}
+.fbe-pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid}
+.fbe-pill.offen{background:#fff6e0;border-color:#e8c46a;color:#7a5a00}
+.fbe-pill.abgeschlossen{background:#eef3fb;border-color:#a9bfdf;color:#2c4f80}
+.fbe-pill.geprueft{background:#e7f5ec;border-color:#8cc59f;color:#25633a}
+.fbe-meta{font-size:12px;color:var(--text-muted,#667)}
+.fbe-layout{display:grid;grid-template-columns:minmax(320px,44%) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:1100px){.fbe-layout{grid-template-columns:1fr}.fbe-scan{position:static!important;max-height:none!important}}
+.fbe-scan{position:sticky;top:156px;max-height:calc(100vh - 170px);display:flex;flex-direction:column;gap:8px;background:var(--surface,#fff);border:1px solid var(--border,#dce3ea);border-radius:var(--radius,10px);padding:10px}
+.fbe-scanliste{display:flex;flex-direction:column;gap:4px;font-size:12px;max-height:160px;overflow:auto}
+.fbe-scanzeile{display:flex;gap:8px;align-items:center;padding:4px 6px;border-radius:6px;cursor:pointer;border:1px solid transparent}
+.fbe-scanzeile.aktiv{background:var(--accent-bg,#e9f1fb);border-color:var(--accent,#2f6fbf)}
+.fbe-scanzeile.ungueltig{opacity:.55;text-decoration:line-through}
+.fbe-scanzeile code{font-size:11px;color:var(--text-muted,#667)}
+.fbe-blick{flex:1;min-height:260px;overflow:auto;background:#e9edf2;border-radius:8px;display:flex;align-items:flex-start;justify-content:center}
+.fbe-blick img{display:block;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.18)}
+.fbe-leer{padding:24px;text-align:center;color:var(--text-muted,#667);font-size:13px}
+.fbe-form{display:flex;flex-direction:column;gap:12px}
+.fbe-sek{background:var(--surface,#fff);border:1px solid var(--border,#dce3ea);border-radius:var(--radius,10px);padding:10px 14px}
+.fbe-sek h4{margin:0 0 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted,#556)}
+.fbe-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}
+.fbe-f{display:flex;flex-direction:column;gap:3px;min-width:0}
+.fbe-f.breit{grid-column:1/-1}
+.fbe-f>label,.fbe-f>.fbe-l{font-size:12px;color:var(--text-muted,#556);display:flex;justify-content:space-between;gap:8px;align-items:center}
+.fbe-zeile{display:flex;gap:6px;align-items:center}
+.fbe-zeile input[type=text],.fbe-f textarea{flex:1;min-width:0;font:inherit;font-size:14px;padding:5px 8px;border:1px solid var(--border,#cfd8e2);border-radius:6px;background:#fff}
+.fbe-f textarea{min-height:52px;resize:vertical}
+.fbe-f.vor input{font-family:var(--mono,monospace)}
+.fbe-e{font-size:12px;color:var(--text-muted,#667);white-space:nowrap}
+.fbe-unl{font-size:11px;padding:1px 6px;border:1px solid var(--border,#cfd8e2);border-radius:5px;background:#fff;color:var(--text-muted,#667);cursor:pointer}
+.fbe-f.ist-unl .fbe-unl{background:#b54708;border-color:#b54708;color:#fff}
+.fbe-f.ist-unl input,.fbe-f.ist-unl textarea{background:repeating-linear-gradient(45deg,#fff,#fff 6px,#fdf0e6 6px,#fdf0e6 12px)}
+.fbe-wahl{display:flex;flex-wrap:wrap;gap:4px}
+.fbe-wahl button{font:inherit;font-size:13px;padding:4px 10px;border:1px solid var(--border,#cfd8e2);border-radius:6px;background:#fff;cursor:pointer}
+.fbe-wahl button[aria-pressed=true]{background:var(--accent,#2f6fbf);border-color:var(--accent,#2f6fbf);color:#fff}
+.fbe-ja{display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer}
+.fbe-f>label.fbe-ja,.fbe-wahl label.fbe-ja{justify-content:flex-start;color:inherit;text-transform:none;letter-spacing:0;font-weight:400}
+.fbe-ja input{margin-top:3px}
+.fbe-hint{font-size:12px;color:#9a4d00;display:none}
+.fbe-hint.da{display:block}
+.fbe-hint.da::before{content:'⚠ '}
+.fbe-tab{display:grid;grid-template-columns:1.6fr 1fr .7fr .7fr 1.2fr;border:1px solid var(--border,#cfd8e2);border-radius:6px;overflow:hidden}
+.fbe-tab>span{font-size:11px;font-weight:600;padding:4px 6px;background:#f3f6f9;border-bottom:1px solid var(--border,#cfd8e2)}
+.fbe-tab .fbe-f{border-bottom:1px solid #edf1f5;border-right:1px solid #edf1f5;padding:2px}
+.fbe-tab .fbe-f input{border:0!important;border-radius:0!important;font-size:13px!important;padding:4px!important}
+.fbe-tab .fbe-f>.fbe-l,.fbe-tab .fbe-f>label>span{display:none}
+.fbe-tab .fbe-f>label{justify-content:flex-end}
+.fbe-tab .fbe-unl{font-size:9px;padding:0 3px;opacity:.6}
+.fbe-tab .fbe-hint{padding:0 4px}
+.fbe-mp{border-left:4px solid var(--accent,#2f6fbf)}
+.fbe-aktionen{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fbe-hinweise{font-size:13px;background:#fff8ec;border:1px solid #f0d29a;border-radius:8px;padding:8px 12px}
+.fbe-hinweise a{color:#7a4500;cursor:pointer;text-decoration:underline}
+.fbe-log{font-size:12px;width:100%;border-collapse:collapse}
+.fbe-log td,.fbe-log th{border-bottom:1px solid #edf1f5;padding:3px 6px;text-align:left;vertical-align:top}
+.fbe-neu{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+`;
+const fbeUi={aktivId:null,scanIdx:0,zoom:100,alt:null,pruefStatus:{},blobUrl:null};
+function fbeKuerzel(){try{return (localStorage.getItem('fbe-kuerzel')||'').trim();}catch(e){return (document.getElementById('fbe-kuerzel')?.value||'').trim();}}
+function fbeKuerzelSetzen(v){try{localStorage.setItem('fbe-kuerzel',String(v||'').trim());}catch(e){}}
+function fbeCtx(){return {von:fbeKuerzel()||(document.getElementById('fbe-kuerzel')?.value||'').trim(),jetzt:new Date().toISOString()};}
+function fbeBrauchtKuerzel(){
+  const k=fbeCtx().von;if(k)return k;
+  const el=document.getElementById('fbe-kuerzel');if(el){el.focus();el.classList.add('fbe-blink');setTimeout(()=>el.classList.remove('fbe-blink'),1200);}
+  flash('Bitte zuerst Ihr Kürzel eintragen – es steht im Protokoll bei jeder Erfassung, Prüfung und Ablage.');return '';
+}
+function fbeAktiv(){return feldprotokolle.find(r=>r.id===fbeUi.aktivId)||null;}
+function fbeZeitText(iso){if(!iso)return '';const d=new Date(iso);return isNaN(d)?String(iso):d.toLocaleDateString('de-DE')+' '+d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});}
+function fbeGeaendert(){markUnsaved();}
+
+function fbeRender(){
+  const box=document.getElementById('fbe-inhalt');if(!box)return;
+  if(!document.getElementById('fbe-style')){const st=document.createElement('style');st.id='fbe-style';st.textContent=FBE_CSS+'.fbe-blink{outline:3px solid #e8a33a}';document.head.append(st);}
+  const kz=document.getElementById('fbe-kuerzel');if(kz&&document.activeElement!==kz)kz.value=fbeKuerzel();
+  const sel=document.getElementById('fbe-wahl');
+  if(!fbeAktiv())fbeUi.aktivId=feldprotokolle.length?feldprotokolle[feldprotokolle.length-1].id:null;
+  if(sel){
+    sel.innerHTML=feldprotokolle.length?feldprotokolle.map(r=>'<option value="'+fbEsc(r.id)+'"'+(r.id===fbeUi.aktivId?' selected':'')+'>'+fbEsc(r.formularId)+' · '+(r.typ==='asbest'?'Asbest/KMF':'Schimmelpilze')+' · '+r.mp.length+' '+(r.typ==='asbest'?'MP':'Messst.')+' · '+fbEsc(fbeStatus(r).kurz)+'</option>').join(''):'<option value="">– noch kein Feldprotokoll erfasst –</option>';
+    sel.disabled=!feldprotokolle.length;
+  }
+  const rec=fbeAktiv();
+  if(!rec||fbeUi.neu){box.innerHTML=fbeNeuHtml(!rec);fbeNeuId();return;}
+  box.innerHTML=fbeRecHtml(rec);
+  fbeHinweiseZeigen(rec);
+  fbeScanZeigen(rec);
+}
+function fbeNeuHtml(erstes){
+  const o=typeof fbOptionen==='function'?fbOptionen():{typ:'asbest',lfd:'01',nr:'',n:3};
+  if(!String(o.nr||'').trim())o.nr=document.getElementById('proj-nr')?.value.trim()||'';
+  const lfdVorschlag=(()=>{const belegt=new Set(feldprotokolle.map(r=>r.formularId));let l=Math.max(1,parseInt(o.lfd,10)||1);while(belegt.has(fbFormularId(o.typ,o.nr,String(l))))l++;return String(l).padStart(2,'0');})();
+  return '<div class="fbe-sek">'+(erstes?'<p style="margin:0 0 10px">Hier werden ausgefüllte Feldbögen am Schreibtisch übertragen und die Scans im Projektordner abgelegt. Formular-ID und Anzahl der Messpunkte stehen oben rechts auf dem Bogen.</p>':'')
+    +'<div class="fbe-neu">'
+    +'<label style="display:inline-flex;gap:6px;align-items:center"><input type="radio" name="fbe-neu-typ" value="asbest"'+(o.typ!=='schimmel'?' checked':'')+' onchange="fbeNeuId()"> Asbest / KMF</label>'
+    +'<label style="display:inline-flex;gap:6px;align-items:center"><input type="radio" name="fbe-neu-typ" value="schimmel"'+(o.typ==='schimmel'?' checked':'')+' onchange="fbeNeuId()"> Schimmelpilze</label>'
+    +'<label for="fbe-neu-nr">Projekt-Nr.</label><input type="text" id="fbe-neu-nr" value="'+fbEsc(o.nr)+'" style="width:110px;font-family:var(--mono)" oninput="fbeNeuId()">'
+    +'<label for="fbe-neu-lfd">Lfd. Nr.</label><input type="text" id="fbe-neu-lfd" value="'+lfdVorschlag+'" maxlength="3" style="width:56px;font-family:var(--mono)" oninput="fbeNeuId()">'
+    +'<label for="fbe-neu-n">Messpunkte</label><input type="number" id="fbe-neu-n" min="1" max="40" value="'+fbEsc(o.n||3)+'" style="width:64px">'
+    +'<span class="fbe-meta">Formular-ID <b id="fbe-neu-id" style="font-family:var(--mono)"></b></span>'
+    +'<button class="btn btn-primary btn-sm" onclick="fbeAnlegen()">Erfassung beginnen</button>'
+    +(erstes?'':'<button class="btn btn-ghost btn-sm" onclick="fbeUi.neu=false;fbeRender()">Abbrechen</button>')
+    +'</div></div>';
+}
+function fbeNeuId(){
+  const typ=document.querySelector('input[name="fbe-neu-typ"]:checked')?.value||'asbest';
+  const el=document.getElementById('fbe-neu-id');if(el)el.textContent=fbFormularId(typ,document.getElementById('fbe-neu-nr').value,document.getElementById('fbe-neu-lfd').value);
+}
+function fbeNeuDialog(){fbeUi.neu=true;fbeRender();fbeNeuId();}
+function fbeAnlegen(){
+  const von=fbeBrauchtKuerzel();if(!von)return;
+  const typ=document.querySelector('input[name="fbe-neu-typ"]:checked')?.value||'asbest';
+  const nr=document.getElementById('fbe-neu-nr').value.trim(),lfd=document.getElementById('fbe-neu-lfd').value.trim();
+  if(!nr||!lfd){flash('Projekt-Nr. und lfd. Nr. angeben (stehen in der Formular-ID auf dem Bogen).');return;}
+  const id=fbFormularId(typ,nr,lfd);
+  if(feldprotokolle.some(r=>r.formularId===id)){flash('Feldprotokoll '+id+' ist bereits erfasst.');return;}
+  const o=typeof fbOptionen==='function'?fbOptionen():{};
+  const vor=typ==='asbest'?{projektNr:nr,objekt:o.objekt,auftraggeber:o.auftraggeber,ortstermin:o.datum}:{projektNr:nr,objekt:o.objekt,datum:o.datum};
+  undoSnapshot();
+  const rec=fbeNeu({typ,formularId:id,n:document.getElementById('fbe-neu-n').value,vor,von,jetzt:new Date().toISOString()});
+  feldprotokolle.push(rec);fbeUi.aktivId=rec.id;fbeUi.neu=false;fbeUi.scanIdx=0;
+  fbeGeaendert();fbeRender();flash('Feldprotokoll '+id+' angelegt – vorgedruckte Angaben bitte mit dem Bogen vergleichen.');
+}
+function fbeWaehle(id){fbeUi.aktivId=id;fbeUi.neu=false;fbeUi.scanIdx=0;fbeRender();}
+
+function fbeFeldHtml(rec,f,pfad,wert){
+  const id='fbe-'+pfad.replace(/\./g,'-'),unl=!!rec.unl[pfad];
+  const unlBtn=f.t==='ja'||f.t==='mehr'||f.t==='wahl'||f.t==='tabelle'?'':'<button type="button" class="fbe-unl" data-unl="'+pfad+'" title="Auf dem Bogen unleserlich – Feld kann zusätzlich das Gelesene enthalten" aria-pressed="'+unl+'">unleserlich</button>';
+  const cls='fbe-f'+(f.breit?' breit':'')+(f.vor?' vor':'')+(unl?' ist-unl':'');
+  const hint='<div class="fbe-hint" data-hint="'+pfad+'"></div>';
+  if(f.t==='ja')return '<div class="'+cls+'" data-p="'+pfad+'"><label class="fbe-ja"><input type="checkbox" data-p="'+pfad+'"'+(wert?' checked':'')+'> '+fbEsc(f.l)+'</label>'+hint+'</div>';
+  if(f.t==='wahl')return '<div class="'+cls+'" data-p="'+pfad+'"><span class="fbe-l">'+fbEsc(f.l)+'</span><div class="fbe-wahl" role="group" aria-label="'+fbEsc(f.l)+'">'+f.o.map(x=>'<button type="button" data-p="'+pfad+'" data-v="'+fbEsc(x)+'" aria-pressed="'+(wert===x)+'">'+fbEsc(x)+'</button>').join('')+'</div>'+hint+'</div>';
+  if(f.t==='mehr')return '<div class="'+cls+'" data-p="'+pfad+'"><span class="fbe-l">'+fbEsc(f.l)+'</span><div class="fbe-wahl">'+f.o.map(x=>'<label class="fbe-ja" style="font-size:13px;margin-right:10px"><input type="checkbox" data-p="'+pfad+'" data-v="'+fbEsc(x)+'"'+((wert||[]).includes(x)?' checked':'')+'> '+fbEsc(x)+'</label>').join('')+'</div>'+hint+'</div>';
+  if(f.t==='tabelle'){
+    const rows=Array.isArray(wert)?wert:[];
+    return '<div class="'+cls+'"><span class="fbe-l">'+fbEsc(f.l)+' <span class="fbe-meta">(je Zeile eine Probe/Platte wie auf dem Bogen)</span></span><div class="fbe-tab">'+FBE_TABELLE.map(sp=>'<span>'+fbEsc(sp.l)+'</span>').join('')
+      +rows.map((r,i)=>FBE_TABELLE.map(sp=>fbeFeldHtml(rec,sp,pfad+'.'+i+'.'+sp.k,(r||{})[sp.k]||'')).join('')).join('')+'</div></div>';
+  }
+  const ctl=f.t==='lang'?'<textarea id="'+id+'" data-p="'+pfad+'" rows="2">'+fbEsc(wert)+'</textarea>'
+    :'<div class="fbe-zeile"><input type="text" id="'+id+'" data-p="'+pfad+'" value="'+fbEsc(wert)+'"'+(f.t==='zahl'?' inputmode="decimal"':'')+' autocomplete="off">'+(f.e?'<span class="fbe-e">'+fbEsc(f.e)+'</span>':'')+'</div>';
+  return '<div class="'+cls+'" data-p="'+pfad+'"><label for="'+id+'"><span>'+fbEsc(f.l)+(f.vor?' <span class="fbe-meta">(vorgedruckt)</span>':'')+'</span>'+unlBtn+'</label>'+ctl+hint+'</div>';
+}
+function fbeRecHtml(rec){
+  const s=FBE_SCHEMA[rec.typ],st=fbeStatus(rec);
+  let h='<div class="fbe-kopf"><div><span class="fbe-id">'+fbEsc(rec.formularId)+'</span> <span class="fbe-pill '+st.klasse+'">'+fbEsc(st.kurz)+'</span>'
+    +'<div class="fbe-meta">'+(rec.typ==='asbest'?'Raumluft Asbest / KMF':'Raumluft Schimmelpilze')+' · erfasst von <b>'+fbEsc(rec.erfasstVon||'—')+'</b> ab '+fbEsc(fbeZeitText(rec.erfasstAm))
+    +(rec.abgeschlossen?' · abgeschlossen von <b>'+fbEsc(rec.abgeschlossen.von)+'</b> am '+fbEsc(fbeZeitText(rec.abgeschlossen.am)):'')
+    +(rec.pruefung?' · Übertragung geprüft von <b>'+fbEsc(rec.pruefung.von)+'</b> am '+fbEsc(fbeZeitText(rec.pruefung.am)):'')+'</div></div>'
+    +'<div class="fbe-aktionen">'
+    +(rec.abgeschlossen?'':'<button class="btn btn-primary btn-sm" onclick="fbeAbschliessenKlick()" title="Danach wird jede Änderung mit altem und neuem Wert protokolliert">✓ Erfassung abschließen</button>')
+    +(rec.abgeschlossen&&!rec.pruefung?'<button class="btn btn-primary btn-sm" onclick="fbePruefenKlick()" title="Zweite Person vergleicht Bildschirm und Scan Feld für Feld">👁 Übertragung geprüft</button>':'')
+    +'<button class="btn btn-ghost btn-sm" onclick="fbeLoeschenKlick()" style="color:#c0392b">Protokoll entfernen</button></div></div>';
+  h+='<div class="fbe-layout"><div class="fbe-scan" id="fbe-scan"></div><div class="fbe-form">';
+  h+='<div class="fbe-hinweise" id="fbe-hinweise" hidden></div>';
+  for(const a of s.kopf){
+    h+='<div class="fbe-sek"><h4>'+fbEsc(a.titel)+'</h4><div class="fbe-grid">'+a.felder.map(f=>fbeFeldHtml(rec,f,'kopf.'+f.k,rec.kopf[f.k])).join('')+'</div></div>';
+  }
+  rec.mp.forEach((m,i)=>{
+    h+='<div class="fbe-sek fbe-mp" id="fbe-mp-'+i+'"><h4>'+fbEsc(s.mpName)+' '+m.nr+'</h4><div class="fbe-grid">'+s.mp.map(f=>fbeFeldHtml(rec,f,'mp.'+i+'.'+f.k,m.w[f.k])).join('')+'</div></div>';
+  });
+  h+='<div class="fbe-aktionen"><button class="btn btn-secondary btn-sm" onclick="fbeMpHinzuKlick()">+ '+fbEsc(s.mpName)+'</button>'
+    +(rec.mp.length>1?'<button class="btn btn-ghost btn-sm" onclick="fbeMpEntfernenKlick()">– letzten '+fbEsc(s.mpName)+' entfernen</button>':'')
+    +'<span class="fbe-meta">Leer gelassene Felder bleiben leer (auf dem Bogen nicht ausgefüllt). Hinweise ändern keine Werte.</span></div>';
+  if(rec.aenderungen.length){
+    h+='<details class="fbe-sek"><summary style="cursor:pointer;font-weight:600">Änderungsprotokoll ('+rec.aenderungen.length+')</summary><table class="fbe-log"><thead><tr><th>Zeit</th><th>Kürzel</th><th>Feld</th><th>alt</th><th>neu</th></tr></thead><tbody>'
+      +rec.aenderungen.map(a=>'<tr><td>'+fbEsc(fbeZeitText(a.am))+'</td><td>'+fbEsc(a.von)+'</td><td>'+fbEsc(a.feld)+'</td><td>'+fbEsc(a.alt)+'</td><td>'+fbEsc(a.neu)+'</td></tr>').join('')+'</tbody></table></details>';
+  }
+  return h+'</div></div>';
+}
+function fbeHinweiseZeigen(rec){
+  const box=document.getElementById('fbe-inhalt');if(!box)return;
+  const hs=fbePlausi(rec),je={};
+  for(const x of hs)(je[x.pfad]=je[x.pfad]||[]).push(x.text);
+  box.querySelectorAll('.fbe-hint').forEach(el=>{const t=je[el.dataset.hint];el.textContent=t?t.join(' '):'';el.classList.toggle('da',!!t);});
+  const sum=document.getElementById('fbe-hinweise');
+  if(sum){sum.hidden=!hs.length;sum.innerHTML=hs.length?'<b>'+hs.length+' Hinweis'+(hs.length===1?'':'e')+'</b> zur Plausibilität (nur zur Kontrolle gegen den Bogen): '+hs.map(x=>'<a data-geh="'+fbEsc(x.pfad)+'">'+fbEsc(fbeFeldLabel(rec,x.pfad))+'</a>').join(' · '):'';}
+}
+function fbeWertAusDom(el){
+  const p=el.dataset.p,rec=fbeAktiv();
+  if(el.type==='checkbox'&&el.dataset.v!==undefined){const alt=fbeLesen(rec,p)||[];const optionen=(fbeFeld(rec.typ,p)||{}).o||[];return optionen.filter(x=>x===el.dataset.v?el.checked:alt.includes(x));}
+  if(el.type==='checkbox')return el.checked;
+  return el.value;
+}
+function fbeSetzeUi(pfad,wert){
+  const rec=fbeAktiv();if(!rec)return;
+  const ctx=fbeCtx();
+  if(rec.abgeschlossen&&!ctx.von){fbeBrauchtKuerzel();fbeRender();return;}
+  if(fbeSetze(rec,pfad,wert,ctx)){fbeGeaendert();if(rec.abgeschlossen)fbeKopfAktualisieren(rec);}
+  fbeHinweiseZeigen(rec);
+}
+function fbeKopfAktualisieren(rec){
+  // Status (Prüfung aufgehoben) und Änderungsprotokoll neu zeichnen, Fokus/Scroll behalten
+  const akt=document.activeElement,pfad=akt&&akt.dataset?akt.dataset.p:null,y=window.scrollY;
+  const scan=document.getElementById('fbe-scan');const scroll=scan?scan.querySelector('.fbe-blick')?.scrollTop:0;
+  fbeRender();window.scrollTo(0,y);
+  if(pfad){const el=document.querySelector('#fbe-inhalt [data-p="'+CSS.escape(pfad)+'"]:not(div)');if(el&&el.focus){el.focus();if(el.setSelectionRange&&el.value)try{el.setSelectionRange(el.value.length,el.value.length);}catch(e){}}}
+  const b=document.querySelector('#fbe-scan .fbe-blick');if(b)b.scrollTop=scroll||0;
+}
+function fbeEventsBinden(){
+  const box=document.getElementById('fbe-inhalt');if(!box||box.dataset.gebunden)return;box.dataset.gebunden='1';
+  box.addEventListener('focusin',e=>{const el=e.target;if(el.dataset&&el.dataset.p)fbeUi.alt={p:el.dataset.p,v:el.value};});
+  box.addEventListener('input',e=>{
+    const el=e.target,rec=fbeAktiv();if(!rec||!el.dataset||!el.dataset.p||el.type==='checkbox')return;
+    if(!rec.abgeschlossen)fbeSetzeUi(el.dataset.p,el.value);   // vor dem Abschluss sofort; danach erst beim Verlassen (ein Protokolleintrag je Änderung)
+  });
+  box.addEventListener('change',e=>{
+    const el=e.target,rec=fbeAktiv();if(!rec||!el.dataset||!el.dataset.p)return;
+    fbeSetzeUi(el.dataset.p,fbeWertAusDom(el));
+  });
+  box.addEventListener('click',e=>{
+    const b=e.target.closest('button');const a=e.target.closest('a[data-geh]');
+    if(a){const el=box.querySelector('[data-p="'+CSS.escape(a.dataset.geh)+'"]:not(div)')||box.querySelector('[data-p="'+CSS.escape(a.dataset.geh)+'"]');if(el){el.scrollIntoView({block:'center',behavior:'smooth'});if(el.focus)el.focus({preventScroll:true});}return;}
+    if(!b)return;
+    const rec=fbeAktiv();if(!rec)return;
+    if(b.dataset.unl){const ctx=fbeCtx();if(rec.abgeschlossen&&!ctx.von){fbeBrauchtKuerzel();return;}const an=!rec.unl[b.dataset.unl];if(fbeSetzeUnleserlich(rec,b.dataset.unl,an,ctx)){fbeGeaendert();}
+      const f=b.closest('.fbe-f');if(f)f.classList.toggle('ist-unl',an);b.setAttribute('aria-pressed',String(an));if(rec.abgeschlossen)fbeKopfAktualisieren(rec);else fbeHinweiseZeigen(rec);return;}
+    if(b.dataset.p&&b.dataset.v!==undefined){
+      const alt=fbeLesen(rec,b.dataset.p),neu=alt===b.dataset.v?'':b.dataset.v;
+      fbeSetzeUi(b.dataset.p,neu);
+      b.parentElement.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.v===fbeLesen(rec,b.dataset.p))));
+    }
+  });
+}
+function fbeAbschliessenKlick(){
+  const rec=fbeAktiv();if(!rec)return;const von=fbeBrauchtKuerzel();if(!von)return;
+  const n=fbePlausi(rec).length;
+  if(!confirm('Erfassung von '+rec.formularId+' abschließen?\n\n'+(n?n+' Plausibilitätshinweis'+(n===1?' ist':'e sind')+' offen – bitte gegen den Bogen geprüft haben.\n\n':'')+'Danach wird jede Änderung mit altem und neuem Wert, Kürzel und Zeit protokolliert.'))return;
+  fbeAbschliessen(rec,fbeCtx());fbeGeaendert();fbeRender();
+}
+function fbePruefenKlick(){
+  const rec=fbeAktiv();if(!rec)return;const von=fbeBrauchtKuerzel();if(!von)return;
+  if(!rec.scans.some(s=>!s.ungueltig)&&!confirm('Zu '+rec.formularId+' ist noch kein Scan abgelegt. Trotzdem als geprüft vermerken?'))return;
+  const selbst=von.toLowerCase()===String(rec.erfasstVon||'').toLowerCase();
+  if(selbst&&!confirm('Sie haben dieses Protokoll selbst erfasst ('+rec.erfasstVon+').\nEine Prüfung durch eine zweite Person ist aussagekräftiger.\n\nTrotzdem als „geprüft durch Erfasser“ vermerken?'))return;
+  if(!confirm('Bestätigen: Alle Felder von '+rec.formularId+' wurden mit dem Bogen bzw. Scan verglichen.\n\nPrüfer: '+von))return;
+  fbePruefen(rec,fbeCtx());fbeGeaendert();fbeRender();flash('Übertragung von '+rec.formularId+' als geprüft vermerkt ✓');
+}
+function fbeLoeschenKlick(){
+  const rec=fbeAktiv();if(!rec)return;
+  if(!confirm('Erfassung '+rec.formularId+' aus LabelKit entfernen?\n\nAbgelegte Scans und das Ablage-Protokoll im Ordner „'+FBE_SCAN_ORDNER+'“ bleiben erhalten.'))return;
+  undoSnapshot();feldprotokolle=feldprotokolle.filter(r=>r!==rec);fbeUi.aktivId=null;fbeGeaendert();fbeRender();
+}
+function fbeMpHinzuKlick(){const rec=fbeAktiv();if(!rec)return;const ctx=fbeCtx();if(rec.abgeschlossen&&!ctx.von){fbeBrauchtKuerzel();return;}const nr=fbeMpHinzu(rec,ctx);fbeGeaendert();fbeRender();document.getElementById('fbe-mp-'+(rec.mp.length-1))?.scrollIntoView({block:'start',behavior:'smooth'});flash(FBE_SCHEMA[rec.typ].mpName+' '+nr+' hinzugefügt');}
+function fbeMpEntfernenKlick(){
+  const rec=fbeAktiv();if(!rec||rec.mp.length<=1)return;const ctx=fbeCtx();if(rec.abgeschlossen&&!ctx.von){fbeBrauchtKuerzel();return;}
+  const i=rec.mp.length-1;if(!fbeMpLeer(rec,i)&&!confirm(FBE_SCHEMA[rec.typ].mpName+' '+rec.mp[i].nr+' enthält Angaben. Wirklich entfernen?'))return;
+  undoSnapshot();fbeMpEntfernen(rec,ctx);fbeGeaendert();fbeRender();
+}
+
+/* --- Scans --- */
+async function fbeScanOrdner(erstellen){
+  const proj=typeof PROJEKTORDNER!=='undefined'&&PROJEKTORDNER.state.proj;if(!proj||!proj.dir)return null;
+  try{return await proj.dir.getDirectoryHandle(FBE_SCAN_ORDNER);}catch(e){}
+  const want=FBE_SCAN_ORDNER.toLowerCase();
+  for await(const h of proj.dir.values())if(h.kind==='directory'&&h.name.normalize('NFC').toLowerCase()===want)return h;
+  return erstellen?proj.dir.getDirectoryHandle(FBE_SCAN_ORDNER,{create:true}):null;
+}
+async function fbeSha256(buf){return fbeHex(await crypto.subtle.digest('SHA-256',buf));}
+function fbeDateienWaehlen(){
+  return new Promise(res=>{const inp=document.createElement('input');inp.type='file';inp.multiple=true;inp.accept=FBE_SCAN_ENDUNGEN.map(e=>'.'+e).join(',');
+    inp.onchange=()=>res([...inp.files]);inp.addEventListener('cancel',()=>res([]));inp.click();});
+}
+/** Scans ablegen: kopieren, Kopie zurücklesen und Prüfsumme vergleichen, Ablage-Protokoll fortschreiben, Projektdaten speichern. */
+async function fbeScansAblegen(dateien){
+  const rec=fbeAktiv();if(!rec)return;
+  if(!(typeof PROJEKTORDNER!=='undefined'&&PROJEKTORDNER.state.proj)){alert('Scans werden im Projektordner abgelegt.\nBitte zuerst das Projekt öffnen („📁 Projekt“ oben oder aus der Projektzentrale).');return;}
+  if(!window.crypto||!crypto.subtle){alert('Dieser Browser kann keine Prüfsummen berechnen. Bitte Chrome oder Edge verwenden.');return;}
+  const von=fbeBrauchtKuerzel();if(!von)return;
+  if(!dateien)dateien=await fbeDateienWaehlen();
+  if(!dateien||!dateien.length)return;
+  let ordner;try{ordner=await fbeScanOrdner(true);}catch(e){alert('Ordner „'+FBE_SCAN_ORDNER+'“ konnte nicht angelegt werden: '+e.message);return;}
+  const vorhanden=[];for await(const h of ordner.values())vorhanden.push(h.name);
+  const neu=[],fehler=[];
+  for(const datei of dateien){
+    try{
+      const ext=(/\.([^.]+)$/.exec(datei.name)||[])[1]||'';
+      const jetzt=new Date().toISOString();
+      const name=fbeScanName(rec.formularId,jetzt,ext,vorhanden);
+      // Nie überschreiben: existiert die Datei doch (anderer Schreiber), abbrechen
+      let existiert=false;try{await ordner.getFileHandle(name);existiert=true;}catch(e){}
+      if(existiert)throw new Error('„'+name+'“ existiert bereits');
+      const buf=await datei.arrayBuffer(),sha=await fbeSha256(buf);
+      const fh=await ordner.getFileHandle(name,{create:true});const w=await fh.createWritable();await w.write(buf);await w.close();
+      const kontrolle=await fbeSha256(await (await fh.getFile()).arrayBuffer());
+      if(kontrolle!==sha)throw new Error('Kopie von „'+datei.name+'“ weicht vom Original ab (Prüfsumme) – bitte erneut ablegen');
+      vorhanden.push(name);
+      const sc={datei:name,ordner:FBE_SCAN_ORDNER,sha256:sha,bytes:buf.byteLength,original:datei.name,originalGeaendert:datei.lastModified?new Date(datei.lastModified).toISOString():'',abgelegtAm:jetzt,abgelegtVon:von,blaetter:''};
+      rec.scans.push(sc);neu.push(sc);
+      fbeProtokoll(rec,'Scan',  '—','abgelegt: '+name,{von,jetzt});
+      fbeUi.pruefStatus[name]='ok';
+    }catch(e){fehler.push(datei.name+': '+e.message);}
+  }
+  if(neu.length){
+    try{
+      const ph=await ordner.getFileHandle('_Ablage-Protokoll.txt',{create:true});const alt=await ph.getFile();
+      const w=await ph.createWritable({keepExistingData:true});
+      const kopf=alt.size?'':'Ablage-Protokoll Feldprotokolle (LabelKit) – je Zeile: Zeit (UTC) | Formular-ID | Datei | Prüfsumme | Größe | Originaldatei | abgelegt von\r\n';
+      await w.write({type:'write',position:alt.size,data:kopf+neu.map(sc=>fbeAblageZeile(sc,rec.formularId)).join('\r\n')+'\r\n'});await w.close();
+    }catch(e){fehler.push('Ablage-Protokoll: '+e.message);}
+    fbeUi.scanIdx=rec.scans.length-1;
+    fbeGeaendert();fbeRender();
+    if(typeof schnellSpeichern==='function')await schnellSpeichern();
+    flash(neu.length+' Scan'+(neu.length===1?'':'s')+' in „'+FBE_SCAN_ORDNER+'“ abgelegt und Projektdaten gespeichert ✓');
+  }
+  if(fehler.length)alert('Nicht abgelegt:\n\n'+fehler.join('\n'));
+}
+/** Abgelegte Scans erneut lesen und Prüfsummen vergleichen. */
+async function fbeAblagePruefen(){
+  const rec=fbeAktiv();if(!rec)return;
+  const ordner=await fbeScanOrdner(false).catch(()=>null);
+  if(!ordner){alert('Projektordner nicht geöffnet oder Ordner „'+FBE_SCAN_ORDNER+'“ fehlt.');return;}
+  let ok=0,bad=0;
+  for(const sc of rec.scans){
+    try{const f=await (await ordner.getFileHandle(sc.datei)).getFile();const s=await fbeSha256(await f.arrayBuffer());fbeUi.pruefStatus[sc.datei]=s===sc.sha256?'ok':'abweichend';}
+    catch(e){fbeUi.pruefStatus[sc.datei]='fehlt';}
+    if(fbeUi.pruefStatus[sc.datei]==='ok')ok++;else bad++;
+  }
+  fbeScanZeigen(rec);
+  flash(bad?'⚠ '+bad+' Scan(s) fehlen oder wurden verändert':'Alle '+ok+' Scans unverändert ✓');
+}
+function fbeScanUngueltig(i){
+  const rec=fbeAktiv(),sc=rec&&rec.scans[i];if(!sc)return;const von=fbeBrauchtKuerzel();if(!von)return;
+  const grund=prompt('Scan „'+sc.datei+'“ als ungültig vermerken (z. B. falscher Bogen, unscharf).\nDie Datei bleibt im Ordner. Grund:','');
+  if(grund===null||!grund.trim())return;
+  sc.ungueltig={von,am:new Date().toISOString(),grund:grund.trim()};
+  fbeProtokoll(rec,'Scan '+sc.datei,'gültig','ungültig: '+grund.trim(),{von,jetzt:sc.ungueltig.am});
+  fbeGeaendert();fbeRender();
+}
+function fbeScanBlaetter(i,wert){
+  const rec=fbeAktiv(),sc=rec&&rec.scans[i];if(!sc)return;const v=String(wert||'').trim();if(v===(sc.blaetter||''))return;
+  fbeProtokoll(rec,'Scan '+sc.datei+' · Blätter',sc.blaetter||'—',v||'—',fbeCtx());sc.blaetter=v;fbeGeaendert();
+}
+async function fbeScanZeigen(rec){
+  const box=document.getElementById('fbe-scan');if(!box)return;
+  const proj=typeof PROJEKTORDNER!=='undefined'&&PROJEKTORDNER.state.proj;
+  const symbol={ok:'✓',abweichend:'✗ verändert',fehlt:'✗ fehlt'};
+  let h='<div class="fbe-aktionen"><button class="btn btn-primary btn-sm" onclick="fbeScansAblegen()"'+(proj?'':' title="Erst das Projekt öffnen"')+'>📎 Scan ablegen…</button>'
+    +(rec.scans.length?'<button class="btn btn-secondary btn-sm" onclick="fbeAblagePruefen()" title="Abgelegte Dateien erneut lesen und Prüfsummen vergleichen">Ablage prüfen</button>':'')+'</div>';
+  if(!proj)h+='<div class="fbe-meta">Scans werden im Projektordner unter „'+FBE_SCAN_ORDNER+'“ abgelegt – dazu das Projekt öffnen.</div>';
+  if(rec.scans.length){
+    h+='<div class="fbe-scanliste">'+rec.scans.map((sc,i)=>'<div class="fbe-scanzeile'+(i===fbeUi.scanIdx?' aktiv':'')+(sc.ungueltig?' ungueltig':'')+'" data-scan="'+i+'" title="Original: '+fbEsc(sc.original)+' · abgelegt '+fbEsc(fbeZeitText(sc.abgelegtAm))+' von '+fbEsc(sc.abgelegtVon)+(sc.ungueltig?' · ungültig: '+fbEsc(sc.ungueltig.grund):'')+'">'
+      +'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fbEsc(sc.datei)+'</span><code>'+sc.sha256.slice(0,10)+'…</code>'
+      +(fbeUi.pruefStatus[sc.datei]?'<span>'+symbol[fbeUi.pruefStatus[sc.datei]]+'</span>':'')
+      +'<input type="text" value="'+fbEsc(sc.blaetter||'')+'" placeholder="Blatt" title="Welche Blätter zeigt dieser Scan? z. B. 1–2" style="width:56px;font-size:11px;padding:2px 4px" onchange="fbeScanBlaetter('+i+',this.value)" onclick="event.stopPropagation()">'
+      +(sc.ungueltig?'':'<button class="btn btn-ghost btn-sm" style="padding:0 6px" title="Als ungültig vermerken (Datei bleibt erhalten)" onclick="event.stopPropagation();fbeScanUngueltig('+i+')">⊘</button>')+'</div>').join('')+'</div>';
+    h+='<div class="fbe-aktionen" style="font-size:12px"><span>Zoom</span><input type="range" min="40" max="300" step="10" value="'+fbeUi.zoom+'" oninput="fbeUi.zoom=+this.value;const i=document.querySelector(\'#fbe-scan .fbe-blick img\');if(i)i.style.width=this.value+\'%\'"><button class="btn btn-ghost btn-sm" onclick="fbeUi.zoom=100;fbeScanZeigen(fbeAktiv())">Breite</button></div>';
+    h+='<div class="fbe-blick" id="fbe-blick"><div class="fbe-leer">Scan wird geladen…</div></div>';
+  }else h+='<div class="fbe-blick"><div class="fbe-leer">Noch kein Scan abgelegt.<br>Bogen am Kopierer als <b>JPEG oder PDF</b> scannen und hier ablegen – JPEG wird direkt neben den Feldern angezeigt.</div></div>';
+  box.innerHTML=h;
+  box.querySelectorAll('[data-scan]').forEach(el=>el.onclick=()=>{fbeUi.scanIdx=+el.dataset.scan;fbeScanZeigen(rec);});
+  const sc=rec.scans[fbeUi.scanIdx]||rec.scans[0];if(!sc)return;
+  const blick=document.getElementById('fbe-blick');
+  const ordner=await fbeScanOrdner(false).catch(()=>null);
+  if(!ordner){blick.innerHTML='<div class="fbe-leer">Projektordner nicht geöffnet – Scan kann nicht angezeigt werden.</div>';return;}
+  let datei;try{datei=await (await ordner.getFileHandle(sc.datei)).getFile();}catch(e){blick.innerHTML='<div class="fbe-leer">„'+fbEsc(sc.datei)+'“ nicht gefunden.</div>';return;}
+  if(fbeUi.blobUrl)URL.revokeObjectURL(fbeUi.blobUrl);
+  fbeUi.blobUrl=URL.createObjectURL(datei);
+  if(/\.(jpe?g|png)$/i.test(sc.datei)){
+    const img=new Image();img.alt='Scan '+sc.datei;img.style.width=fbeUi.zoom+'%';img.src=fbeUi.blobUrl;blick.innerHTML='';blick.append(img);
+  }else{
+    blick.innerHTML='<div class="fbe-leer">'+(/\.pdf$/i.test(sc.datei)?'PDF-Scans kann LabelKit aus Sicherheitsgründen nicht eingebettet anzeigen.':'TIFF kann der Browser nicht anzeigen.')+'<br><br><button class="btn btn-secondary btn-sm" id="fbe-extern">In neuem Fenster öffnen</button><br><br><span>Tipp: neben LabelKit anordnen (Windows-Taste + ←/→).</span></div>';
+    document.getElementById('fbe-extern').onclick=()=>window.open(fbeUi.blobUrl,'_blank');
+  }
+}
+document.addEventListener('DOMContentLoaded',fbeEventsBinden);
+if(document.readyState!=='loading')fbeEventsBinden();
+
 </script>
 <script>
 (function(){

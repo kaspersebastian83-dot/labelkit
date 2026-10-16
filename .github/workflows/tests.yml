@@ -24,6 +24,7 @@ jobs:
       - run: node tests/export-flow.cjs
       - run: node tests/browser-hint.cjs
       - run: node tests/feldboegen.cjs
+      - run: node tests/feldprotokolle.cjs
 
   browser-tests:
     name: Browser tests (${{ matrix.browser }})
@@ -45,3 +46,5 @@ jobs:
           "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps ${{ matrix.browser }}
       - name: Field forms in the real browser
         run: node tests/feldboegen-browser.cjs ${{ matrix.browser }}
+      - name: Field protocol entry and scan filing in the real browser
+        run: node tests/feldprotokolle-browser.cjs ${{ matrix.browser }}
