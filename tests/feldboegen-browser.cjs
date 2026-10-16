@@ -84,4 +84,10 @@ const url = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
   assert.deepEqual(errors, [], 'keine Fehler in der Konsole');
   await browser.close();
   console.log(`OK (${name})`);
-})().catch(e => { console.error(e); process.exit(1); });
+})().catch(e => {
+  console.error(e);
+  // GitHub-Annotation, damit die Ursache auch ohne Protokoll-Download sichtbar ist
+  const text = String(e && e.stack || e).slice(0, 1500).replace(/%/g, '%25').replace(/\r/g, '').replace(/\n/g, '%0A');
+  console.log(`::error title=Browsertest ${name}::${text}`);
+  process.exit(1);
+});
