@@ -1,5 +1,12 @@
 # Änderungen
 
+## 4.24.0 – Oktober 2026
+
+- Projektordner: Öffnen aus der Projektzentrale (`?projekt=<Ordnername>`) oder über „📁 Projekt“.
+- Im Projekt ersetzt „Laboraufträge“ jeden Ordnerdialog (Speichern, Strg+S, Laborübergaben, Protokolle, Textbausteine).
+- Neueste `…_Daten.json` aus „Laboraufträge“ wird beim Öffnen geladen; Projektnummer und Schadenort aus dem Ordnernamen.
+- Kopfzeile: Projektkennung und „← Projektzentrale“ statt des alten Dashboard-Links.
+
 ## In Vorbereitung
 
 - `index.html` als zentrale Startdatei für das Repository eingeführt.
