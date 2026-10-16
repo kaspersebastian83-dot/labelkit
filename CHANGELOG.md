@@ -1,5 +1,12 @@
 # Änderungen
 
+## 4.27.0 – Oktober 2026
+
+- Neuer Feldbogen „Probenahme Feststoffe (PN 98)“ im Reiter „Feldbögen“ (bisher „Feldbögen Raumluft“): Probenahmeprotokoll zum Ausfüllen vor Ort, angelehnt an LAGA PN 98 Anhang C und bewusst kurz gehalten. Blatt 1: Projekt, Anlass und vermutete Schadstoffe, Labor, Vor-Ort-Bedingungen für alle Proben (Material, Lagerung, Witterung, Gerät, Gefäß, Transport, Lage der Probenahmestellen) und Probe 1; Folgeblätter mit je drei Proben. Unterschrift Probenehmer und Anwesende/Zeugen. Das Labor wird aus dem PN 98-Reiter vorgedruckt.
+- Übertragung am Schreibtisch unter „Erfassen & Scans“ wie bei Asbest und Schimmel (Scan-Ablage mit SHA-256, Abschluss, Prüfung durch zweite Person, Änderungsprotokoll).
+- Plausibilitätshinweise PN 98: fehlende oder doppelte Proben-Nr., Mischprobe aus weniger als 4 Einzelproben, „Einzelprobe“ mit mehreren Einzelproben, weniger Mischproben je Entnahmestelle als die PN 98-Staffelung des Probenrechners für die angegebene Menge, Übergabe vor dem Probenahmedatum. Hinweise ändern keine Werte.
+- Absprung zum Feldbogen aus dem PN 98-Reiter und aus dem Probenrechner (mit der berechneten Zahl der Laborproben). Das bisherige PN 98-Protokoll am Bildschirm bleibt unverändert nutzbar.
+
 ## 4.26.0 – Oktober 2026
 
 - Neuer Unterreiter „Erfassen & Scans“ im Reiter „Feldbögen Raumluft“: ausgefüllte Feldbögen am Schreibtisch übertragen, Eingabemaske in der Reihenfolge des Papierbogens, Scan daneben (JPEG/PNG direkt, PDF im eigenen Fenster).

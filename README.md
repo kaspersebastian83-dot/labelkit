@@ -8,8 +8,9 @@ Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben
 - Etiketten und Laborübergaben erstellen
 - Brandgeruch-Bewertungen erfassen
 - PN-98-Probenahmeprotokolle und Textbausteine erstellen
-- Feldbögen für Raumluftmessungen (Asbest/KMF, Schimmelpilze) zum Ausdrucken und Ausfüllen von Hand, mit Projektdaten vorgedruckt (ab 4.25)
+- Feldbögen für Raumluftmessungen (Asbest/KMF, Schimmelpilze) und Probenahmen nach PN 98 zum Ausdrucken und Ausfüllen von Hand, mit Projektdaten vorgedruckt (ab 4.25)
 - Ausgefüllte Feldbögen am Schreibtisch erfassen, Scans mit Prüfsumme im Projektordner unter „Feldprotokolle“ ablegen, Prüfung der Übertragung durch eine zweite Person und Änderungsprotokoll (ab 4.26)
+- Feldbogen Probenahme Feststoffe nach LAGA PN 98 zum Ausfüllen vor Ort, mit derselben Erfassung und Scan-Ablage (ab 4.27)
 - Projektdaten als JSON speichern und wieder importieren
 - Gemeinsamer Export der Laborübergaben, Projektdatei und freigegebenen Textbausteine
 

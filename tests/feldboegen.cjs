@@ -1,4 +1,4 @@
-// Feldbögen Raumluft (4.25.0): Blattzahl, Formular-ID, Vorbelegung, Escaping und Leerformular – ohne Browser.
+// Feldbögen (4.25.0, PN 98 ab 4.27.0): Blattzahl, Formular-ID, Vorbelegung, Escaping und Leerformular – ohne Browser.
 const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
@@ -50,4 +50,20 @@ assert.match(leer, /____-AS-__/);
 // Logo im Kopf und als Wasserzeichen; ohne Logo kein leeres Bild.
 assert.equal((as[0].match(/data:image\/png;base64,AAAA/g) || []).length, 2);
 assert.doesNotMatch(fbSeiten({...base, typ: 'asbest', logo: ''}).join(''), /<img/);
+// PN 98 (4.27.0): Blatt 1 mit Probe 1, Folgeblätter mit je drei Proben; Labor vorgedruckt, Auftraggeber auch.
+for (const [n, pn] of [[1, 1], [2, 2], [4, 2], [5, 3], [7, 3], [8, 4], [40, 14]]) {
+  assert.equal(fbBlattzahl('pn98', n), pn, `PN 98 n=${n}`);
+  assert.equal(fbSeiten({...base, typ: 'pn98', n}).length, pn);
+}
+const pn = fbSeiten({...base, typ: 'pn98', n: 5, labor: 'Labor <X>'});
+assert.equal(fbFormularId('pn98', '26.0142', '2'), '26.0142-PN-02');
+pn.forEach((seite, i) => { assert.match(seite, /26\.0142-PN-01/); assert.match(seite, new RegExp(`Blatt ${i + 1} von 3`)); });
+assert.deepEqual(pn.join('').match(/<b>Probe (\d+)<\/b>/g).map(m => m.match(/\d+/)[0]), ['1', '2', '3', '4', '5']);
+assert.match(pn[0], /Beispiel Versicherung AG/);
+assert.match(pn[0], /Labor &lt;X&gt;/);
+assert.match(pn[0], /LAGA PN 98/);
+assert.match(pn[0], /Anwesende \/ Zeugen/, 'Unterschrift Anwesende/Zeugen wie Anhang C');
+assert.match(pn[0], /mind\. 4/);
+assert.doesNotMatch(fbSeiten({...base, typ: 'pn98', leer: true, labor: 'Labor X'}).join(''), /Labor X|26\.0142/);
+
 console.log('feldboegen: OK');
