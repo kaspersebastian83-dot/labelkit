@@ -8,6 +8,7 @@ Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben
 - Etiketten und Laborübergaben erstellen
 - Brandgeruch-Bewertungen erfassen
 - PN-98-Probenahmeprotokolle und Textbausteine erstellen
+- Feldbögen für Raumluftmessungen (Asbest/KMF, Schimmelpilze) zum Ausdrucken und Ausfüllen von Hand, mit Projektdaten vorgedruckt (ab 4.25)
 - Projektdaten als JSON speichern und wieder importieren
 - Gemeinsamer Export der Laborübergaben, Projektdatei und freigegebenen Textbausteine
 
@@ -62,9 +63,10 @@ Mit Node.js aus dem Repository-Ordner ausführen:
 ```sh
 node tests/export-flow.cjs
 node tests/browser-hint.cjs
+node tests/feldboegen.cjs
 ```
 
-Die Prüfungen decken den Sammel-Export mit simulierten Browser-Schnittstellen, Abbruch, Schreibfehler und Browserhinweise ab. Echte Ordnerdialoge, Druckausgaben und die Darstellung in Office müssen zusätzlich praktisch geprüft werden.
+Die Prüfungen decken den Sammel-Export mit simulierten Browser-Schnittstellen, Abbruch, Schreibfehler und Browserhinweise sowie die Feldbögen (Blattzahl, Formular-ID, Vorbelegung, Maskierung von Eingaben, Leerformular) ab. Echte Ordnerdialoge, Druckausgaben und die Darstellung in Office müssen zusätzlich praktisch geprüft werden.
 
 ## Firmenspezifische Inhalte und Lizenz
 

@@ -1553,7 +1553,7 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
       style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:white;font-family:var(--sans);font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;transition:background .15s"
       onmouseover="this.style.background='rgba(255,255,255,0.25)'"
       onmouseout="this.style.background='rgba(255,255,255,0.15)'"
-      title="Version und Änderungen anzeigen">v4.24.1</button>
+      title="Version und Änderungen anzeigen">v4.25.0</button>
     <button id="projekt-ordner" class="projekt-ordner" title="Projektordner wählen (z. B. „26.0123 Köln“) – LabelKit speichert dann direkt in dessen Ordner „Laboraufträge“" hidden>📁 Projekt</button><span id="projekt-kennung" class="projekt-kennung" hidden></span>
     <span class="header-badge" id="header-projekt">Kein Projekt geladen</span>
     <span class="header-status unsaved" id="header-save-status" title="Speicherstatus">Ungespeichert</span>
@@ -1569,6 +1569,7 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
   <button class="main-tab"        id="main-sonstige" onclick="switchMainTab('sonstige')">Sonstige Proben</button>
   <button class="main-tab"        id="main-brandgeruch" onclick="switchMainTab('brandgeruch')">Brandgeruch</button>
   <button class="main-tab"        id="main-pn98"     onclick="switchMainTab('pn98')">Probenprotokoll PN 98</button>
+  <button class="main-tab"        id="main-feldboegen" onclick="switchMainTab('feldboegen')">Feldbögen Raumluft</button>
   <button class="main-tab"        id="main-auftrag"  onclick="switchMainTab('auftrag')">Probenerfassung abschließen</button>
   <button class="main-tab"        id="main-textbausteine" onclick="switchMainTab('textbausteine')">Textbausteine</button>
 </div>
@@ -1602,6 +1603,9 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
   <button class="sub-tab active" onclick="switchTab('pn98',this)">Probenahmeprotokoll</button>
   <button class="sub-tab" onclick="switchTab('pn98-rechner',this)">Probenrechner</button>
   <button class="sub-tab" onclick="switchTab('pn98-export',this)">Export</button>
+</div>
+<div class="sub-tabs" id="sub-tabs-feldboegen" style="display:none">
+  <button class="sub-tab active" onclick="switchTab('feldboegen',this)">Feldbögen drucken</button>
 </div>
 <div class="sub-tabs" id="sub-tabs-auftrag" style="display:none">
 </div>
@@ -2300,6 +2304,41 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
     </div>
   </div>
 </div>
+<!-- TAB: FELDBÖGEN RAUMLUFT (v4.25.0) -->
+<div id="tab-feldboegen" class="tab-content">
+  <div class="container">
+    <div class="step-label"><span class="step-nr">1</span><span class="step-title">Formular</span></div>
+    <div class="projekt-bar" style="margin-bottom:10px;flex-wrap:wrap">
+      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="fb-typ" value="asbest" checked onchange="fbRender()"> Raumluft Asbest / KMF (VDI 3492)</label>
+      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="fb-typ" value="schimmel" onchange="fbRender()"> Raumluft Schimmelpilze</label>
+      <div class="bar-sep"></div>
+      <label for="fb-mp">Messpunkte</label>
+      <input type="number" id="fb-mp" min="1" max="40" value="3" style="width:72px" oninput="fbRender()">
+      <label for="fb-lfd">Lfd. Nr.</label>
+      <input type="text" id="fb-lfd" value="01" maxlength="3" style="width:60px;font-family:var(--mono)" oninput="fbRender()" title="Laufende Nummer des Formulars im Projekt (Teil der Formular-ID)">
+    </div>
+    <div class="step-label"><span class="step-nr">2</span><span class="step-title">Vorgedruckte Angaben</span></div>
+    <div class="projekt-bar" style="margin-bottom:10px;flex-wrap:wrap">
+      <label for="fb-nr">Projekt-Nr.</label>
+      <input type="text" id="fb-nr" placeholder="z.B. 26.0142" style="width:120px;font-family:var(--mono)" oninput="fbRender()">
+      <label for="fb-datum">Datum / Ortstermin</label>
+      <input type="text" id="fb-datum" placeholder="TT.MM.JJJJ" style="width:120px;font-family:var(--mono)" oninput="fbRender()">
+      <label for="fb-objekt">Objekt</label>
+      <input type="text" id="fb-objekt" placeholder="Adresse / Gebäude" style="flex:1;min-width:220px" oninput="fbRender()">
+      <span id="fb-ag-feld" style="display:contents"><label for="fb-ag">Auftraggeber</label>
+      <input type="text" id="fb-ag" placeholder="z.B. Versicherung" style="flex:1;min-width:200px" oninput="fbRender()"></span>
+      <div class="bar-sep"></div>
+      <button class="btn btn-secondary btn-sm" onclick="fbVorbelegen(true)" title="Projekt-Nr., Objekt, Auftraggeber und Ortstermin aus dem Projektordner bzw. den LabelKit-Angaben übernehmen">↙ Aus Projekt übernehmen</button>
+      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="fb-leer" onchange="fbRender()"> Leerformular ohne Projektdaten</label>
+    </div>
+    <div class="step-label"><span class="step-nr">3</span><span class="step-title">Vorschau &amp; Drucken</span></div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+      <button class="btn btn-primary" onclick="fbDrucken()">🖨 Feldbögen drucken</button>
+      <span id="fb-info" style="font-size:12px;color:var(--text-muted)"></span>
+    </div>
+    <div id="fb-preview" class="fb-preview" aria-label="Druckvorschau der Feldbögen"></div>
+  </div>
+</div>
 <!-- TAB: PN 98 PROBENAHMEPROTOKOLL -->
 <div id="tab-pn98" class="tab-content">
   <div class="container">
@@ -2663,6 +2702,16 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
     <div style="display:flex;flex-direction:column;gap:16px">
 
       <div style="border-left:3px solid #2f6fbf;padding-left:14px">
+        <div style="font-family:var(--mono);font-size:11px;color:#2f6fbf;margin-bottom:4px">v4.25.0 · Oktober 2026 · Feldbögen</div>
+        <div style="font-weight:600;font-size:13px;margin-bottom:6px">Feldbögen Raumluft zum Ausdrucken</div>
+        <ul style="font-size:12px;color:var(--text-muted);line-height:1.8;padding-left:16px">
+          <li>Neuer Reiter „Feldbögen Raumluft“: Feldprotokolle für Raumluftmessungen auf Asbest/KMF (VDI 3492, TRGS 519) und Schimmelpilze zum Ausfüllen von Hand</li>
+          <li>Projekt-Nr., Objekt, Auftraggeber und Ortstermin werden aus dem Projektordner vorgedruckt; Formular-ID und „Blatt x von n“ auf jedem Blatt</li>
+          <li>Folgeblätter mit je zwei Messpunkten, Firmenlogo und Wasserzeichen; Leerformular ohne Projektdaten möglich</li>
+        </ul>
+      </div>
+
+      <div style="border-left:3px solid #c9d6e6;padding-left:14px">
         <div style="font-family:var(--mono);font-size:11px;color:#2f6fbf;margin-bottom:4px">v4.24.1 · Oktober 2026 · Sicherheit</div>
         <div style="font-weight:600;font-size:13px;margin-bottom:6px">Keine Verbindungen zu fremden Servern mehr</div>
         <ul style="font-size:12px;color:var(--text-muted);line-height:1.8;padding-left:16px">
@@ -3482,7 +3531,7 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
 <div id="flash" style="display:none" class="flash"></div>
 
 <script>
-const APP_VERSION='4.24.1';
+const APP_VERSION='4.25.0';
 const MATRICES=['Wischprobe','Bauschutt','Material (hoher org. Anteil)','Material (mineralisch)','Luft (Raumluft)','Sonstige'];
 const BEAUFSCHLAGUNG=['gereinigt','mit Belag','leicht verrußt','verrußt','mit Ruß','mit Kondensat','mit Staub'];
 const OBERFLAECHEN=['Aufsicht','Ansicht','Untersicht'];
@@ -3721,7 +3770,7 @@ function switchMainTab(group){
   document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('main-'+group).classList.add('active');
   // Unter-Tab-Leisten
-  ['pak','chlorid','asbest','sonstige','brandgeruch','pn98','auftrag','textbausteine'].forEach(g=>{
+  ['pak','chlorid','asbest','sonstige','brandgeruch','pn98','feldboegen','auftrag','textbausteine'].forEach(g=>{
     const el=document.getElementById('sub-tabs-'+g);
     if(el) el.style.display=g===group?'flex':'none';
   });
@@ -3753,6 +3802,11 @@ function switchMainTab(group){
     switchTab('brandgeruch',btn);
     document.querySelectorAll('#sub-tabs-brandgeruch .sub-tab').forEach(t=>t.classList.remove('active'));
     btn.classList.add('active');
+  } else if(group==='feldboegen'){
+    const btn=document.querySelector('#sub-tabs-feldboegen .sub-tab');
+    switchTab('feldboegen',btn);
+    btn.classList.add('active');
+    fbVorbelegen(false);
   } else if(group==='pn98'){
     const btn=document.querySelector('#sub-tabs-pn98 .sub-tab');
     switchTab('pn98',btn);
@@ -9926,6 +9980,211 @@ const PROJEKTORDNER=(function(){
   if(start)ausZentrale(start);
   return {state,oeffnen,ausZentrale,parse};
 })();
+</script>
+<script>
+/* ---------- Feldbögen Raumluft (v4.25.0) ----------
+   Druckbare Feldprotokolle zum Ausfüllen von Hand: Raumluft Asbest/KMF (VDI 3492, TRGS 519) und Raumluft Schimmelpilze.
+   Blatt 1 mit Kopfdaten, danach Folgeblätter mit je zwei Messpunkten. Projektdaten werden vorgedruckt (Schreibmaschinenschrift),
+   damit Handschrift und Vorgabe unterscheidbar bleiben; jedes Blatt trägt eine Formular-ID und „Blatt x von n“.
+   Vorschau und Druck verwenden dasselbe Markup (fbSeiten) und dieselben Stile (FB_CSS). */
+const FB_CSS=`
+.fb-page{width:210mm;height:297mm;box-sizing:border-box;padding:38px 48px 32px 64px;position:relative;isolation:isolate;display:flex;flex-direction:column;background:#fff;color:#111;font-family:'IBM Plex Sans',Arial,sans-serif;font-size:13px;line-height:1.35;overflow:hidden;break-after:page;page-break-after:always;text-align:left}
+.fb-page:last-child{break-after:auto;page-break-after:auto}
+.fb-page *{box-sizing:border-box}
+.fb-wm{position:absolute;left:50%;top:52%;width:540px;transform:translate(-50%,-50%);opacity:.06;z-index:-1;pointer-events:none}
+.fb-co{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px}
+.fb-co img{width:26px;height:23px;object-fit:contain}
+.fb-co b{font-size:13px}
+.fb-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.fb-head.fb-small{align-items:center;padding-bottom:8px;border-bottom:2px solid #111}
+.fb-title{display:block;font-size:21px;font-weight:700}
+.fb-small .fb-title{font-size:16px}
+.fb-sub{display:block;font-size:12px}
+.fb-id{display:flex;flex-direction:column;border:1.5px solid #111;padding:5px 10px;min-width:170px;font-size:12px}
+.fb-id b{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500}
+.fb-sec{display:block;font-size:12px;font-weight:700;letter-spacing:.08em;border-bottom:2px solid #111;padding-bottom:3px;margin-top:12px}
+.fb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 22px;margin-top:9px}
+.fb-grid3{display:grid;grid-template-columns:100px minmax(0,1fr) 140px;gap:14px}
+.fb-span{grid-column:span 2}
+.fb-f{display:flex;gap:6px;align-items:flex-end}
+.fb-col{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+.fb-row{display:flex;align-items:flex-end;flex-wrap:wrap;gap:4px 0}
+.fb-lab{font-size:12px;color:#333;white-space:nowrap}
+.fb-ln{flex-grow:1;border-bottom:1px solid #111;min-width:34px;height:21px}
+.fb-pre{font-family:'IBM Plex Mono',monospace;font-size:13px;border-bottom:1px solid #111;flex-grow:1;padding-bottom:2px;min-height:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fb-pre.fb-fix{flex-grow:0;padding-right:4px}
+.fb-cb{display:inline-block;width:12px;height:12px;border:1.5px solid #111;flex-shrink:0;margin-right:6px;vertical-align:-2px}
+.fb-opt{margin-right:14px;white-space:nowrap}
+.fb-gap{margin-right:8px}
+.fb-box{display:flex;flex-direction:column;gap:8px;margin-top:12px;border:1.5px solid #111;padding:10px 12px}
+.fb-tab{display:grid;grid-template-columns:170px 110px 80px 76px minmax(0,1fr);border:1.5px solid #111;font-size:12px}
+.fb-tab span{border-bottom:1px solid #111;border-right:1px solid #111;min-height:29px}
+.fb-tab span:nth-child(5n){border-right:0}
+.fb-tab .fb-th{font-weight:600;padding:4px 6px;min-height:0}
+.fb-note{font-size:12px}
+.fb-fill{flex-grow:1}
+.fb-sig{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:40px}
+.fb-sig div{display:flex;flex-direction:column;gap:3px}
+.fb-foot{display:flex;justify-content:space-between;gap:16px;margin-top:10px;padding-top:6px;border-top:1px solid #111;font-size:12px}
+.fb-foot b{font-family:'IBM Plex Mono',monospace;font-weight:400}
+.fb-preview{display:flex;flex-direction:column;align-items:center;gap:18px;padding:18px;background:#e9edf2;border-radius:var(--radius,10px);overflow:auto;max-height:78vh}
+.fb-preview .fb-scale{width:calc(210mm * .62);height:calc(297mm * .62);flex-shrink:0;box-shadow:0 2px 12px rgba(20,40,70,.18);background:#fff}
+.fb-preview .fb-page{transform:scale(.62);transform-origin:0 0}
+`;
+const FB_FIRMA={name:'Dr. Schiffers & Partner',zeile:'Sachverständigenbüro · Gouleystr. 59 · 52146 Würselen'};
+const FB_TYPEN={
+  asbest:{kurz:'AS',titel:'Feldprotokoll · Raumluftmessung Asbest / KMF',sub:'Anorganische faserförmige Partikel · Probenahme nach VDI 3492 · TRGS 519',folge:'Feldprotokoll Asbest / KMF · Folgeblatt Messpunkte',mpErsteSeite:1,mpStandard:3,person:'Messtechniker'},
+  schimmel:{kurz:'SP',titel:'Feldprotokoll · Raumluftmessung Schimmelpilze',sub:'Probenahme in Anlehnung an DIN ISO 16000-18/-19 und UBA-Schimmelleitfaden (Stand 2024)',folge:'Feldprotokoll Schimmelpilze · Folgeblatt Messstellen',mpErsteSeite:0,mpStandard:2,person:'Probenehmer'}
+};
+function fbEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+/** Anzahl der Blätter für n Messpunkte: Blatt 1 (beim Asbest mit MP 1) plus Folgeblätter mit je zwei Messpunkten. */
+function fbBlattzahl(typ,n){const t=FB_TYPEN[typ];n=Math.max(1,Math.min(40,Math.floor(Number(n))||1));return 1+Math.ceil(Math.max(0,n-t.mpErsteSeite)/2);}
+function fbFormularId(typ,nr,lfd){const l=String(lfd||'').trim();return (String(nr||'').trim()||'____')+'-'+FB_TYPEN[typ].kurz+'-'+(l?l.padStart(2,'0'):'__');}
+/** Seiten-Markup. o: {typ, n, lfd, nr, datum, objekt, auftraggeber, leer, logo} */
+function fbSeiten(o){
+  const t=FB_TYPEN[o.typ],n=Math.max(1,Math.min(40,Math.floor(Number(o.n))||1)),total=fbBlattzahl(o.typ,n);
+  const v=x=>o.leer?'':String(x||'').trim(),id=o.leer?'____-'+t.kurz+'-__':fbFormularId(o.typ,o.nr,o.lfd);
+  const ln=w=>'<span class="fb-ln"'+(w?' style="max-width:'+w+'px"':'')+'></span>';
+  const pre=x=>x?'<span class="fb-pre">'+fbEsc(x)+'</span>':ln();
+  const cb=(label,cls)=>'<span class="'+(cls||'fb-opt')+'"><span class="fb-cb"></span>'+label+'</span>';
+  const f=(label,val,extra)=>'<div class="fb-f'+(extra?' '+extra:'')+'"><span class="fb-lab">'+label+'</span>'+(val===undefined?ln():pre(val))+'</div>';
+  const logo=o.logo?'<img src="'+fbEsc(o.logo)+'" alt="">':'';
+  const wm=o.logo?'<img class="fb-wm" src="'+fbEsc(o.logo)+'" alt="" aria-hidden="true">':'';
+  const co='<div class="fb-co">'+logo+'<b>'+fbEsc(FB_FIRMA.name)+'</b><span>· '+fbEsc(FB_FIRMA.zeile)+'</span></div>';
+  const idBox=(blatt,gross)=>'<div class="fb-id">'+(gross?'<span>Formular-ID</span>':'')+'<b>'+fbEsc(id)+'</b><span'+(gross?' style="margin-top:4px"':'')+'>Blatt '+blatt+' von '+total+'</span></div>';
+  const fuss='<div class="fb-foot"><span>Vorgedrucktes stammt aus dem Projekt. Korrekturen: durchstreichen, nicht überschreiben.</span><b>'+fbEsc(id)+'</b></div>';
+  const sig='<div class="fb-sig"><div><span class="fb-ln" style="height:24px"></span><span class="fb-lab">Ort, Datum</span></div><div><span class="fb-ln" style="height:24px"></span><span class="fb-lab">Unterschrift '+t.person+'</span></div></div>';
+  const kurzSig='<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px"><div style="display:flex;flex-direction:column;gap:3px;width:300px"><span class="fb-ln" style="height:24px"></span><span class="fb-lab">Kürzel '+t.person+'</span></div><span class="fb-note">Korrekturen: durchstreichen, nicht überschreiben.</span></div>';
+  const seite=inhalt=>'<div class="fb-page">'+wm+co+inhalt+'</div>';
+  const nrTxt=v(o.nr)?'<span style="font-family:\'IBM Plex Mono\',monospace">'+fbEsc(v(o.nr))+'</span>':'________';
+  const folgeKopf=blatt=>'<div class="fb-head fb-small"><div><span class="fb-title">'+t.folge+'</span><span class="fb-sub">Projekt '+nrTxt+' · '+(o.typ==='asbest'?'Bedingungen wie Blatt 1, Abschnitt C, sofern nicht anders vermerkt':'Vorbereitung und Referenz siehe Blatt 1')+'</span></div>'+idBox(blatt,false)+'</div>';
+  const mpNr=k=>'<div class="fb-f"><span class="fb-lab">MP-Nr.</span><span class="fb-pre">'+k+'</span></div>';
+  // Asbest: ein Messpunkt
+  const asbestMP=(k,blatt1)=>'<div class="fb-box">'
+    +'<div class="fb-grid3" style="grid-template-columns:110px minmax(0,1fr) 120px">'+mpNr(k)+f('Raum / Bezeichnung')+f('Foto-Nr.')+'</div>'
+    +f('Probenbezeichnung (Filter)')
+    +'<span class="fb-row"><span class="fb-gap">Ort der Messung:</span>'+cb('Raummitte, &gt; 1,5 m von Wandflächen')+'<span class="fb-cb"></span><span style="margin-right:6px">anders:</span>'+ln()+'</span>'
+    +'<div class="fb-grid" style="margin-top:0;gap:9px 22px">'
+      +'<div class="fb-f"><span class="fb-lab">Gerät</span><span class="fb-pre fb-fix">APC PNA</span>'+ln()+'<span class="fb-lab">Inv.-Nr. [P</span>'+ln(44)+'<span class="fb-lab">]</span></div>'
+      +'<div class="fb-f"><span class="fb-lab">Start</span>'+ln()+'<span class="fb-lab">Uhr · Ende</span>'+ln()+'<span class="fb-lab">Uhr</span></div>'
+      +'<div class="fb-f"><span class="fb-lab">Volumenstrom Start</span>'+ln()+'<span class="fb-lab">Ende</span>'+ln()+'<span class="fb-lab">l/min</span></div>'
+      +'<div class="fb-f"><span class="fb-lab">Probenvolumen</span>'+ln()+'<span class="fb-lab">m³</span></div>'
+      +'<div class="fb-f"><span class="fb-lab">Lufttemperatur (Start)</span>'+ln()+'<span class="fb-lab">°C</span></div>'
+      +'<div class="fb-f"><span class="fb-lab">Rel. Luftfeuchte (Start)</span>'+ln()+'<span class="fb-lab">% rF</span></div>'
+    +'</div>'
+    +'<span class="fb-note">'+cb('Volumen vom Gaszähler')+cb('berechnet (Volumenstrom × Dauer)')+'Kontrolle: 8 l/min × 480 min ≈ 3,84 m³</span>'
+    +'<span><span class="fb-gap">Lüftung / Nutzung:</span>'+cb(blatt1?'wie unter C':'wie Blatt 1')+cb('abweichend → Anmerkung','')+'</span>'
+    +'<div style="display:flex;flex-direction:column;gap:4px"><span class="fb-lab">Anmerkungen</span>'+ln()+ln()+(blatt1?'':ln())+'</div>'
+  +'</div>';
+  // Schimmel: eine Messstelle
+  const tabelle=(zeilen,titel)=>'<div class="fb-tab"><span class="fb-th">'+titel+'</span><span class="fb-th">Gerät / Nr.</span><span class="fb-th">Volumen l</span><span class="fb-th">Uhrzeit</span><span class="fb-th">Proben- / Platten-Nr.</span>'+'<span></span>'.repeat(zeilen*5)+'</div>';
+  const schimmelMP=k=>'<div class="fb-box">'
+    +'<div class="fb-grid3" style="grid-template-columns:100px minmax(0,1fr) 150px">'+mpNr(k)+f('Raum / Ort')+f('Foto-Nr.')+'</div>'
+    +'<span class="fb-row">'+cb('Raummitte')+'<span style="margin-right:6px">Höhe</span>'+ln(50)+'<span style="margin:0 22px 0 6px">m (üblich 1,2–1,5 m)</span><span style="margin-right:6px">Temp.</span>'+ln(50)+'<span style="margin:0 6px">°C · rF</span>'+ln(50)+'<span style="margin-left:6px">%</span></span>'
+    +'<span class="fb-row"><span class="fb-gap">Nutzung während Messung:</span>'+cb('Ruhe')+cb('normale Aktivität')+'<span style="margin:0 6px 0 8px">Personen im Raum</span>'+ln(50)+'</span>'
+    +'<span class="fb-row"><span class="fb-gap">Sichtbefund / Geruch / Feuchte</span>'+ln()+'</span>'
+    +tabelle(6,'Verfahren / Medium')
+    +'<div style="display:flex;flex-direction:column;gap:3px"><span class="fb-lab">Anmerkungen (Abweichungen von Blatt 1, besondere Vorkommnisse)</span>'+ln()+'</div>'
+  +'</div>';
+  const seiten=[];
+  const kopf=(titel,sub)=>'<div class="fb-head"><div><span class="fb-title">'+titel+'</span><span class="fb-sub">'+sub+'</span></div>'+idBox(1,true)+'</div>';
+  if(o.typ==='asbest'){
+    seiten.push(seite(kopf(t.titel,t.sub)
+      +'<span class="fb-sec">A · PROJEKT</span><div class="fb-grid">'+f('Projekt-Nr.',v(o.nr))+f('Auftrags-Nr. Messung')+f('Objekt',v(o.objekt),'fb-span')+f('Auftraggeber',v(o.auftraggeber),'fb-span')+f('Ortstermin',v(o.datum))+f('Messtechniker')+f('Ansprechpartner vor Ort',undefined,'fb-span')+'</div>'
+      +'<span class="fb-sec">B · ZIEL DER MESSUNG UND ANALYSE</span><div class="fb-col">'
+        +'<span>'+cb('Feststellung der Freisetzung lungengängiger faserförmiger Partikel aus Bauprodukten','')+'</span>'
+        +'<span>'+cb('Freigabemessung nach Asbestsanierung (TRGS 519)','')+'</span>'
+        +'<span class="fb-row">'+cb('Sonstiges','fb-gap')+ln()+'</span>'
+        +'<span class="fb-row"><span class="fb-gap">Analyse:</span>'+cb('akkreditiertes Fremdlabor')+ln()+'</span></div>'
+      +'<span class="fb-sec">C · MESSBEDINGUNGEN (GILT FÜR ALLE MP – ABWEICHUNGEN BEIM MP NOTIEREN)</span><div class="fb-col">'
+        +'<span class="fb-row"><span class="fb-gap">Fenster und Türen geschlossen seit</span>'+ln(70)+'<span style="margin:0 14px 0 6px">Uhr (Soll ≥ 8 h)</span>'+cb('lt. Ansprechpartner')+cb('selbst festgestellt','')+'</span>'
+        +'<span>'+cb('während der Probenahme weiter verschlossen (DIN EN ISO 16000-1)','')+'</span>'
+        +'<span><span class="fb-gap">Nutzung:</span>'+cb('außerhalb der Nutzung')+cb('während der Nutzung','')+'</span>'
+        +'<span><span class="fb-gap">Stoßartige Belastung durch Anblasen (TRGS 519 / VDI 3492):</span>'+cb('ja')+cb('nein','')+'</span>'
+        +'<span><span class="fb-gap">Filter:</span>'+cb('goldbedampfter Kernporenfilter, ø 25 mm (øeff. 22 mm), Porenweite 0,8 µm','')+'</span>'
+        +'<span class="fb-row"><span style="margin:0 8px 0 50px">'+cb('anderer Filter:','')+'</span>'+ln()+'</span></div>'
+      +'<span class="fb-sec">D · MESSPUNKT</span>'+asbestMP(1,true)
+      +'<span class="fb-fill"></span>'+sig+fuss));
+    for(let k=2,b=2;k<=n;k+=2,b++)seiten.push(seite(folgeKopf(b)+asbestMP(k,false)+(k+1<=n?asbestMP(k+1,false):'')+'<span class="fb-fill"></span>'+kurzSig));
+  }else{
+    seiten.push(seite(kopf(t.titel,t.sub)
+      +'<span class="fb-sec">A · PROJEKT</span><div class="fb-grid">'+f('Projekt-Nr.',v(o.nr))+f('Datum',v(o.datum))+f('Objekt',v(o.objekt),'fb-span')+f('Probenehmer')+f('Ansprechpartner / Nutzer')+'</div>'
+      +'<span class="fb-sec">B · ANLASS</span><div class="fb-grid" style="gap:6px 22px;margin-top:8px">'
+        +'<span>'+cb('Verdacht auf verdeckten Befall','')+'</span><span>'+cb('Abklärung nach Wasser-/Feuchteschaden','')+'</span>'
+        +'<span>'+cb('Sanierungskontrolle / Freimessung','')+'</span><span>'+cb('Beschwerden der Nutzer','')+'</span>'
+        +'<span class="fb-row fb-span">'+cb('Sonstiges','fb-gap')+ln()+'</span></div>'
+      +'<span class="fb-sec">C · VORBEREITUNG (VOR MESSBEGINN PRÜFEN)</span><div class="fb-col">'
+        +'<span class="fb-row"><span class="fb-gap">Fenster und Türen geschlossen seit</span>'+ln(64)+'<span style="margin:0 14px 0 6px">Uhr (Soll 8–12 h)</span>'+cb('lt. Nutzer')+cb('selbst festgestellt','')+'</span>'
+        +'<span class="fb-row"><span class="fb-gap">Sporenquellen entfernt (Abfall, Obst, Topfpflanzen), Haustiere aus dem Raum:</span>'+cb('ja')+cb('nein','')+'</span>'
+        +'<span class="fb-row"><span class="fb-gap">Letzte Reinigung / Staubsaugen</span>'+ln()+'</span>'
+        +'<span class="fb-row"><span class="fb-gap">Bau- oder Sanierungsarbeiten im Gebäude:</span>'+cb('nein')+'<span class="fb-cb"></span><span style="margin-right:6px">ja:</span>'+ln()+'</span>'
+        +'<span class="fb-row"><span class="fb-gap">Heizung:</span>'+cb('an')+cb('aus','fb-opt" style="margin-right:22px')+'<span class="fb-gap">Lüftungsanlage:</span>'+cb('keine')+cb('in Betrieb')+cb('aus','')+'</span>'
+        +'<span class="fb-row"><span class="fb-gap">Sichtbarer Befall / Geruch im Gebäude</span>'+ln()+'</span>'
+        +'<span>'+cb('Sammler vor der Messung und zwischen den Messstellen desinfiziert','')+'</span></div>'
+      +'<span class="fb-sec">D · REFERENZ: AUSSENLUFT ODER REFERENZRAUM</span><div class="fb-col">'
+        +'<span class="fb-row">'+cb('Außenluft (Luvseite)')+'<span class="fb-cb"></span><span style="margin-right:6px">Referenzraum:</span>'+ln(190)+'<span style="margin-left:14px">'+cb('entfällt (Sanierungskontrolle)','')+'</span></span>'
+        +'<span class="fb-row"><span class="fb-gap">Ort</span>'+ln()+'<span style="margin:0 8px 0 14px">Quellen in der Nähe (Kompost, Tonnen, Laub, Baustelle)</span>'+cb('nein')+cb('ja','')+'</span>'
+        +'<span class="fb-row"><span class="fb-gap">Wetter:</span>'+cb('sonnig')+cb('bewölkt')+cb('Regen')+cb('Nebel')+cb('Schnee / Frost','')+'</span>'
+        +'<span class="fb-row"><span class="fb-gap">Wind:</span>'+cb('windstill')+cb('schwach')+cb('stark')+'<span style="margin-right:6px">Richtung</span>'+ln(60)+'<span style="margin:0 6px 0 14px">Temp.</span>'+ln(50)+'<span style="margin:0 6px">°C · rF</span>'+ln(50)+'<span style="margin-left:6px">%</span></span>'
+        +tabelle(3,'Verfahren / Medium')
+        +'<span class="fb-note">Verfahren, Nährmedien und Volumina nach Vorgabe des Labors (z. B. Kultivierung auf DG18 / MEA, Gelatinefilter, Gesamtsporen durch Partikelsammlung).</span></div>'
+      +'<span class="fb-sec">E · VERSAND</span><div class="fb-col">'
+        +'<span class="fb-row"><span class="fb-gap">Labor</span>'+ln()+'<span style="margin:0 8px 0 14px">Versand am</span>'+ln(90)+'<span style="margin-left:14px">'+cb('gekühlt','')+'</span></span>'
+        +'<span class="fb-note">Versand und Beschriftung nach Vorgabe des Labors (Nährmedien in der Regel innerhalb von 24–48 h, nicht freitags/samstags).</span></div>'
+      +'<span class="fb-fill"></span>'+sig+fuss));
+    for(let k=1,b=2;k<=n;k+=2,b++)seiten.push(seite(folgeKopf(b)+schimmelMP(k)+(k+1<=n?schimmelMP(k+1):'')+'<span class="fb-note" style="margin-top:10px">Verfahren, Nährmedien und Volumina nach Vorgabe des Labors; Parallelproben je Zeile einzeln eintragen.</span><span class="fb-fill"></span>'+kurzSig));
+  }
+  return seiten;
+}
+/** Zahlenangabe aus ISO (JJJJ-MM-TT) in TT.MM.JJJJ; anderes bleibt unverändert. */
+function fbDatum(s){const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(s||''));return m?m[3]+'.'+m[2]+'.'+m[1]:String(s||'');}
+function fbHeute(){const d=new Date();return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();}
+function fbTyp(){return document.querySelector('input[name="fb-typ"]:checked')?.value==='schimmel'?'schimmel':'asbest';}
+function fbOptionen(){
+  const g=id=>document.getElementById(id);
+  return {typ:fbTyp(),n:g('fb-mp').value,lfd:g('fb-lfd').value,nr:g('fb-nr').value,datum:g('fb-datum').value,objekt:g('fb-objekt').value,auftraggeber:g('fb-ag').value,leer:g('fb-leer').checked,logo:document.querySelector('#wasserzeichen img')?.getAttribute('src')||''};
+}
+let fbLetzterTyp=null;
+function fbRender(){
+  if(!document.getElementById('fb-style')){const st=document.createElement('style');st.id='fb-style';st.textContent=FB_CSS;document.head.append(st);}
+  const typ=fbTyp(),mp=document.getElementById('fb-mp');
+  if(fbLetzterTyp&&fbLetzterTyp!==typ&&String(mp.value)===String(FB_TYPEN[fbLetzterTyp].mpStandard))mp.value=FB_TYPEN[typ].mpStandard;
+  fbLetzterTyp=typ;
+  document.getElementById('fb-ag-feld').style.display=typ==='asbest'?'':'none';
+  const o=fbOptionen(),seiten=fbSeiten(o);
+  document.getElementById('fb-preview').innerHTML=seiten.map(s=>'<div class="fb-scale">'+s+'</div>').join('');
+  const n=Math.max(1,Math.min(40,Math.floor(Number(o.n))||1));
+  document.getElementById('fb-info').textContent=seiten.length+' '+(seiten.length===1?'Blatt':'Blätter')+' · '+n+' '+(typ==='asbest'?'Messpunkt'+(n===1?'':'e'):'Messstelle'+(n===1?'':'n'))+' · Formular-ID '+(o.leer?'leer':fbFormularId(typ,o.nr,o.lfd));
+}
+/** Vorbelegung: Projektordner (_Projekt.json) vor LabelKit-Feldern; leere Felder werden gefüllt, mit erzwingen alle. */
+async function fbVorbelegen(erzwingen){
+  const g=id=>document.getElementById(id),setze=(id,wert)=>{if(wert&&(erzwingen||!g(id).value.trim()))g(id).value=wert;};
+  let pj={};const proj=(typeof PROJEKTORDNER!=='undefined'&&PROJEKTORDNER.state&&PROJEKTORDNER.state.proj)||null;
+  if(proj&&proj.dir){try{const fh=await proj.dir.getFileHandle('_Projekt.json');const o=JSON.parse(await (await fh.getFile()).text());if(o&&typeof o==='object')pj=o;}catch(e){/* keine Projektdaten vorhanden */}}
+  const pn=(typeof pn98Projekt!=='undefined'&&pn98Projekt)||{};
+  setze('fb-nr',(proj&&proj.nr)||g('proj-nr')?.value.trim()||pn.schaden||'');
+  setze('fb-objekt',String(pj.objekt||'').trim()||pn.ort||(proj&&proj.ort)||'');
+  setze('fb-ag',String(pj.auftraggeber||'').trim());
+  setze('fb-datum',fbDatum(pj.ortstermin)||pn.pndatum||fbHeute());
+  fbRender();
+  if(erzwingen)flash(Object.keys(pj).length?'Angaben aus dem Projektordner übernommen ✓':'Angaben übernommen ✓');
+}
+function fbSchriften(){
+  // Eingebettete IBM-Plex-Schriften für das Druckfenster übernehmen (kein Nachladen, CSP-konform).
+  let css='';
+  for(const sheet of document.styleSheets){let rules;try{rules=sheet.cssRules;}catch(e){continue;}for(const r of rules)if(r.type===5&&/IBM Plex/.test(r.cssText))css+=r.cssText+'\n';}
+  return css;
+}
+function fbDrucken(){
+  const o=fbOptionen(),seiten=fbSeiten(o);
+  const win=window.open('','_blank','width=900,height=700');if(!win){alert('Popup wurde blockiert – bitte Popups für diese Seite erlauben.');return;}
+  const titel=(o.leer?'Feldprotokoll':fbFormularId(o.typ,o.nr,o.lfd))+' – '+(o.typ==='asbest'?'Raumluft Asbest KMF':'Raumluft Schimmelpilze');
+  win.document.write('<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>'+fbEsc(titel)+'</title><style>'+fbSchriften()+FB_CSS
+    +'@page{size:A4 portrait;margin:0}html,body{margin:0;padding:0;background:#fff}@media screen{body{background:#e9edf2}.fb-page{margin:12px auto;box-shadow:0 2px 12px rgba(0,0,0,.15)}}'
+    +'</style></head><body>'+seiten.join('')
+    +'<scr'+'ipt>window.onload=function(){(document.fonts&&document.fonts.ready||Promise.resolve()).then(function(){setTimeout(function(){window.print()},300)})};</scr'+'ipt></body></html>');
+  win.document.close();
+}
 </script>
 <script>
 (function(){
