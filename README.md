@@ -49,7 +49,7 @@ Projektdaten und Browser-Speicher werden beim Browserwechsel nicht automatisch �
 
 Die App verarbeitet die Probendaten im Browser. Einige Einstellungen, Vorlagen und ein Projektarchiv liegen im lokalen Browser-Speicher. Eine gespeicherte JSON-Projektdatei dient zur Übertragung und Sicherung.
 
-Schriftarten werden von Google Fonts geladen. Ohne Internet können Ersatzschriftarten verwendet werden; dadurch kann sich das Druckbild ändern. Das Erscheinungsbild-Panel funktioniert ohne React, Babel oder zusätzliche lokale Dateien.
+Die Schriftarten (IBM Plex, DM Sans/Mono) sind in `index.html` eingebettet; die App lädt nichts von fremden Servern (Content Security Policy mit `connect-src 'self'`) und funktioniert auch ohne Internet mit gleichem Druckbild. Das Erscheinungsbild-Panel funktioniert ohne React, Babel oder zusätzliche lokale Dateien.
 
 Keine echten Projektdaten, Laboraufträge oder Exporte in das öffentliche Repository hochladen. Die `.gitignore` schließt typische Daten- und Exportdateien aus. Diese Regeln schützen nicht vor einem manuellen Upload über die GitHub-Webseite.
 
