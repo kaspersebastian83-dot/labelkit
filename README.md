@@ -17,6 +17,16 @@ Das Repository herunterladen und entpacken. Die Datei `index.html` in Microsoft 
 
 Für die Ordnerauswahl wird ein unterstützter Browser benötigt. Bei einer Bereitstellung als Website HTTPS verwenden.
 
+## Projektordner (ab 4.24)
+
+In der **Projektzentrale** ein Projekt wählen und **„Proben erfassen → LabelKit“** klicken – oder in LabelKit oben **„📁 Projekt“** und den Projektordner (z. B. `26.0123 Köln`) wählen. Danach:
+
+- Jeder Ordnerdialog entfällt: Speichern (auch Strg+S), Laborübergaben, Protokolle und Textbausteine landen direkt im Unterordner **„Laboraufträge“** des Projekts.
+- Die neueste `…_Daten.json` aus „Laboraufträge“ wird beim Öffnen automatisch geladen.
+- Projektnummer (z. B. `26.0123`) und Schadenort kommen aus dem Ordnernamen; die Kennung steht oben in der Kopfzeile.
+- Der Archivordner wird aus dem gemeinsamen Browser-Speicher der Projektzentrale übernommen (IndexedDB `mosaik-suite`, Schlüssel `archiv`). Nach einem Browserneustart genügt „Zugriff erlauben und öffnen“.
+- „← Projektzentrale“ führt zurück zur Projektübersicht.
+
 ## Speichern und wieder öffnen
 
 1. Proben erfassen und unter **Probenerfassung abschließen** die Vollständigkeit prüfen.

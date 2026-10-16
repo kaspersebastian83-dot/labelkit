@@ -1528,11 +1528,11 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
 
 <header class="app-header">
   <div style="display:flex;align-items:center;gap:12px">
-    <a href="SV_Dashboard.html"
+    <a href="../Projektzentrale/"
       style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:rgba(255,255,255,0.9);font-family:var(--sans);font-size:12px;font-weight:600;padding:5px 11px;text-decoration:none;transition:background .15s;white-space:nowrap"
       onmouseover="this.style.background='rgba(255,255,255,0.22)'"
       onmouseout="this.style.background='rgba(255,255,255,0.12)'"
-      title="Zurück zum Dashboard">← Dashboard</a>
+      title="Zur Projektzentrale (alle Projekte)">← Projektzentrale</a>
     <h1>⬡ LabelKit</h1>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
@@ -1545,7 +1545,8 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
       style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:white;font-family:var(--sans);font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;transition:background .15s"
       onmouseover="this.style.background='rgba(255,255,255,0.25)'"
       onmouseout="this.style.background='rgba(255,255,255,0.15)'"
-      title="Version und Änderungen anzeigen">v4.23.5</button>
+      title="Version und Änderungen anzeigen">v4.24.0</button>
+    <button id="projekt-ordner" class="projekt-ordner" title="Projektordner wählen (z. B. „26.0123 Köln“) – LabelKit speichert dann direkt in dessen Ordner „Laboraufträge“" hidden>📁 Projekt</button><span id="projekt-kennung" class="projekt-kennung" hidden></span>
     <span class="header-badge" id="header-projekt">Kein Projekt geladen</span>
     <span class="header-status unsaved" id="header-save-status" title="Speicherstatus">Ungespeichert</span>
   </div>
@@ -2654,6 +2655,16 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
     <div style="display:flex;flex-direction:column;gap:16px">
 
       <div style="border-left:3px solid #2f6fbf;padding-left:14px">
+        <div style="font-family:var(--mono);font-size:11px;color:#2f6fbf;margin-bottom:4px">v4.24.0 · Oktober 2026 · Projektordner</div>
+        <div style="font-weight:600;font-size:13px;margin-bottom:6px">Direkt im Projektordner arbeiten</div>
+        <ul style="font-size:12px;color:var(--text-muted);line-height:1.8;padding-left:16px">
+          <li>Aus der Projektzentrale „Proben erfassen → LabelKit“ oder hier „📁 Projekt“ wählen</li>
+          <li>Speichern, Laborübergaben und Protokolle landen ohne Ordnerdialog in „Laboraufträge“ des Projekts</li>
+          <li>Die zuletzt gespeicherte Projektdatei (…_Daten.json) wird beim Öffnen automatisch geladen</li>
+          <li>Projektnummer und Schadenort kommen aus dem Ordnernamen</li>
+        </ul>
+      </div>
+      <div style="border-left:3px solid #c2d6ec;padding-left:14px">
         <div style="font-family:var(--mono);font-size:11px;color:#2f6fbf;margin-bottom:4px">v4.23.5 · August 2026 · Individuelle Löschpulverauswahl</div>
         <div style="font-weight:600;font-size:13px;margin-bottom:6px">Löschpulverparameter je Chlorid-Wischprobe auswählen</div>
         <ul style="font-size:12px;color:var(--text-muted);line-height:1.8;padding-left:16px">
@@ -3454,7 +3465,7 @@ body.lg .fokus-field input,body.lg .fokus-field select,body.lg .fokus-field text
 <div id="flash" style="display:none" class="flash"></div>
 
 <script>
-const APP_VERSION='4.23.5';
+const APP_VERSION='4.24.0';
 const MATRICES=['Wischprobe','Bauschutt','Material (hoher org. Anteil)','Material (mineralisch)','Luft (Raumluft)','Sonstige'];
 const BEAUFSCHLAGUNG=['gereinigt','mit Belag','leicht verrußt','verrußt','mit Ruß','mit Kondensat','mit Staub'];
 const OBERFLAECHEN=['Aufsicht','Ansicht','Untersicht'];
@@ -9804,6 +9815,94 @@ body[data-density="luftig"] tbody td{padding:14px 10px}
   </div>
 </details>
 <style>@media print{#appearance-panel{display:none}}#modal-browser-hinweis::backdrop{background:rgba(16,30,46,.5)}</style>
+<style>
+.projekt-ordner{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:#fff;font-family:var(--sans);font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer}
+.projekt-ordner:hover{background:rgba(255,255,255,0.25)}
+.projekt-kennung{background:#fff;color:#356aa8;border-radius:4px;padding:4px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.projekt-kennung b{font-family:var(--mono);font-weight:600}
+.projekt-ordner[hidden],.projekt-kennung[hidden]{display:none}
+.projekt-hinweis{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:9999;background:#fff;border:1px solid #c2d6ec;border-radius:10px;box-shadow:0 8px 30px rgba(20,40,70,.2);padding:14px 18px;display:flex;align-items:center;gap:12px;font-size:13px}
+</style>
+<script>
+/* ---------- Projektordner (Projektzentrale) ----------
+   Absprache mit Projektzentrale, FotoKit und PlanKit (dort identisch halten):
+     • IndexedDB „mosaik-suite“ v1, Store „kv“, Schlüssel „archiv“ → Handle des „Mosaik Archivordner“
+     • Projektordner „<JJ>.<Nummer> <Schadenort>“, LabelKit schreibt in den Unterordner „Laboraufträge“
+   Mit ?projekt=<Ordnername> oder „📁 Projekt“ ersetzt der Projektordner jeden Ordnerdialog: Speichern, Laborübergaben und
+   Protokolle landen direkt in „Laboraufträge“. Die neueste …_Daten.json dort wird beim Öffnen geladen. */
+const PROJEKTORDNER=(function(){
+  const LAB_DIR='Laboraufträge';
+  const state={proj:null};
+  const parse=name=>{const m=/^(\d{2})\.(\d{2,6})(?:[\s_-]+(.*))?$/.exec(String(name).normalize('NFC').trim());return m?{nr:m[1]+'.'+m[2],ort:(m[3]||'').trim()}:null;};
+  const archiv=()=>new Promise(res=>{try{const r=indexedDB.open('mosaik-suite',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{try{const g=r.result.transaction('kv').objectStore('kv').get('archiv');g.onsuccess=()=>{r.result.close();res(g.result||null);};g.onerror=()=>{r.result.close();res(null);};}catch(e){res(null);}};r.onerror=()=>res(null);}catch(e){res(null);}});
+  const permission=async(h,request)=>{const o={mode:'readwrite'};try{if(!h.queryPermission||await h.queryPermission(o)==='granted')return true;return !!request&&!!h.requestPermission&&await h.requestPermission(o)==='granted';}catch(e){return false;}};
+  async function subdir(dir,name,create){try{return await dir.getDirectoryHandle(name);}catch(e){}const want=name.normalize('NFC').toLowerCase();for await(const h of dir.values())if(h.kind==='directory'&&h.name.normalize('NFC').toLowerCase()===want)return h;return create?dir.getDirectoryHandle(name,{create:true}):null;}
+  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  // Jeder bisherige Ordnerdialog liefert im Projekt direkt „Laboraufträge“.
+  const originalPicker=window.showDirectoryPicker?window.showDirectoryPicker.bind(window):null;
+  if(originalPicker)window.showDirectoryPicker=async function(options){return state.proj?state.proj.lab:originalPicker(options);};
+  function zeigen(){
+    const k=document.getElementById('projekt-kennung');if(!k)return;
+    k.hidden=!state.proj;
+    if(state.proj){k.innerHTML='<b>'+esc(state.proj.nr)+'</b> '+esc(state.proj.ort);k.title='Projektordner „'+state.proj.name+'“ – gespeichert wird in „'+LAB_DIR+'“';document.title=state.proj.name+' · LabelKit';}
+  }
+  function hinweis(html,button,action){
+    document.querySelector('.projekt-hinweis')?.remove();
+    const box=document.createElement('div');box.className='projekt-hinweis';box.innerHTML='<span>'+html+'</span>';
+    if(button){const b=document.createElement('button');b.className='btn btn-primary';b.textContent=button;b.onclick=()=>{box.remove();action();};box.append(b);}
+    const x=document.createElement('button');x.className='btn btn-ghost';x.textContent='×';x.title='Schließen';x.onclick=()=>box.remove();box.append(x);
+    document.body.append(box);
+  }
+  async function neuesteDaten(lab){
+    let best=null;
+    for await(const h of lab.values()){if(h.kind!=='file'||!/_Daten\.json$/i.test(h.name))continue;const f=await h.getFile();if(!best||f.lastModified>best.lastModified)best=f;}
+    return best;
+  }
+  async function oeffnen(dir){
+    if(!await permission(dir,true)){flash('Ohne Schreibrecht auf den Projektordner kann LabelKit dort nicht speichern.');return;}
+    const p=parse(dir.name);if(!p){flash('„'+dir.name+'“ ist kein Projektordner (erwartet z. B. „26.0123 Köln“).');return;}
+    let lab=await subdir(dir,LAB_DIR,false);
+    if(!lab){if(!confirm('Im Projekt „'+dir.name+'“ gibt es keinen Unterordner „'+LAB_DIR+'“. Jetzt anlegen?'))return;lab=await subdir(dir,LAB_DIR,true);}
+    const vorhanden=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length;
+    const datei=await neuesteDaten(lab);
+    if(datei){
+      if(vorhanden&&projektStatus.dirty&&!confirm('In „'+LAB_DIR+'“ liegt „'+datei.name+'“.\nDie aktuell erfassten, nicht gespeicherten Proben werden dadurch ersetzt.\n\nProjektdatei laden?'))return;
+      try{undoSnapshot();applyProjektData(JSON.parse(await datei.text()),p.nr);}catch(e){alert('„'+datei.name+'“ konnte nicht geladen werden: '+e.message);return;}
+    }else if(vorhanden&&document.getElementById('proj-nr').value.trim()&&document.getElementById('proj-nr').value.trim()!==p.nr){
+      if(!confirm('Es sind noch Proben von Projekt „'+document.getElementById('proj-nr').value.trim()+'“ erfasst.\nFür „'+dir.name+'“ mit leerer Erfassung beginnen?'))return;
+      undoSnapshot();applyProjektData({proben:[],chloridProben:[],asbestProben:[],sonstigeProben:[],brandgeruchProben:[],pn98Proben:[]});
+    }
+    state.proj={dir,lab,name:dir.name,nr:p.nr,ort:p.ort};
+    if(typeof letzterSpeicherOrdner!=='undefined')letzterSpeicherOrdner=lab;
+    const nrEl=document.getElementById('proj-nr');if(nrEl&&!nrEl.value.trim()){nrEl.value=p.nr;}
+    if(typeof pn98Projekt==='object'){if(!pn98Projekt.ort&&p.ort)pn98Projekt.ort=p.ort;if(!pn98Projekt.schaden)pn98Projekt.schaden=p.nr;if(typeof setPn98ProjektFelderUi==='function')setPn98ProjektFelderUi();}
+    updateProjekt();
+    if(datei)markSaved(datei.name,LAB_DIR);
+    zeigen();
+    try{history.replaceState(null,'','?projekt='+encodeURIComponent(dir.name));}catch(e){}
+    flash(datei?'Projekt '+dir.name+': „'+datei.name+'“ geladen – gespeichert wird in „'+LAB_DIR+'“':'Projekt '+dir.name+': gespeichert wird in „'+LAB_DIR+'“');
+  }
+  async function ausZentrale(name){
+    const root=await archiv();
+    if(!root){hinweis('Projekt <b>'+esc(name)+'</b>: Der Archivordner ist in diesem Browser nicht bekannt. Bitte in der Projektzentrale einmal den Archivordner wählen – oder hier „📁 Projekt“.');return;}
+    const los=async()=>{try{await oeffnen(await root.getDirectoryHandle(name));}catch(e){hinweis('Projekt <b>'+esc(name)+'</b> nicht gefunden in „'+esc(root.name)+'“: '+esc(e.message));}};
+    if(await permission(root,false)){await los();return;}
+    hinweis('Projekt <b>'+esc(name)+'</b> aus der Projektzentrale','Zugriff erlauben und öffnen',async()=>{if(await permission(root,true))await los();else flash('Ohne Zugriff auf den Archivordner kann das Projekt nicht geöffnet werden.');});
+  }
+  async function waehlen(){
+    if(!originalPicker)return;
+    const root=await archiv();let dir;
+    try{dir=await originalPicker({mode:'readwrite',id:'labelkit-projekt',...(root?{startIn:root}:{})});}catch(e){if(e.name!=='AbortError')flash('Ordner konnte nicht geöffnet werden: '+e.message);return;}
+    if(!parse(dir.name)&&root&&await permission(root,false)){try{const pfad=await root.resolve(dir);if(pfad&&pfad.length===2&&parse(pfad[0]))dir=await root.getDirectoryHandle(pfad[0]);}catch(e){}}
+    await oeffnen(dir);
+  }
+  const knopf=document.getElementById('projekt-ordner');
+  if(knopf&&originalPicker){knopf.hidden=false;knopf.onclick=waehlen;}
+  const start=new URLSearchParams(location.search).get('projekt');
+  if(start)ausZentrale(start);
+  return {state,oeffnen,ausZentrale,parse};
+})();
+</script>
 <script>
 (function(){
   const palettes={
