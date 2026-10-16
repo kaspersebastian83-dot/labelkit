@@ -56,8 +56,9 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
   await page.locator('#main-feldboegen').click();
   await page.locator('#fb-preview .fb-page').first().waitFor();
   if (kannAblegen) await page.waitForFunction(() => document.getElementById('fb-nr').value !== '');
-  await page.locator('#sub-tabs-feldboegen .sub-tab', {hasText: 'Erfassen'}).click();
+  await page.locator('#tab-feldboegen button', {hasText: 'Ausgefüllte Bögen erfassen'}).click();   // Hinweis oben im Reiter führt zur Erfassung
   await page.locator('#fbe-neu-id').waitFor();
+  assert.ok(await page.locator('#sub-fbe').evaluate(b => b.classList.contains('active')), 'Unterreiter ② aktiv');
 
   // Ohne Kürzel kein Anlegen
   await page.locator('#tab-feldboegen-erfassen button', {hasText: 'Erfassung beginnen'}).click();

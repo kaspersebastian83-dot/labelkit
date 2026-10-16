@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.27.1 – Oktober 2026
+
+- Feldbögen leichter zu finden: Unterreiter heißen „① Bögen drucken (für vor Ort)“ und „② Ausgefüllte Bögen erfassen & Scans ablegen“; Hinweis mit Knopf oben im Reiter „Feldbögen“ und im PN 98-Reiter.
+
 ## 4.27.0 – Oktober 2026
 
 - Neuer Feldbogen „Probenahme Feststoffe (PN 98)“ im Reiter „Feldbögen“ (bisher „Feldbögen Raumluft“): Probenahmeprotokoll zum Ausfüllen vor Ort, angelehnt an LAGA PN 98 Anhang C und bewusst kurz gehalten. Blatt 1: Projekt, Anlass und vermutete Schadstoffe, Labor, Vor-Ort-Bedingungen für alle Proben (Material, Lagerung, Witterung, Gerät, Gefäß, Transport, Lage der Probenahmestellen) und Probe 1; Folgeblätter mit je drei Proben. Unterschrift Probenehmer und Anwesende/Zeugen. Das Labor wird aus dem PN 98-Reiter vorgedruckt.
