@@ -15,7 +15,7 @@ const url = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
-  page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+  page.on('console', m => { if (m.type() === 'error' && !(url.startsWith('file:') && /Access-Control-Allow-Origin/.test(m.text()))) errors.push('console: ' + m.text()); });
   await page.goto(url);
   // Browser ohne Ordner-Zugriff (WebKit/Safari) zeigen verzögert den Browserhinweis; erst abwarten, dann schließen.
   await page.waitForSelector('#modal-browser-hinweis[open]', {timeout: 3000}).catch(() => {});

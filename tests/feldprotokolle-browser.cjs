@@ -20,7 +20,7 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
   const page = await ctx.newPage();
   const errors = [], dialoge = [];
   page.on('pageerror', e => errors.push(e.message));
-  page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+  page.on('console', m => { if (m.type() === 'error' && !(url.startsWith('file:') && /Access-Control-Allow-Origin/.test(m.text()))) errors.push('console: ' + m.text()); });
   page.on('dialog', d => { dialoge.push(d.message()); d.accept(d.type() === 'prompt' ? 'falscher Bogen' : undefined); });
   await page.goto(url);
   await page.waitForSelector('#modal-browser-hinweis[open]', {timeout: 3000}).catch(() => {});
@@ -189,6 +189,34 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
   assert.equal(await page.evaluate(() => feldprotokolle.length), 0);
   await page.evaluate(() => undoLetzteAktion());
   assert.equal(await page.evaluate(() => feldprotokolle.length), 1, 'Entfernen lässt sich rückgängig machen');
+
+  // PN 98 (4.27.0): aus dem PN 98-Reiter zum Feldbogen, Probenzahl aus dem Rechner, Erfassung mit Hinweisen
+  await page.locator('#main-pn98').click();
+  await page.locator('#tab-pn98 button', {hasText: 'Feldbogen PN 98'}).click();
+  await page.waitForFunction(() => fbTyp() === 'pn98' && document.getElementById('tab-feldboegen').classList.contains('active'));
+  await page.evaluate(() => { document.getElementById('fb-labor').value = 'Labor X'; fbPn98Oeffnen(4); });
+  await page.waitForFunction(() => /2 Blätter · 4 Proben · Formular-ID .*-PN-01/.test(document.getElementById('fb-info').textContent));
+  assert.match(await page.locator('#fb-preview').textContent(), /Labor X/);
+  await page.locator('#sub-tabs-feldboegen .sub-tab', {hasText: 'Erfassen'}).click();
+  await page.locator('#tab-feldboegen-erfassen button', {hasText: 'Neues Feldprotokoll'}).click();
+  await page.locator('input[name="fbe-neu-typ"][value="pn98"]').check();
+  assert.equal(await page.locator('#fbe-neu-n-label').textContent(), 'Proben');
+  if (!kannAblegen) await page.locator('#fbe-neu-nr').fill('26.0142');
+  await page.locator('#fbe-neu-lfd').fill('01');
+  await page.locator('#fbe-neu-n').fill('2');
+  assert.equal(await page.locator('#fbe-neu-id').textContent(), '26.0142-PN-01');
+  await page.locator('#tab-feldboegen-erfassen button', {hasText: 'Erfassung beginnen'}).click();
+  await page.locator('#fbe-mp-1').waitFor();
+  rec = await page.evaluate(() => feldprotokolle.find(r => r.typ === 'pn98'));
+  assert.equal(rec.kopf.labor, 'Labor X', 'Labor vorgedruckt');
+  await feld('mp.0.probenNr').fill('P1');
+  await feld('mp.1.probenNr').fill('P1');
+  await page.locator('#fbe-inhalt button[data-p="mp.1.art"][data-v="Mischprobe"]').click();
+  await feld('mp.1.einzelproben').fill('3');
+  assert.match(await page.locator('.fbe-hint[data-hint="mp.1.probenNr"]').textContent(), /kommt 2× vor/);
+  assert.match(await page.locator('.fbe-hint[data-hint="mp.1.einzelproben"]').textContent(), /mindestens 4/);
+  assert.match(await page.locator('#fbe-wahl').textContent(), /26\.0142-PN-01 · Probenahme PN 98 · 2 Proben/);
+  assert.equal(await page.locator('#tab-feldboegen-erfassen button', {hasText: '+ Probe'}).count(), 1);
 
   // Keine Seite der Eingabe ragt horizontal heraus
   const breit = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

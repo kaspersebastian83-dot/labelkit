@@ -8,7 +8,9 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const start = html.indexOf('/* FBE-LOGIK-START */'), end = html.indexOf('/* FBE-LOGIK-ENDE */');
 assert.ok(start > 0 && end > start, 'Erfassungs-Logik gefunden');
 const ctx = {};
-vm.runInNewContext(html.slice(start, end) + `
+const s2a = html.indexOf('/* PN98-STAFFEL-START */'), s2e = html.indexOf('/* PN98-STAFFEL-ENDE */');
+assert.ok(s2a > 0 && s2e > s2a, 'PN 98-Staffelung gefunden');
+vm.runInNewContext(html.slice(s2a, s2e) + html.slice(start, end) + `
 this.api={FBE_SCHEMA,fbeNeu,fbeSetze,fbeSetzeUnleserlich,fbeAbschliessen,fbePruefen,fbePlausi,fbeScanName,fbeZahl,fbeZeit,
   fbeDatumLesen,fbeFeldLabel,fbeMpHinzu,fbeMpEntfernen,fbeMpLeer,fbeStatus,fbeAblageZeile,fbeHex,fbeFeld};`, ctx);
 const A = ctx.api;
@@ -33,7 +35,7 @@ assert.deepEqual(plain(sp.kopf.anlass), []);
 assert.throws(() => A.fbeNeu({typ: 'radon'}), /Unbekannter Formulartyp/);
 
 // Alle Felder des Papierbogens sind im Schema und jede Feldkennung ist eindeutig.
-for (const typ of ['asbest', 'schimmel']) {
+for (const typ of ['asbest', 'schimmel', 'pn98']) {
   const s = A.FBE_SCHEMA[typ];
   const kopf = s.kopf.flatMap(a => a.felder).map(f => f.k), mp = s.mp.map(f => f.k);
   assert.equal(new Set(kopf).size, kopf.length, typ + ': Kopffelder eindeutig');
@@ -154,5 +156,32 @@ assert.ok(lang.length <= 90);
 assert.equal(A.fbeHex(new Uint8Array([0, 15, 255]).buffer), '000fff');
 assert.match(A.fbeAblageZeile({abgelegtAm: T, datei: 'a.jpg', sha256: 'ab', bytes: 3, original: 'scan 1.jpg', abgelegtVon: 'SK'}, '26.0142-AS-01'),
   /^2026-10-21T08:00:00.000Z \| 26\.0142-AS-01 \| a\.jpg \| SHA-256 ab \| 3 Byte \| Original: scan 1\.jpg \| abgelegt von: SK$/);
+
+// PN 98 (4.27.0): vorgedruckt inkl. Labor, Proben-Nr. eindeutig, Mischproben, Staffelung, Übergabe
+const pn = A.fbeNeu({typ: 'pn98', formularId: '26.0142-PN-01', n: 4, von: 'SK', jetzt: T,
+  vor: {projektNr: '26.0142', objekt: 'EFH', auftraggeber: 'AG', datum: '21.10.2026', labor: 'Eurofins', ortstermin: 'x'}});
+assert.equal(pn.kopf.labor, 'Eurofins');
+assert.equal(pn.kopf.auftraggeber, 'AG');
+assert.deepEqual(plain(pn.kopf.grund), []);
+assert.equal(A.fbeFeldLabel(pn, 'mp.2.probenNr'), 'Probe 3 · Proben-Nr.');
+Object.assign(pn.kopf, {probenehmer: 'SK', unterschrift: true, uebergabeAm: '20.10.2026'});
+Object.assign(pn.mp[0].w, {probenNr: 'P1', stelle: 'Haufwerk H1', art: 'Mischprobe', einzelproben: '4', volumen: '45'});
+Object.assign(pn.mp[1].w, {probenNr: 'p 1', stelle: 'haufwerk h1', art: 'Mischprobe', einzelproben: '3'});
+Object.assign(pn.mp[2].w, {material: 'Estrich', art: 'Einzelprobe / Hot-Spot', einzelproben: '2', geruch: 'anders'});
+const hp = A.fbePlausi(pn).map(x => x.pfad + ': ' + x.text).join('\n');
+assert.match(hp, /mp\.0\.probenNr: Proben-Nr\. „P1“ kommt 2× vor \(Proben 1, 2\)/);
+assert.match(hp, /mp\.1\.probenNr: .*kommt 2× vor/);
+assert.match(hp, /mp\.1\.einzelproben: Mischprobe aus 3 Einzelproben – PN 98 sieht mindestens 4 vor/);
+assert.match(hp, /mp\.0\.volumen: „Haufwerk H1“ ca\. 45 m³: PN 98 sieht 3 Mischproben .* auf dem Bogen 2/);
+assert.match(hp, /mp\.2\.probenNr: Probe 3 hat Angaben, aber keine Proben-Nr\./);
+assert.match(hp, /mp\.2\.art: „Einzelprobe \/ Hot-Spot“ angekreuzt, aber 2 Einzelproben/);
+assert.match(hp, /mp\.2\.geruchAnders/);
+assert.match(hp, /kopf\.uebergabeAm: Übergabe an das Labor vor dem Probenahmedatum/);
+assert.doesNotMatch(hp, /mp\.3\./, 'leere Probe ohne Hinweis');
+assert.doesNotMatch(hp, /Sammelhöhe|Versand|geschlossen/, 'keine Raumluft-Prüfungen beim PN 98');
+pn.mp[1].w.volumen = '25'; pn.mp[0].w.volumen = '';
+assert.doesNotMatch(A.fbePlausi(pn).map(x => x.text).join(' '), /sieht 3 Mischproben|sieht 2 Mischproben/, '≤ 30 m³: 2 Mischproben reichen');
+pn.unl['mp.1.einzelproben'] = true;
+assert.doesNotMatch(A.fbePlausi(pn).map(x => x.pfad).join(' '), /mp\.1\.einzelproben/, 'unleserlich → kein Hinweis');
 
 console.log('Feldprotokolle: alle Prüfungen bestanden');
