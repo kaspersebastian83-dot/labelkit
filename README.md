@@ -66,6 +66,16 @@ node tests/browser-hint.cjs
 node tests/feldboegen.cjs
 ```
 
+Zusätzlich gibt es einen Browsertest für die Feldbögen (Vorschau, Blattüberlauf, Druckfenster mit Schrift und Logo). Er braucht Playwright, das nicht im Repository geführt wird:
+
+```sh
+npm install --no-save playwright && npx playwright install chromium webkit
+node tests/feldboegen-browser.cjs chromium
+node tests/feldboegen-browser.cjs webkit
+```
+
+GitHub führt alle Prüfungen bei jedem Pull Request automatisch aus (`.github/workflows/tests.yml`, Chromium und WebKit).
+
 Die Prüfungen decken den Sammel-Export mit simulierten Browser-Schnittstellen, Abbruch, Schreibfehler und Browserhinweise sowie die Feldbögen (Blattzahl, Formular-ID, Vorbelegung, Maskierung von Eingaben, Leerformular) ab. Echte Ordnerdialoge, Druckausgaben und die Darstellung in Office müssen zusätzlich praktisch geprüft werden.
 
 ## Firmenspezifische Inhalte und Lizenz
