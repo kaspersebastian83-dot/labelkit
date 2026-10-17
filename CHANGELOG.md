@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.30.1 – Oktober 2026
+
+- Behoben: Das Projektmenü der Leiste oben („Anderes Projekt“) schloss sich von selbst, wenn die Leiste sich im Hintergrund aktualisierte (alle 20 Sekunden und beim Zurückkehren ins Fenster).
+
 ## 4.30.0 – Oktober 2026
 
 - Schalter „Liquid Glass“ und der Glas-Look entfernt, ebenso „Glas-Frost“ unter „Erscheinungsbild“, das Konfetti bei Erfolgsmeldungen und alle Töne (Klick-/Erfolgstöne, Ton-Schalter unten links). LabelKit erscheint immer im klassischen Design (bisher bei ausgeschaltetem Schalter); sonst unverändert.
