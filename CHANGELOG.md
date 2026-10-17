@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.30.0 – Oktober 2026
+
+- Schalter „Liquid Glass“ und der Glas-Look entfernt, ebenso „Glas-Frost“ unter „Erscheinungsbild“, das Konfetti bei Erfolgsmeldungen und alle Töne (Klick-/Erfolgstöne, Ton-Schalter unten links). LabelKit erscheint immer im klassischen Design (bisher bei ausgeschaltetem Schalter); sonst unverändert.
+
 ## 4.29.0 – Oktober 2026
 
 - Neue schmale Leiste oben, in allen vier Apps gleich: Projekt mit Wechsel zu den zuletzt geöffneten, die vier Arbeitsschritte (LabelKit, FotoKit, PlanKit, BelegKit) mit Haken bei erledigten Schritten, und ein Knopf „Weiter: …“ zum nächsten offenen Schritt – öffnet die App mit demselben Projekt. Ohne geöffnetes Projekt bietet die Leiste „Weiter mit <zuletzt geöffnetes Projekt>“ an. Die Leiste liest den Projektordner nur und schreibt nie hinein; ohne Ordnerrecht (oder in Safari) fehlen nur die Haken.

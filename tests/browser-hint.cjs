@@ -51,9 +51,7 @@ assert.ok(!html.includes('unpkg.com/'));
 const panelScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];
 const controls = {
   'appearance-color': {value: '#2f6fbf'},
-  'appearance-density': {value: 'standard'},
-  'appearance-frost': {value: '170'},
-  'appearance-frost-value': {}
+  'appearance-density': {value: 'standard'}
 };
 for (const control of Object.values(controls)) {
   control.addEventListener = (name, callback) => {control[name] = callback;};
@@ -63,7 +61,8 @@ vm.runInNewContext(panelScript, {document: {
   getElementById: id => controls[id], body: {dataset},
   documentElement: {style: {setProperty: (name, value) => {properties[name] = value;}}}
 }});
-assert.equal(properties['--gf'], '1.7');
+assert.equal(properties['--accent'], '#2f6fbf');
+assert.equal(properties['--gf'], undefined, 'kein Glas-Frost mehr (Liquid Glass entfernt)');
 controls['appearance-color'].value = '#3d7a4e';
 controls['appearance-color'].change();
 assert.equal(properties['--accent'], '#3d7a4e');
@@ -73,9 +72,6 @@ assert.equal(dataset.density, 'kompakt');
 controls['appearance-density'].value = 'standard';
 controls['appearance-density'].change();
 assert.equal(dataset.density, undefined);
-controls['appearance-frost'].value = '50';
-controls['appearance-frost'].input();
-assert.equal(properties['--gf'], '0.5');
-assert.equal(controls['appearance-frost-value'].textContent, '50 %');
+for (const gone of ['lg-toggle', 'pak_liquid_glass', 'cf-canvas', 'body.lg', 'appearance-frost', 'lgMovePill', 'snd-toggle', 'AudioContext', 'pak_sound_muted']) assert.ok(!html.includes(gone), gone + ' ist entfernt');
 console.log('Browser-Hinweis geprüft: Firefox, lokale Datei, Webadresse, Windows und unterstützte Browser.');
-console.log('Erscheinungsbild geprüft: Akzentfarbe, Dichte und Glas-Frost ohne externe Panel-Abhängigkeiten.');
+console.log('Erscheinungsbild geprüft: Akzentfarbe und Dichte ohne externe Panel-Abhängigkeiten.');
