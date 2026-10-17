@@ -67,6 +67,7 @@ node tests/export-flow.cjs
 node tests/browser-hint.cjs
 node tests/feldboegen.cjs
 node tests/feldprotokolle.cjs
+node tests/kuerzel.cjs
 ```
 
 Zusätzlich gibt es Browsertests für die Feldbögen (Vorschau, Blattüberlauf, Druckfenster mit Schrift und Logo) und für die Erfassung mit Scan-Ablage (in Chromium mit nachgebildetem Projektordner, in WebKit nur die Erfassung). Er braucht Playwright, das nicht im Repository geführt wird:
