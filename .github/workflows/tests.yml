@@ -49,3 +49,5 @@ jobs:
         run: node tests/feldboegen-browser.cjs ${{ matrix.browser }}
       - name: Field protocol entry and scan filing in the real browser
         run: node tests/feldprotokolle-browser.cjs ${{ matrix.browser }}
+      - name: Project data from the Projektzentrale in the real browser
+        run: node tests/projektdaten-browser.cjs ${{ matrix.browser }}

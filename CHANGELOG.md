@@ -1,5 +1,10 @@
 # Änderungen
 
+## 4.28.0 – Oktober 2026
+
+- Projektdaten aus der Projektzentrale (`_Projekt.json`) werden im Schritt „Projektnummer“ angezeigt: Objekt, Auftraggeber, Schaden-Nr. Nur Anzeige, wird beim Zurückkehren in die App neu gelesen.
+- Auf dem Auftragsschein (Bildschirm und RTF) steht zusätzlich das Objekt. Auftraggeber und Schaden-Nr. werden bewusst nicht auf den Laborauftrag gedruckt.
+
 ## 4.27.2 – Oktober 2026
 
 - „Ihr Kürzel“ wird mit BelegKit geteilt: einmal eintragen, gilt in beiden Apps. Bisher eingetragene Kürzel werden übernommen.
