@@ -70,7 +70,7 @@ node tests/feldprotokolle.cjs
 node tests/kuerzel.cjs
 ```
 
-Zusätzlich gibt es Browsertests für die Feldbögen (Vorschau, Blattüberlauf, Druckfenster mit Schrift und Logo), für die Anzeige der Projektdaten (`tests/projektdaten-browser.cjs`) und für die Erfassung mit Scan-Ablage (in Chromium mit nachgebildetem Projektordner, in WebKit nur die Erfassung). Er braucht Playwright, das nicht im Repository geführt wird:
+Zusätzlich gibt es Browsertests für die Feldbögen (Vorschau, Blattüberlauf, Druckfenster mit Schrift und Logo), für die Anzeige der Projektdaten (`tests/projektdaten-browser.cjs`), für die Leiste mit Projekt und Arbeitsschritten (`tests/leiste-browser.cjs`) und für die Erfassung mit Scan-Ablage (in Chromium mit nachgebildetem Projektordner, in WebKit nur die Erfassung). Er braucht Playwright, das nicht im Repository geführt wird:
 
 ```sh
 npm install --no-save playwright && npx playwright install chromium webkit

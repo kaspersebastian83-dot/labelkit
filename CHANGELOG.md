@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.29.0 – Oktober 2026
+
+- Neue schmale Leiste oben, in allen vier Apps gleich: Projekt mit Wechsel zu den zuletzt geöffneten, die vier Arbeitsschritte (LabelKit, FotoKit, PlanKit, BelegKit) mit Haken bei erledigten Schritten, und ein Knopf „Weiter: …“ zum nächsten offenen Schritt – öffnet die App mit demselben Projekt. Ohne geöffnetes Projekt bietet die Leiste „Weiter mit <zuletzt geöffnetes Projekt>“ an. Die Leiste liest den Projektordner nur und schreibt nie hinein; ohne Ordnerrecht (oder in Safari) fehlen nur die Haken.
+
 ## 4.28.0 – Oktober 2026
 
 - Projektdaten aus der Projektzentrale (`_Projekt.json`) werden im Schritt „Projektnummer“ angezeigt: Objekt, Auftraggeber, Schaden-Nr. Nur Anzeige, wird beim Zurückkehren in die App neu gelesen.
