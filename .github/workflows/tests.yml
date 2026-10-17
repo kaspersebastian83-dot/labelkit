@@ -25,6 +25,7 @@ jobs:
       - run: node tests/browser-hint.cjs
       - run: node tests/feldboegen.cjs
       - run: node tests/feldprotokolle.cjs
+      - run: node tests/kuerzel.cjs
 
   browser-tests:
     name: Browser tests (${{ matrix.browser }})

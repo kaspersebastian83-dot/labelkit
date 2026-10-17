@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.27.2 – Oktober 2026
+
+- „Ihr Kürzel“ wird mit BelegKit geteilt: einmal eintragen, gilt in beiden Apps. Bisher eingetragene Kürzel werden übernommen.
+
 ## 4.27.1 – Oktober 2026
 
 - Feldbögen leichter zu finden: Unterreiter heißen „① Bögen drucken (für vor Ort)“ und „② Ausgefüllte Bögen erfassen & Scans ablegen“; Hinweis mit Knopf oben im Reiter „Feldbögen“ und im PN 98-Reiter.
