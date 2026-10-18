@@ -51,5 +51,7 @@ jobs:
         run: node tests/feldprotokolle-browser.cjs ${{ matrix.browser }}
       - name: Project data from the Projektzentrale in the real browser
         run: node tests/projektdaten-browser.cjs ${{ matrix.browser }}
+      - name: Field protocol entry without folder access (Safari behaviour)
+        run: node tests/feldprotokolle-ohne-ordner.cjs ${{ matrix.browser }}
       - name: Mosaik bar (project, steps, next step) in the real browser
         run: node tests/leiste-browser.cjs ${{ matrix.browser }}
