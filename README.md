@@ -1,6 +1,8 @@
 # LabelKit
 
-Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben.
+Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
+
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.30.1** (Änderungen in `CHANGELOG.md`)
 
 ## Funktionen
 
@@ -13,12 +15,16 @@ Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben
 - Feldbogen Probenahme Feststoffe nach LAGA PN 98 zum Ausfüllen vor Ort, mit derselben Erfassung und Scan-Ablage (ab 4.27)
 - Projektdaten als JSON speichern und wieder importieren
 - Gemeinsamer Export der Laborübergaben, Projektdatei und freigegebenen Textbausteine
+- Projektdaten aus der Projektzentrale (`_Projekt.json`: Objekt, Auftraggeber, Schaden-Nr.) im Schritt „Projektnummer“ anzeigen; das Objekt steht auch auf dem Auftragsschein (ab 4.28)
+- „Ihr Kürzel“ gemeinsam mit BelegKit: einmal eintragen, gilt in beiden Apps (ab 4.27.2)
+- Schmale Leiste oben wie in FotoKit, PlanKit und BelegKit: Projekt mit Wechsel zu den zuletzt geöffneten, die vier Arbeitsschritte mit Haken und „Weiter: …“ zum nächsten offenen Schritt (ab 4.29)
+- Immer im klassischen Design – ohne „Liquid Glass“, Konfetti und Töne (ab 4.30)
 
 ## Starten
 
-Das Repository herunterladen und entpacken. Die Datei `index.html` in Microsoft Edge oder Google Chrome am Computer öffnen. Es ist keine Installation und kein eigener Server erforderlich.
+Im Büro die Adresse oben in Microsoft Edge oder Google Chrome öffnen – am einfachsten aus der Projektzentrale über „Proben erfassen → LabelKit“. Es ist keine Installation und kein eigener Server erforderlich.
 
-Für die Ordnerauswahl wird ein unterstützter Browser benötigt. Bei einer Bereitstellung als Website HTTPS verwenden.
+Alternativ läuft die App auch als einzelne Datei: Repository herunterladen und `index.html` in Edge oder Chrome öffnen. Für die Ordnerauswahl wird ein unterstützter Browser benötigt; bei einer Bereitstellung als Website HTTPS verwenden.
 
 ## Projektordner (ab 4.24)
 
@@ -58,7 +64,7 @@ Keine echten Projektdaten, Laboraufträge oder Exporte in das öffentliche Repos
 
 ## Entwicklung und Prüfungen
 
-Die App steht in `index.html`. Die vorhandene Versionsbezeichnung der Ausgangsversion ist 4.23.5; die Änderungen sind in `CHANGELOG.md` beschrieben.
+Die App steht in `index.html` (`APP_VERSION`, derzeit 4.30.1). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
 
 Mit Node.js aus dem Repository-Ordner ausführen:
 
@@ -78,6 +84,8 @@ node tests/feldboegen-browser.cjs chromium
 node tests/feldboegen-browser.cjs webkit
 node tests/feldprotokolle-browser.cjs chromium
 node tests/feldprotokolle-browser.cjs webkit
+node tests/projektdaten-browser.cjs chromium
+node tests/leiste-browser.cjs chromium
 ```
 
 GitHub führt alle Prüfungen bei jedem Pull Request automatisch aus (`.github/workflows/tests.yml`, Chromium und WebKit).
