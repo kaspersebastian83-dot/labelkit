@@ -38,6 +38,19 @@ const url = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
   let s = await state();
   assert.equal(s.nr, '26.0142', 'Projektnummer übernommen');
   assert.equal(s.pages, 2, 'Asbest, 3 Messpunkte: zwei Blätter');
+  // Layout: Auswahlkästchen klein (nicht durch die Feldstile der Leiste aufgebläht), Text in normaler Schrift
+  const opt = await page.evaluate(() => [...document.querySelectorAll('#tab-feldboegen .opt-lab')].map(l => {
+    const i = l.querySelector('input').getBoundingClientRect();
+    return {w: i.width, h: i.height, up: getComputedStyle(l).textTransform};
+  }));
+  assert.equal(opt.length, 4, 'drei Formulartypen und Leerformular');
+  for (const o of opt) { assert.ok(o.w <= 22 && o.h <= 22, 'Auswahlkästchen höchstens 22 px, ist ' + o.w + 'x' + o.h); assert.equal(o.up, 'none'); }
+  // Druck: Bogenhöhe knapp unter A4 (Safari rundet die druckbare Höhe ab) und Umbruch nur zwischen den Bögen, nie danach
+  const pr = await page.evaluate(() => { const el = document.createElement('div'); el.innerHTML = fbSeiten(fbOptionen()).join(''); document.body.appendChild(el);
+    const pg = el.querySelectorAll('.fb-page'); const r = {h: pg[0].getBoundingClientRect().height, a4: 297 * 96 / 25.4,
+      after: getComputedStyle(pg[0]).breakAfter, beforeNext: getComputedStyle(pg[1]).breakBefore, afterLast: getComputedStyle(pg[pg.length - 1]).breakAfter}; el.remove(); return r; });
+  assert.ok(pr.h < pr.a4 - 1, 'Bogen höher als druckbare Fläche: ' + pr.h + ' von ' + pr.a4);
+  assert.notEqual(pr.after, 'page', 'kein Umbruch nach dem Bogen'); assert.equal(pr.beforeNext, 'page'); assert.notEqual(pr.afterLast, 'page');
   assert.match(s.info, /26\.0142-AS-01/);
   for (const n of [1, 2, 3, 4, 5, 40]) {
     await page.locator('#fb-mp').fill(String(n));
