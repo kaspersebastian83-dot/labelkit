@@ -1,5 +1,10 @@
 # Änderungen
 
+## 4.30.3 – Oktober 2026
+
+- Behoben: Feldbögen drucken in Safari (Mac) nicht mehr mit einer Leerseite nach jedem Bogen. Die Bögen sind 296 mm statt 297 mm hoch (Safari rundet die druckbare Höhe knapp unter A4), und der Seitenumbruch steht nur noch zwischen den Bögen.
+- Feldbögen: Die Auswahl des Formulars (Radio-Knöpfe) und „Leerformular ohne Projektdaten“ wirken nicht mehr überdimensioniert. Die Kästchen sind klein und stehen sauber neben ihrem Text, der Text erscheint nicht mehr in Großbuchstaben.
+
 ## 4.30.2 – Oktober 2026
 
 - Die Leiste oben zeigt links den Namen der App-Suite „Spektron“ (die Büro-Apps Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit und SpesenKit). Sonst unverändert.
