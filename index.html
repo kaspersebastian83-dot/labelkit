@@ -2081,6 +2081,8 @@ body:not(.lg) .btn-secondary:hover{border-color:var(--accent);color:var(--accent
         <div style="font-weight:600;font-size:13px;margin-bottom:6px">Feldbögen: Druck ohne Leerseiten, schlankere Auswahl</div>
         <ul style="font-size:12px;color:var(--text-muted);line-height:1.8;padding-left:16px">
           <li>Behoben: In Safari (Mac) kam nach jedem gedruckten Feldbogen eine leere Seite. Die Bögen sind jetzt knapp unter A4-Höhe, der Seitenumbruch steht nur zwischen den Bögen.</li>
+          <li>Behoben: Ohne Ordnerzugriff (Safari) speicherte „Speichern“ im Reiter „Ausgefüllte Bögen erfassen“ keine Feldprotokolle. Jetzt wird die Projektdatei heruntergeladen. „Scan ablegen“ erklärt in Safari, warum es dort nicht geht.</li>
+          <li>Neue Erfassung: Beim Wechsel des Formulars springt die laufende Nummer auf die erste freie.</li>
           <li>Die Auswahl „Raumluft Asbest / KMF · Schimmelpilze · Probenahme Feststoffe“ und „Leerformular ohne Projektdaten“ sitzt wieder ordentlich: kleine Auswahlkästchen neben normal geschriebenem Text.</li>
         </ul>
       </div>
@@ -6795,6 +6797,9 @@ async function schnellSpeichern(){
         flash('Speichern fehlgeschlagen \u2013 Ordner-Auswahl zur\u00fcckgesetzt, bitte Strg+S erneut dr\u00fccken');
       }
     }
+  } else if(!(proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length)){
+    // Browser ohne Ordnerzugriff (Safari) und nur Feldprotokolle: Projektdatei herunterladen, sonst ginge die Erfassung verloren
+    exportJSON();
   } else {
     // Fallback: alle EOL-Übergaben
     abschlussSpeichernGeprueft(false);
@@ -9948,13 +9953,24 @@ function fbeRender(){
   fbeHinweiseZeigen(rec);
   fbeScanZeigen(rec);
 }
+function fbeLfdVorschlag(typ,nr,ab){
+  const belegt=new Set(feldprotokolle.map(r=>r.formularId));let l=Math.max(1,parseInt(ab,10)||1);
+  while(belegt.has(fbFormularId(typ,nr,String(l))))l++;return String(l).padStart(2,'0');
+}
+function fbeNeuTyp(){
+  const typ=document.querySelector('input[name="fbe-neu-typ"]:checked')?.value||'asbest';
+  const lfd=document.getElementById('fbe-neu-lfd'),nr=document.getElementById('fbe-neu-nr');
+  if(lfd&&nr)lfd.value=fbeLfdVorschlag(typ,nr.value,'1');
+  fbeNeuId();
+}
 function fbeNeuHtml(erstes){
   const o=typeof fbOptionen==='function'?fbOptionen():{typ:'asbest',lfd:'01',nr:'',n:3};
   if(!String(o.nr||'').trim())o.nr=document.getElementById('proj-nr')?.value.trim()||'';
-  const lfdVorschlag=(()=>{const belegt=new Set(feldprotokolle.map(r=>r.formularId));let l=Math.max(1,parseInt(o.lfd,10)||1);while(belegt.has(fbFormularId(o.typ,o.nr,String(l))))l++;return String(l).padStart(2,'0');})();
+  if(!String(o.nr||'').trim()&&feldprotokolle.length)o.nr=String((feldprotokolle[feldprotokolle.length-1].kopf||{}).projektNr||'').trim();
+  const lfdVorschlag=fbeLfdVorschlag(o.typ,o.nr,o.lfd);
   return '<div class="fbe-sek">'+(erstes?'<p style="margin:0 0 10px">Hier werden ausgefüllte Feldbögen am Schreibtisch übertragen und die Scans im Projektordner abgelegt. Die Formular-ID steht oben rechts auf dem Bogen.</p>':'')
     +'<div class="fbe-neu">'
-    +Object.keys(FBE_SCHEMA).map(typ=>'<label style="display:inline-flex;gap:6px;align-items:center"><input type="radio" name="fbe-neu-typ" value="'+typ+'"'+(o.typ===typ?' checked':'')+' onchange="fbeNeuId()"> '+fbEsc(FB_TYPEN[typ].name)+'</label>').join('')
+    +Object.keys(FBE_SCHEMA).map(typ=>'<label style="display:inline-flex;gap:6px;align-items:center"><input type="radio" name="fbe-neu-typ" value="'+typ+'"'+(o.typ===typ?' checked':'')+' onchange="fbeNeuTyp()"> '+fbEsc(FB_TYPEN[typ].name)+'</label>').join('')
     +'<label for="fbe-neu-nr">Projekt-Nr.</label><input type="text" id="fbe-neu-nr" value="'+fbEsc(o.nr)+'" style="width:110px;font-family:var(--mono)" oninput="fbeNeuId()">'
     +'<label for="fbe-neu-lfd">Lfd. Nr.</label><input type="text" id="fbe-neu-lfd" value="'+lfdVorschlag+'" maxlength="3" style="width:56px;font-family:var(--mono)" oninput="fbeNeuId()">'
  +'<label for="fbe-neu-n" id="fbe-neu-n-label">'+fbEsc(FB_TYPEN[o.typ].einheit[1])+'</label><input type="number" id="fbe-neu-n" min="1" max="40" value="'+fbEsc(o.n||3)+'" style="width:64px">'
@@ -10126,6 +10142,7 @@ function fbeDateienWaehlen(){
 /** Scans ablegen: kopieren, Kopie zurücklesen und Prüfsumme vergleichen, Ablage-Protokoll fortschreiben, Projektdaten speichern. */
 async function fbeScansAblegen(dateien){
   const rec=fbeAktiv();if(!rec)return;
+  if(!window.showDirectoryPicker){alert('Dieser Browser (z. B. Safari) darf keine Ordner beschreiben, daher kann LabelKit den Scan hier nicht ablegen.\n\nBitte Chrome oder Edge verwenden oder den Scan von Hand im Ordner „'+FBE_SCAN_ORDNER+'“ des Projekts speichern.');return;}
   if(!(typeof PROJEKTORDNER!=='undefined'&&PROJEKTORDNER.state.proj)){alert('Scans werden im Projektordner abgelegt.\nBitte zuerst das Projekt öffnen („📁 Projekt“ oben oder aus der Projektzentrale).');return;}
   if(!window.crypto||!crypto.subtle){alert('Dieser Browser kann keine Prüfsummen berechnen. Bitte Chrome oder Edge verwenden.');return;}
   const von=fbeBrauchtKuerzel();if(!von)return;
@@ -10199,7 +10216,7 @@ async function fbeScanZeigen(rec){
   const symbol={ok:'✓',abweichend:'✗ verändert',fehlt:'✗ fehlt'};
   let h='<div class="fbe-aktionen"><button class="btn btn-primary btn-sm" onclick="fbeScansAblegen()"'+(proj?'':' title="Erst das Projekt öffnen"')+'>📎 Scan ablegen…</button>'
     +(rec.scans.length?'<button class="btn btn-secondary btn-sm" onclick="fbeAblagePruefen()" title="Abgelegte Dateien erneut lesen und Prüfsummen vergleichen">Ablage prüfen</button>':'')+'</div>';
-  if(!proj)h+='<div class="fbe-meta">Scans werden im Projektordner unter „'+FBE_SCAN_ORDNER+'“ abgelegt – dazu das Projekt öffnen.</div>';
+  if(!proj)h+='<div class="fbe-meta">'+(window.showDirectoryPicker?'Scans werden im Projektordner unter „'+FBE_SCAN_ORDNER+'“ abgelegt – dazu das Projekt öffnen.':'Dieser Browser (z. B. Safari) kann keine Ordner beschreiben. Scans bitte von Hand im Ordner „'+FBE_SCAN_ORDNER+'“ speichern oder Chrome/Edge verwenden.')+'</div>';
   if(rec.scans.length){
     h+='<div class="fbe-scanliste">'+rec.scans.map((sc,i)=>'<div class="fbe-scanzeile'+(i===fbeUi.scanIdx?' aktiv':'')+(sc.ungueltig?' ungueltig':'')+'" data-scan="'+i+'" title="Original: '+fbEsc(sc.original)+' · abgelegt '+fbEsc(fbeZeitText(sc.abgelegtAm))+' von '+fbEsc(sc.abgelegtVon)+(sc.ungueltig?' · ungültig: '+fbEsc(sc.ungueltig.grund):'')+'">'
       +'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fbEsc(sc.datei)+'</span><code>'+sc.sha256.slice(0,10)+'…</code>'

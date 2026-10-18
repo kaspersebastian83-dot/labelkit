@@ -3,6 +3,9 @@
 ## 4.30.3 – Oktober 2026
 
 - Behoben: Feldbögen drucken in Safari (Mac) nicht mehr mit einer Leerseite nach jedem Bogen. Die Bögen sind 296 mm statt 297 mm hoch (Safari rundet die druckbare Höhe knapp unter A4), und der Seitenumbruch steht nur noch zwischen den Bögen.
+- Behoben: In Browsern ohne Ordnerzugriff (Safari) speicherte „💾 Speichern“ im Reiter „Ausgefüllte Bögen erfassen“ nichts, solange nur Feldprotokolle vorhanden waren („Keine Proben vorhanden“). Jetzt wird die Projektdatei heruntergeladen und lässt sich über „Laden“ wieder öffnen.
+- „📎 Scan ablegen“ nennt in Safari den wahren Grund (Browser darf keine Ordner beschreiben) statt „Projekt öffnen“.
+- Neue Erfassung: Wechselt man das Formular (Asbest, Schimmelpilze, PN 98), springt die laufende Nummer auf die erste freie dieses Formulars statt auf die des zuvor gewählten.
 - Feldbögen: Die Auswahl des Formulars (Radio-Knöpfe) und „Leerformular ohne Projektdaten“ wirken nicht mehr überdimensioniert. Die Kästchen sind klein und stehen sauber neben ihrem Text, der Text erscheint nicht mehr in Großbuchstaben.
 
 ## 4.30.2 – Oktober 2026
