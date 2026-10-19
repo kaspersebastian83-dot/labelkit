@@ -2,7 +2,7 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.30.7** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.30.8** (Änderungen in `CHANGELOG.md`)
 
 ## Funktionen
 
@@ -44,7 +44,19 @@ In der **Projektzentrale** ein Projekt wählen und **„Proben erfassen → Labe
 
 Leere Vorbelegungsfelder lassen bestehende Angaben unverändert. Eine ausgefüllte ungültige Datums- oder Flächenangabe wird vor der Aktion zurückgewiesen; neue Proben erfordern eine ganze Anzahl von 1 bis 96. Abbrechen, Escape und Enter auf der vorausgewählten Abbrechen-Schaltfläche verändern weder Daten noch Rückgängig-Historie oder Speicherstatus. Jede tatsächliche Aktion lässt sich mit Strg/⌘+Z in einem Schritt rückgängig machen. Andere Probenarten bleiben erhalten; beim Hinzufügen verschieben sich ihre fortlaufenden Nummern nach der bestehenden gemeinsamen Nummerierung.
 
-## Speichern und wieder öffnen
+## Zwischenstand speichern (ab 4.30.8)
+
+Oben steht in jedem Reiter **Zwischenstand speichern**. Die Schaltfläche und **Strg/⌘+S** verwenden denselben Speicherweg und speichern ausschließlich die JSON-Projektdatei – auch wenn Pflichtangaben fehlen. Es entstehen keine Laboraufträge, Druckdokumente oder Textbausteine.
+
+- Mit geöffnetem Projekt wird wie bisher in **Laboraufträge** gespeichert. Sonst wird ein Speicherordner gewählt und für weitere Speicherungen wiederverwendet.
+- Ohne Ordnerzugriff startet ausschließlich der bestehende JSON-Download. Bitte den Download prüfen; der Browser kann dessen erfolgreiche Ablage nicht bestätigen. Ungespeicherte Änderungen bleiben entsprechend gekennzeichnet.
+- Der Status neben der Schaltfläche zeigt ungespeicherte Änderungen, laufendes Speichern, Erfolg, Abbruch oder Fehler. Erfolg wird erst nach abgeschlossenem Schreiben angezeigt. Änderungen während des Schreibens bleiben ungespeichert; gleichzeitige weitere Aufrufe werden abgefangen.
+- Zwischenstand und Abschluss teilen sich die Speichersperre. Während einer Speicherung bitte deren Ende abwarten und danach erneut speichern. Ein älterer Vorgang kann dadurch keinen neueren gespeicherten Stand überschreiben. Nach Änderungen oder Projekt-/Zielordnerwechseln bestätigt er den aktuellen Stand nicht als gespeichert.
+- Zum Weiterarbeiten die JSON-Datei über **Laden** importieren oder das Projekt öffnen (lädt die neueste Projektdatei).
+
+## Probenerfassung abschließen und Laborunterlagen speichern
+
+Zwischenspeichern ist keine Freigabe für Laborunterlagen. Der Abschluss prüft weiterhin unter anderem Projektnummer, Datum, Raum/Ort und Probennummern sowie die erforderliche Textbausteinfreigabe. Der bestehende ausdrücklich bestätigte Ausnahmeweg bleibt erhalten.
 
 1. Proben erfassen und unter **Probenerfassung abschließen** die Vollständigkeit prüfen.
 2. **Alle EOL + Projektdatei inkl. Textbausteine speichern** anklicken.
@@ -72,7 +84,7 @@ Keine echten Projektdaten, Laboraufträge oder Exporte in das öffentliche Repos
 
 ## Entwicklung und Prüfungen
 
-Die App steht in `index.html` (`APP_VERSION`, derzeit 4.30.7). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
+Die App steht in `index.html` (`APP_VERSION`, derzeit 4.30.8). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
 
 Mit Node.js aus dem Repository-Ordner ausführen:
 
@@ -100,6 +112,10 @@ node tests/pak-reset-browser.cjs chromium
 node tests/pak-reset-browser.cjs webkit
 node tests/pak-vorbelegung-browser.cjs chromium
 node tests/pak-vorbelegung-browser.cjs webkit
+node tests/zwischenstand-browser.cjs chromium
+node tests/zwischenstand-browser.cjs webkit
+node tests/speicher-races-browser.cjs chromium
+node tests/speicher-races-browser.cjs webkit
 ```
 
 GitHub führt alle Prüfungen bei jedem Pull Request automatisch aus (`.github/workflows/tests.yml`, Chromium und WebKit).
