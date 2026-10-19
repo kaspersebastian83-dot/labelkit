@@ -1,5 +1,11 @@
 # Änderungen
 
+## 4.30.7 – Oktober 2026
+
+- PAK-Vorbelegung: Hinzufügen neuer Proben, Ergänzen leerer Angaben und Ändern bestehender Angaben sind jetzt getrennte Aktionen. Hinzufügen überschreibt keine vorhandenen Angaben mehr.
+- Vor Sammeländerungen zeigt eine Bestätigung die betroffenen PAK-Probennummern, Felder, neuen Werte und Überschreibungen. Abbrechen verändert keine Daten, Undo-Historie oder Speicherstatus; tatsächliche Änderungen bleiben in einem Schritt rückgängig machbar.
+- Ungültige Anzahl, Datum und Fläche werden vor der Aktion abgefangen; wirkungslose Ergänzungen erzeugen keinen Undo-Eintrag und keinen geänderten Speicherstatus. Datenformat, andere Probenarten und gemeinsame Nummerierungsregel bleiben erhalten.
+
 ## 4.30.6 – Oktober 2026
 
 - PAK-Erfassung: „Neue Proben“ heißt jetzt „PAK-Proben zurücksetzen …“ und steht getrennt von der Probenerfassung unter „Weitere Aktionen“. Ohne PAK-Proben ist die Aktion deaktiviert.

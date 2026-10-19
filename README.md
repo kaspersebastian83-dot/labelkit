@@ -2,7 +2,7 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.30.6** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.30.7** (Änderungen in `CHANGELOG.md`)
 
 ## Funktionen
 
@@ -36,6 +36,14 @@ In der **Projektzentrale** ein Projekt wählen und **„Proben erfassen → Labe
 - Der Archivordner wird aus dem gemeinsamen Browser-Speicher der Projektzentrale übernommen (IndexedDB `mosaik-suite`, Schlüssel `archiv`). Nach einem Browserneustart genügt „Zugriff erlauben und öffnen“.
 - „← Projektzentrale“ führt zurück zur Projektübersicht.
 
+## PAK-Proben vorbelegen (ab 4.30.7)
+
+- **Neue Proben hinzufügen** legt ausschließlich die angegebene Anzahl neuer PAK-Wischproben mit Projektnummer, Datum und Fläche aus der Vorbelegung an. Bestehende Angaben werden nicht verändert. Ohne Fläche gilt für neue Wischproben wie bisher 600 cm².
+- **Leere Angaben ergänzen** ergänzt nur fehlende Projektnummern, Datumsangaben und Flächen vorhandener PAK-Proben (Fläche nur bei Wischproben). Es entstehen keine neuen Proben.
+- **Bestehende Angaben ändern …** zeigt zuerst je Feld die betroffenen PAK-Probennummern, den neuen Wert und die Anzahl der Überschreibungen. Leere Angaben bleiben dabei leer. Erst **Genannte Angaben jetzt ändern** führt die Sammeländerung aus. Häkchen in der Probenliste schränken diese Aktion nicht ein.
+
+Leere Vorbelegungsfelder lassen bestehende Angaben unverändert. Eine ausgefüllte ungültige Datums- oder Flächenangabe wird vor der Aktion zurückgewiesen; neue Proben erfordern eine ganze Anzahl von 1 bis 96. Abbrechen, Escape und Enter auf der vorausgewählten Abbrechen-Schaltfläche verändern weder Daten noch Rückgängig-Historie oder Speicherstatus. Jede tatsächliche Aktion lässt sich mit Strg/⌘+Z in einem Schritt rückgängig machen. Andere Probenarten bleiben erhalten; beim Hinzufügen verschieben sich ihre fortlaufenden Nummern nach der bestehenden gemeinsamen Nummerierung.
+
 ## Speichern und wieder öffnen
 
 1. Proben erfassen und unter **Probenerfassung abschließen** die Vollständigkeit prüfen.
@@ -64,7 +72,7 @@ Keine echten Projektdaten, Laboraufträge oder Exporte in das öffentliche Repos
 
 ## Entwicklung und Prüfungen
 
-Die App steht in `index.html` (`APP_VERSION`, derzeit 4.30.6). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
+Die App steht in `index.html` (`APP_VERSION`, derzeit 4.30.7). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
 
 Mit Node.js aus dem Repository-Ordner ausführen:
 
@@ -75,6 +83,7 @@ node tests/feldboegen.cjs
 node tests/feldprotokolle.cjs
 node tests/kuerzel.cjs
 node tests/pak-reset.cjs
+node tests/pak-vorbelegung.cjs
 ```
 
 Zusätzlich gibt es Browsertests für die Feldbögen (Vorschau, Blattüberlauf, Druckfenster mit Schrift und Logo), für die Anzeige der Projektdaten (`tests/projektdaten-browser.cjs`), für die Leiste mit Projekt und Arbeitsschritten (`tests/leiste-browser.cjs`) und für die Erfassung mit Scan-Ablage (in Chromium mit nachgebildetem Projektordner, in WebKit nur die Erfassung). Er braucht Playwright, das nicht im Repository geführt wird:
@@ -89,6 +98,8 @@ node tests/projektdaten-browser.cjs chromium
 node tests/leiste-browser.cjs chromium
 node tests/pak-reset-browser.cjs chromium
 node tests/pak-reset-browser.cjs webkit
+node tests/pak-vorbelegung-browser.cjs chromium
+node tests/pak-vorbelegung-browser.cjs webkit
 ```
 
 GitHub führt alle Prüfungen bei jedem Pull Request automatisch aus (`.github/workflows/tests.yml`, Chromium und WebKit).
