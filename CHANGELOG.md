@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.30.5 – Oktober 2026
+
+- Behoben: Die Leiste oben zeigt jetzt das Objekt aus der Projektzentrale neben dem Projekt. Sie suchte es bisher an einer Stelle in „_Projekt.json“, an der die Projektzentrale es nicht ablegt.
+
 ## 4.30.4 – Oktober 2026
 
 - Behoben: In Browsern ohne Ordnerzugriff (Safari) speicherte „💾 Speichern“ im Reiter „Ausgefüllte Bögen erfassen“ nichts, solange nur Feldprotokolle vorhanden waren („Keine Proben vorhanden“). Jetzt wird die Projektdatei heruntergeladen und lässt sich über „Laden“ wieder öffnen.
