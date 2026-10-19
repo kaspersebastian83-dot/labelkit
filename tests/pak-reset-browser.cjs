@@ -14,9 +14,10 @@ const name = process.argv[2] || 'chromium';
     browser = await playwright[name].launch();
     const context = await browser.newContext({viewport: {width: 1280, height: 900}, acceptDownloads: true});
     await context.addInitScript(() => localStorage.setItem('willkommen-gelesen', '1'));
-    const page = await context.newPage(), errors = [];
+    const page = await context.newPage(), errors = [], downloads = [], prompts = [];
+    page.on('download', d => downloads.push(d.suggestedFilename()));
     page.on('pageerror', e => errors.push(e.message));
-    page.on('dialog', d => d.dismiss());
+    page.on('dialog', d => {prompts.push(d.message()); d.dismiss();});
     await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
     await page.evaluate(() => {
       zeigWillkommen(); // Verzögerten Browserhinweis vor dem Test vollständig behandeln.
@@ -29,6 +30,7 @@ const name = process.argv[2] || 'chromium';
     assert.equal(await reset.isDisabled(), true);
     await page.evaluate(() => {
       document.getElementById('proj-nr').value = '26.0999';
+      probenStartNr = 7; bgBlind = false;
       addChloridProbe(); addAsbest(); addSonstige(); addBrandgeruchProbe(); addPn98Probe();
       addProbe({z2: 'Synthetischer Raum', notiz: 'Erhalten bei Abbruch'}); addProbe({z2: 'Zweiter Testraum'});
       renummerieren(); renderTable();
@@ -44,6 +46,42 @@ const name = process.argv[2] || 'chromium';
     await page.locator('#pak-reset-abbrechen').click();
     const unchanged = await state(); delete unchanged.saved.gespeichertAm; const baseline = structuredClone(before); delete baseline.saved.gespeichertAm;
     assert.deepEqual(unchanged, baseline);
+    // Vorhandene Undo-Historie: globale App-Aktionen dürfen im Resetdialog nichts auslösen.
+    assert.ok(before.undo.length > 0);
+    for (const modifier of ['Control', 'Meta']) {
+      await reset.click();
+      const promptCount = prompts.length, downloadCount = downloads.length;
+      for (const shortcut of ['Enter', 'z', 'Shift+E', 's']) {
+        await page.keyboard.press(`${modifier}+${shortcut}`);
+        await page.waitForTimeout(100); // Auch verzögerten Fokus und Speichervorgänge beobachten.
+        assert.equal(await dialog.isVisible(), true, `${modifier}+${shortcut}: Resetdialog bleibt offen`);
+        const during = await state(); delete during.saved.gespeichertAm;
+        assert.deepEqual(during, baseline, `${modifier}+${shortcut}: Daten, Undo und Speicherstatus unverändert`);
+        assert.equal(await page.locator('.modal-overlay.open').count(), 0, 'Keine zusätzliche Eingabemaske');
+        assert.equal(prompts.length, promptCount, 'Kein zusätzlicher Browserdialog');
+        assert.equal(downloads.length, downloadCount, 'Kein Speichern/Download');
+        assert.match(await dialog.textContent(), /Alle 2 PAK-Proben/);
+      }
+      assert.equal(await page.evaluate(() => istModalOffen()), true);
+      // Native Tab-Reihenfolge hängt bei WebKit von der Plattform-Tastatursteuerung ab.
+      // Die App darf weder Tab noch Shift+Tab abfangen oder den Dialog schließen.
+      for (const key of ['Tab', 'Shift+Tab']) {
+        await page.evaluate(() => {
+          window.pakTabPrevented = null;
+          document.addEventListener('keydown', function observe(event) {
+            if (event.key !== 'Tab') return;
+            window.pakTabPrevented = event.defaultPrevented;
+            document.removeEventListener('keydown', observe);
+          });
+        });
+        await page.keyboard.press(key);
+        assert.equal(await page.evaluate(() => window.pakTabPrevented), false);
+        assert.equal(await dialog.isVisible(), true);
+      }
+      await page.locator('#pak-reset-abbrechen').click();
+      const cancelled = await state(); delete cancelled.saved.gespeichertAm;
+      assert.deepEqual(cancelled, baseline);
+    }
     await reset.click(); await page.keyboard.press('Escape');
     const escaped = await state(); delete escaped.saved.gespeichertAm; assert.deepEqual(escaped, baseline);
     await reset.click(); await page.keyboard.press('Enter');
@@ -58,6 +96,36 @@ const name = process.argv[2] || 'chromium';
     }
     for (const key of ['projekt','ui','brandgeruchProben','pn98Proben','pn98Projekt','feldprotokolle','probenStartNr','sonstigeNextId','asbestNextId']) assert.deepEqual(after.saved[key], before.saved[key]);
     assert.equal(await reset.isDisabled(), true);
+    // Direkt nach Reset, VOR Rückgängig: JSON und echte Sammel-Laborübergaben enthalten nur die verbleibenden Proben.
+    const [resetDownload] = await Promise.all([page.waitForEvent('download'), page.evaluate(() => exportJSON())]);
+    const resetJson = JSON.parse(fs.readFileSync(await resetDownload.path(), 'utf8'));
+    const expectedReset = structuredClone(after.saved); delete expectedReset.gespeichertAm;
+    const actualReset = structuredClone(resetJson); delete actualReset.gespeichertAm;
+    assert.deepEqual(actualReset, expectedReset);
+    for (const [i, key] of ['chloridProben', 'asbestProben', 'sonstigeProben'].entries()) assert.equal(resetJson[key][0]._nr, 7 + i);
+    assert.equal(resetJson.chloridProben[0].chloridNr, 7);
+    const files = await page.evaluate(async () => {
+      // Nur die Dateisystemgrenze nachbilden, alle Exportgeneratoren unverändert ausführen.
+      const previousPicker = window.showDirectoryPicker, previousFolder = letzterSpeicherOrdner;
+      const written = [];
+      window.showDirectoryPicker = async () => ({name: 'Synthetischer Exportordner', async getFileHandle(name) {
+        return {async createWritable() {return {async write(content) {written.push({name, content});}, async close() {}};}};
+      }});
+      try {await alleUebergabenSpeichernMitWord({skipValidation: true}); return written;}
+      finally {window.showDirectoryPicker = previousPicker; letzterSpeicherOrdner = previousFolder;}
+    });
+    assert.ok(files.some(file => file.name.endsWith('_Daten.json')));
+    const exportedJson = JSON.parse(files.find(file => file.name.endsWith('_Daten.json')).content);
+    delete exportedJson.gespeichertAm; assert.deepEqual(exportedJson, expectedReset);
+    const sheets = files.filter(file => file.name.endsWith('.xls'));
+    assert.equal(sheets.length, 3); assert.ok(!files.some(file => /_PAK_/.test(file.name)));
+    for (const [i, type] of ['Chlorid', 'Asbest', 'Sonstige'].entries()) {
+      const file = sheets.find(file => file.name.includes(`_${type}_`)); assert.ok(file, `${type} erhalten`);
+      const rows = await page.evaluate(content => [...new DOMParser().parseFromString(content, 'text/html').querySelectorAll('tr')].map(row => [...row.querySelectorAll('td')].map(cell => cell.textContent)), file.content);
+      assert.equal(rows.length, 2); assert.equal(rows[1][0], `Probe ${7 + i}`);
+      assert.ok(!file.content.includes('Synthetischer Raum') && !file.content.includes('Zweiter Testraum'));
+    }
+    assert.equal((await state()).undo.length, after.undo.length, 'Export verändert Undo-Historie nicht');
     // Rückgängig und reguläre Eingabe arbeiten weiter, auch im Kartenmodus.
     await page.evaluate(() => undoLetzteAktion());
     const restored = await state(); assert.deepEqual(restored.saved.proben, before.saved.proben);
@@ -79,6 +147,6 @@ const name = process.argv[2] || 'chromium';
     const box = await dialog.boundingBox(); assert.ok(box.x >= 0 && box.x + box.width <= 391, 'Dialog passt auf schmalen Bildschirm');
     await page.keyboard.press('Escape');
     assert.deepEqual(errors, []);
-    console.log(`PAK-Reset (${name}): Abbrechen, Escape/Enter, Bestätigung, andere Daten, Rückgängig, Eingabe, JSON/Import, Laborübergabe und schmaler Dialog bestanden.`);
+    console.log(`PAK-Reset (${name}): Abbrechen, Dialog-Tastenkürzelsperre (Strg/⌘), Escape/Enter/Tab, Reset-Exporte, andere Daten, Rückgängig, Eingabe, JSON/Import und schmaler Dialog bestanden.`);
   } finally {if (browser) await browser.close(); server.close();}
 })().catch(e => {console.error(e); process.exitCode = 1;});

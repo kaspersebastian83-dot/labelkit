@@ -6294,13 +6294,18 @@ function flash(msg){
 }
 
 function istModalOffen(){
-  return !!document.querySelector('.modal-overlay.open');
+  return !!document.querySelector('.modal-overlay.open, dialog[open]');
 }
 function istTabAktiv(id){
   const el=document.getElementById(id);
   return !!(el&&el.classList.contains('active'));
 }
 document.addEventListener('keydown',e=>{
+  // Im Resetdialog gelten nur dessen native Tasten (Tab, Enter, Escape), keine App-Aktionen.
+  if(document.getElementById('modal-pak-reset').open){
+    if(e.ctrlKey||e.metaKey)e.preventDefault();
+    return;
+  }
   const inTextField=e.target&&e.target.closest&&e.target.closest('input,textarea,select,[contenteditable="true"]');
   if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&!istModalOffen()&&istTabAktiv('tab-eingabe')){
     e.preventDefault();addProbe();
