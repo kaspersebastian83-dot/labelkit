@@ -1,5 +1,10 @@
 # Änderungen
 
+## 4.30.6 – Oktober 2026
+
+- PAK-Erfassung: „Neue Proben“ heißt jetzt „PAK-Proben zurücksetzen …“ und steht getrennt von der Probenerfassung unter „Weitere Aktionen“. Ohne PAK-Proben ist die Aktion deaktiviert.
+- Die Bestätigung nennt Anzahl und Projekt, erklärt den Verlust der PAK-Angaben und die bestehende Neunummerierung. „Abbrechen“ ist vorausgewählt; Abbrechen und Escape lassen alle Daten unverändert. Andere Probenarten und Projektangaben bleiben erhalten.
+
 ## 4.30.5 – Oktober 2026
 
 - Behoben: Die Leiste oben zeigt jetzt das Objekt aus der Projektzentrale neben dem Projekt. Sie suchte es bisher an einer Stelle in „_Projekt.json“, an der die Projektzentrale es nicht ablegt.
