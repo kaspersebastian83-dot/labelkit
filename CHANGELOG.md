@@ -1,5 +1,11 @@
 # Änderungen
 
+## 4.30.8 – Oktober 2026
+
+- Gut sichtbares „Zwischenstand speichern“ in allen Reitern, über denselben Speicherweg wie Strg/⌘+S. Unvollständige Erfassungen werden ausschließlich als JSON-Projektdatei gespeichert.
+- Ohne Ordnerzugriff verwendet Strg/⌘+S jetzt den bestehenden JSON-Download statt des Abschlusswegs; es entstehen keine Laborunterlagen. Abschlussprüfungen bleiben unverändert.
+- Speicherstatus zeigt laufendes Speichern, Abbruch und Fehler. Änderungen während des Schreibens werden nicht als gespeichert gekennzeichnet; parallele Zwischenstand-Speicherungen werden verhindert. Datenformat, Ordnerstruktur, Nummerierung und Undo bleiben erhalten.
+
 ## 4.30.7 – Oktober 2026
 
 - PAK-Vorbelegung: Hinzufügen neuer Proben, Ergänzen leerer Angaben und Ändern bestehender Angaben sind jetzt getrennte Aktionen. Hinzufügen überschreibt keine vorhandenen Angaben mehr.

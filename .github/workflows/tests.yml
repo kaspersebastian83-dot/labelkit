@@ -63,3 +63,6 @@ jobs:
 
       - name: PAK defaults with separate add, fill and confirmed update actions
         run: node tests/pak-vorbelegung-browser.cjs ${{ matrix.browser }}
+
+      - name: Interim save, errors, JSON round-trip and completion boundary
+        run: node tests/zwischenstand-browser.cjs ${{ matrix.browser }}
