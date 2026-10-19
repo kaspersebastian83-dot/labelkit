@@ -3338,7 +3338,40 @@ function chloridProjektnrUebernehmen(){
 }
 
 const projektStatus={dirty:true,lastSavedAt:null,filename:'',folder:''};
-let speichernAktiv=false, speicherHinweis='';
+let speichernAktiv=false, speicherHinweis='', speicherKontextRevision=0;
+
+// Gemeinsame Sperre für Zwischenstand und Abschluss, einschließlich Ordnerauswahl.
+function projektSpeichernStarten(){
+  if(speichernAktiv){flash('Speichern läuft bereits – bitte danach erneut speichern.');return false;}
+  speichernAktiv=true;speicherHinweis='';
+  document.getElementById('btn-zwischenstand-speichern').disabled=true;
+  updateProjektStatus();return true;
+}
+function projektSpeichernBeenden(){
+  speichernAktiv=false;
+  document.getElementById('btn-zwischenstand-speichern').disabled=false;
+  updateProjektStatus();
+}
+function projektSpeicherKontext(){
+  return {revision:speicherKontextRevision,ordner:letzterSpeicherOrdner,
+    projekt:typeof PROJEKTORDNER==='undefined'?null:PROJEKTORDNER.state.proj};
+}
+function projektSpeicherKontextAktuell(kontext){
+  const jetzt=projektSpeicherKontext();
+  return jetzt.revision===kontext.revision&&jetzt.ordner===kontext.ordner&&jetzt.projekt===kontext.projekt;
+}
+function projektSpeicherStand(content){
+  const data=JSON.parse(content);delete data.gespeichertAm;return JSON.stringify(data);
+}
+function projektSpeicherStandAktuell(daten,kontext){
+  const jetzt=buildProjektSaveData();
+  return projektSpeicherKontextAktuell(kontext)&&jetzt.filename===daten.filename&&projektSpeicherStand(jetzt.content)===projektSpeicherStand(daten.content);
+}
+function projektSpeicherStandVeraltet(geschrieben){
+  markUnsaved();
+  speicherHinweis=geschrieben?'Früherer Zwischenstand gespeichert · aktuelle Änderungen noch nicht gespeichert':'Angaben, Projekt oder Zielordner geändert · bitte erneut speichern';
+  flash(speicherHinweis);
+}
 
 function formatZeit(d){
   return d?d.toLocaleDateString('de-DE')+' '+d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}):'';
@@ -4209,6 +4242,8 @@ function applyProjektData(data,fallbackNr){
   if(!data||typeof data!=='object') throw new Error('Ungültige Projektdatei');
   const hasAnyList=['proben','chloridProben','asbestProben','sonstigeProben','brandgeruchProben','pn98Proben','feldprotokolle'].some(k=>Array.isArray(data[k]));
   if(!hasAnyList) throw new Error('Keine Probendaten in Projektdatei');
+
+  speicherKontextRevision++;
 
   proben=Array.isArray(data.proben)?data.proben:[];
   chloridProben=Array.isArray(data.chloridProben)?data.chloridProben:[];
@@ -5600,6 +5635,7 @@ function downloadJSON(content,filename){
 
 // Gespeicherten Ordner zurücksetzen
 function ordnerZuruecksetzen(){
+  speicherKontextRevision++;
   letzterSpeicherOrdner=null;
   ['pak','chlorid','asbest','sonstige'].forEach(t=>{
     const el=document.getElementById(t+'-save-path');
@@ -6895,35 +6931,31 @@ function updateMainTabBadges(){
 // ── CTRL+S SPEICHERN ─────────────────────────────────
 let letzterSpeicherOrdner=null;
 async function schnellSpeichern(){
-  if(speichernAktiv)return;
   const gesamt=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length;
   if(!gesamt){flash('Keine Proben zum Speichern');return;}
-  speichernAktiv=true;speicherHinweis='';
-  const button=document.getElementById('btn-zwischenstand-speichern');
-  button.disabled=true;updateProjektStatus();
+  if(!projektSpeichernStarten())return;
+  const kontext=projektSpeicherKontext();
   try{
+    const projDaten=buildProjektSaveData();
     if(window.showDirectoryPicker){
       let dir=letzterSpeicherOrdner;
       if(!dir){
         dir=await window.showDirectoryPicker({mode:'readwrite'});
-        letzterSpeicherOrdner=dir;
       }
+      if(!projektSpeicherStandAktuell(projDaten,kontext)){projektSpeicherStandVeraltet(false);return;}
+      letzterSpeicherOrdner=dir;kontext.ordner=dir;
       // Derselbe zentrale JSON-Snapshot wie bisher, keine Abschlussprodukte.
-      const projDaten=buildProjektSaveData();
       const fh=await dir.getFileHandle(projDaten.filename,{create:true});
       const w=await fh.createWritable();
       await w.write(projDaten.content);
       await w.close();
       // Während des Schreibens kann weitergearbeitet oder das Projekt gewechselt werden.
       // Nur der tatsächlich geschriebene Stand darf als gespeichert erscheinen.
-      const stand=content=>{const data=JSON.parse(content);delete data.gespeichertAm;return JSON.stringify(data);};
-      if(letzterSpeicherOrdner===dir&&stand(buildProjektSaveData().content)===stand(projDaten.content)){
+      if(projektSpeicherStandAktuell(projDaten,kontext)){
         markSaved(projDaten.filename,dir.name);
         flash('Zwischenstand in „'+dir.name+'“ gespeichert ✓');
       }else{
-        markUnsaved();
-        speicherHinweis='Früherer Zwischenstand gespeichert · aktuelle Änderungen noch nicht gespeichert';
-        flash(speicherHinweis);
+        projektSpeicherStandVeraltet(true);
       }
     }else{
       // Vorhandener Einzeldatei-Download statt des bisherigen Abschluss-Fallbacks.
@@ -6934,13 +6966,13 @@ async function schnellSpeichern(){
     if(e.name==='AbortError'){
       speicherHinweis='Speichern abgebrochen'+(projektStatus.dirty?' · Änderungen noch nicht gespeichert':'');
     }else{
-      letzterSpeicherOrdner=null;
+      if(projektSpeicherKontextAktuell(kontext))letzterSpeicherOrdner=null;
       markUnsaved();
       speicherHinweis='Speichern fehlgeschlagen · Änderungen noch nicht gespeichert. Bitte erneut speichern und Ordnerzugriff erlauben.';
     }
     flash(speicherHinweis);
   }finally{
-    speichernAktiv=false;button.disabled=false;updateProjektStatus();
+    projektSpeichernBeenden();
   }
 }
 
@@ -8244,6 +8276,9 @@ function druckenPn98(){
 
 
 async function alleUebergabenSpeichernMitWord(options){
+  if(!projektSpeichernStarten())return;
+  const kontext=projektSpeicherKontext();
+  try{
   options=options||{};
   const gesamt=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length;
   if(!gesamt){flash('Keine Proben vorhanden');return;}
@@ -8266,6 +8301,7 @@ async function alleUebergabenSpeichernMitWord(options){
   if(brandgeruchProben.length&&bgBlind&&!confirm('Blind-Modus aktiv \u2013 die Brandgeruch-Bewertungen w\u00fcrden verdeckt (als \u201e\u2022\u201c) exportiert.\n\nEmpfehlung: Abbrechen und zuerst im Reiter \u201eBrandgeruch\u201c auf \u201eErgebnisse aufdecken\u201c klicken.\n\nTrotzdem verdeckt exportieren?')) return;
 
   // Ordner direkt im Klick-Ablauf wählen, bevor die Exportdateien erzeugt werden.
+  const ausgangsStand=buildProjektSaveData();
   let dir=null;
   if(typeof window.showDirectoryPicker==='function'){
     try{
@@ -8273,7 +8309,8 @@ async function alleUebergabenSpeichernMitWord(options){
       if(letzterSpeicherOrdner) pickerOptions.startIn=letzterSpeicherOrdner;
       dir=await window.showDirectoryPicker(pickerOptions);
     }catch(err){
-      if(err.name==='AbortError'){flash('Speichern abgebrochen');return;}
+      if(err.name==='AbortError'){speicherHinweis='Speichern abgebrochen'+(projektStatus.dirty?' · Änderungen noch nicht gespeichert':'');flash(speicherHinweis);return;}
+      markUnsaved();speicherHinweis='Speichern fehlgeschlagen · Änderungen noch nicht gespeichert';
       alert('Die Ordnerauswahl konnte nicht geöffnet werden. Bitte den Speichern-Button erneut anklicken und die Datei direkt in Microsoft Edge oder Google Chrome öffnen.\n\n'+(err.message||err.name));
       flash('Ordnerauswahl fehlgeschlagen – keine Downloads gestartet');
       return;
@@ -8281,6 +8318,8 @@ async function alleUebergabenSpeichernMitWord(options){
   }else if(!confirm('Dieser Browser unterstützt keine direkte Ordnerauswahl. Öffne LabelKit in Microsoft Edge oder Google Chrome, um alle Dateien gemeinsam in einem Projektordner zu speichern.\n\nStattdessen alle Dateien als Downloads speichern?')){
     return;
   }
+  if(!projektSpeicherStandAktuell(ausgangsStand,kontext)){projektSpeicherStandVeraltet(false);return;}
+  if(dir){letzterSpeicherOrdner=dir;kontext.ordner=dir;}
 
   function buildXls(probenListe, beschrFn, istSonstige){
     const hatUntersuchungsparameter=istSonstige||probenListe===chloridProben;
@@ -8485,11 +8524,16 @@ async function alleUebergabenSpeichernMitWord(options){
         await w.close();
         gespeichert++;
       }
-      letzterSpeicherOrdner=dir;
-      markSaved(projDaten.filename,dir.name);
-      flash('✓ '+files.length+' Dateien in „'+dir.name+'" gespeichert');
-      projektArchivAutoSave();
+      if(projektSpeicherStandAktuell(projDaten,kontext)){
+        markSaved(projDaten.filename,dir.name);
+        flash('✓ '+files.length+' Dateien in „'+dir.name+'" gespeichert');
+        projektArchivAutoSave();
+      }else{
+        projektSpeicherStandVeraltet(true);
+      }
     } catch(err){
+      if(projektSpeicherKontextAktuell(kontext))letzterSpeicherOrdner=null;
+      markUnsaved();speicherHinweis='Speichern fehlgeschlagen · Änderungen noch nicht gespeichert';
       alert('Speichern in „'+dir.name+'“ fehlgeschlagen. '+gespeichert+' von '+files.length+' Dateien wurden vollständig gespeichert. Bitte den Ordner prüfen und erneut speichern.\n\n'+(err.message||err.name));
       flash('Speichern fehlgeschlagen – keine Downloads gestartet');
     }
@@ -8504,6 +8548,7 @@ async function alleUebergabenSpeichernMitWord(options){
     updateProjektStatus();
     flash('Downloads gestartet – bitte Dateien prüfen');
   }
+  }finally{projektSpeichernBeenden();}
 }
 
 renderTable();

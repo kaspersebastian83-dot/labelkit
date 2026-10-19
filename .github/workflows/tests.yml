@@ -66,3 +66,6 @@ jobs:
 
       - name: Interim save, errors, JSON round-trip and completion boundary
         run: node tests/zwischenstand-browser.cjs ${{ matrix.browser }}
+
+      - name: Shared save guard, completion races and stale save confirmations
+        run: node tests/speicher-races-browser.cjs ${{ matrix.browser }}

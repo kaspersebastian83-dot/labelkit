@@ -6,6 +6,7 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const exportCode = html.slice(html.indexOf('async function alleUebergabenSpeichernMitWord(options){'), html.indexOf('\nrenderTable();\nupdateMainTabBadges();\ninitApp();'));
 const approvalCode = html.slice(html.indexOf('function textbausteineFreigebenUndAbschluss(){'), html.indexOf('\nasync function textblockInZwischenablage'));
+const saveGuardCode = html.slice(html.indexOf('function projektSpeichernStarten(){'), html.indexOf('\nfunction formatZeit('));
 
 async function scenario({picker = 'ok', writeFailure = false, downloadApproval = false} = {}) {
   const events = [], written = [], alerts = [];
@@ -21,6 +22,7 @@ async function scenario({picker = 'ok', writeFailure = false, downloadApproval =
     proben: [sample], chloridProben: [sample], asbestProben: [sample], sonstigeProben: [sample],
     brandgeruchProben: [], pn98Proben: [], bgBlind: false,
     letzterSpeicherOrdner: null, textblockFreigabeSignatur: 'approved',
+    speichernAktiv: false, speicherHinweis: '', speicherKontextRevision: 0,
     window: {}, document: {
       getElementById: () => ({value: 'Testprojekt', checked: false}),
       createElement: () => ({click() {events.push('download');}})
@@ -36,6 +38,7 @@ async function scenario({picker = 'ok', writeFailure = false, downloadApproval =
     createTextblockDocxBytes: () => new Uint8Array([80, 75]),
     buildProjektSaveData: () => ({filename: 'Projekt.json', content: '{"test":true}'}),
     markSaved: (...args) => events.push(['saved', ...args]),
+    markUnsaved() {context.projektStatus.dirty = true;},
     flash: message => events.push(message), alert: message => alerts.push(message),
     projektArchivAutoSave: () => events.push('archive'), projektStatus: {}, updateProjektStatus() {},
     confirm: () => downloadApproval, setTimeout: fn => fn(),
@@ -48,6 +51,7 @@ async function scenario({picker = 'ok', writeFailure = false, downloadApproval =
     return dir;
   };
   vm.createContext(context);
+  vm.runInContext(saveGuardCode, context);
   vm.runInContext(exportCode, context);
   await context.alleUebergabenSpeichernMitWord({skipValidation: true});
   return {events, written, alerts, context};

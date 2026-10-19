@@ -51,6 +51,7 @@ Oben steht in jedem Reiter **Zwischenstand speichern**. Die Schaltfläche und **
 - Mit geöffnetem Projekt wird wie bisher in **Laboraufträge** gespeichert. Sonst wird ein Speicherordner gewählt und für weitere Speicherungen wiederverwendet.
 - Ohne Ordnerzugriff startet ausschließlich der bestehende JSON-Download. Bitte den Download prüfen; der Browser kann dessen erfolgreiche Ablage nicht bestätigen. Ungespeicherte Änderungen bleiben entsprechend gekennzeichnet.
 - Der Status neben der Schaltfläche zeigt ungespeicherte Änderungen, laufendes Speichern, Erfolg, Abbruch oder Fehler. Erfolg wird erst nach abgeschlossenem Schreiben angezeigt. Änderungen während des Schreibens bleiben ungespeichert; gleichzeitige weitere Aufrufe werden abgefangen.
+- Zwischenstand und Abschluss teilen sich die Speichersperre. Während einer Speicherung bitte deren Ende abwarten und danach erneut speichern. Ein älterer Vorgang kann dadurch keinen neueren gespeicherten Stand überschreiben. Nach Änderungen oder Projekt-/Zielordnerwechseln bestätigt er den aktuellen Stand nicht als gespeichert.
 - Zum Weiterarbeiten die JSON-Datei über **Laden** importieren oder das Projekt öffnen (lädt die neueste Projektdatei).
 
 ## Probenerfassung abschließen und Laborunterlagen speichern
@@ -113,6 +114,8 @@ node tests/pak-vorbelegung-browser.cjs chromium
 node tests/pak-vorbelegung-browser.cjs webkit
 node tests/zwischenstand-browser.cjs chromium
 node tests/zwischenstand-browser.cjs webkit
+node tests/speicher-races-browser.cjs chromium
+node tests/speicher-races-browser.cjs webkit
 ```
 
 GitHub führt alle Prüfungen bei jedem Pull Request automatisch aus (`.github/workflows/tests.yml`, Chromium und WebKit).

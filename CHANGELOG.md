@@ -2,6 +2,7 @@
 
 ## 4.30.8 – Oktober 2026
 
+- Zwischenstand und Abschluss verwenden eine gemeinsame Speichersperre. Veraltete Vorgänge nach Daten-, Projekt- oder Zielordnerwechseln bestätigen keinen aktuellen Speichererfolg; Regressionstests prüfen beide Startrichtungen und die tatsächlich geschriebenen Dateiinhalte.
 - Gut sichtbares „Zwischenstand speichern“ in allen Reitern, über denselben Speicherweg wie Strg/⌘+S. Unvollständige Erfassungen werden ausschließlich als JSON-Projektdatei gespeichert.
 - Ohne Ordnerzugriff verwendet Strg/⌘+S jetzt den bestehenden JSON-Download statt des Abschlusswegs; es entstehen keine Laborunterlagen. Abschlussprüfungen bleiben unverändert.
 - Speicherstatus zeigt laufendes Speichern, Abbruch und Fehler. Änderungen während des Schreibens werden nicht als gespeichert gekennzeichnet; parallele Zwischenstand-Speicherungen werden verhindert. Datenformat, Ordnerstruktur, Nummerierung und Undo bleiben erhalten.
