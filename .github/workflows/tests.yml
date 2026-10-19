@@ -26,6 +26,7 @@ jobs:
       - run: node tests/feldboegen.cjs
       - run: node tests/feldprotokolle.cjs
       - run: node tests/kuerzel.cjs
+      - run: node tests/pak-reset.cjs
 
   browser-tests:
     name: Browser tests (${{ matrix.browser }})
@@ -55,3 +56,6 @@ jobs:
         run: node tests/feldprotokolle-ohne-ordner.cjs ${{ matrix.browser }}
       - name: Mosaik bar (project, steps, next step) in the real browser
         run: node tests/leiste-browser.cjs ${{ matrix.browser }}
+
+      - name: PAK reset with cancellation, entry and export regression checks
+        run: node tests/pak-reset-browser.cjs ${{ matrix.browser }}
