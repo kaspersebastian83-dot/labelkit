@@ -11,7 +11,7 @@ const playwright = require('playwright');
 
 const name = process.argv[2] || 'chromium';
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
-const PROJ = '26.0142 Teststadt';
+const PROJ = '26.0142 Köln & Süd + 50% #Hof';
 
 (async () => {
   const server = http.createServer((req, res) => { res.writeHead(200, {'content-type': 'text/html; charset=utf-8'}); res.end(html); });
@@ -50,6 +50,15 @@ const PROJ = '26.0142 Teststadt';
   }, PROJ);
   await page.goto(url + '?projekt=' + encodeURIComponent(PROJ));
   await page.waitForSelector('#pj-info:not([hidden])', {timeout: 8000});
+  assert.equal(new URL(page.url()).searchParams.has('projekt'), false, 'alter Query-Link bereinigt');
+  assert.equal(new URLSearchParams(new URL(page.url()).hash.slice(1)).get('projekt'), PROJ);
+  await page.goto(url + '?projekt=falsch&ansicht=liste#fotos&projekt=' + encodeURIComponent(PROJ));
+  await page.waitForSelector('#pj-info:not([hidden])', {timeout: 8000});
+  assert.equal(new URL(page.url()).searchParams.has('projekt'), false, 'Fragment gewinnt vor altem Query-Projekt');
+  assert.equal(new URL(page.url()).searchParams.get('ansicht'), 'liste');
+  assert.ok(new URL(page.url()).hash.startsWith('#fotos&'), 'fremdes Fragment erhalten');
+  assert.equal(await page.evaluate(() => PROJEKTORDNER.state.proj.name), PROJ, 'Fragment öffnet exakten Ordner mit Sonderzeichen');
+
   const info = (await page.locator('#pj-info').textContent()).replace(/\s+/g, ' ');
   assert.match(info, /Objekt EFH, Musterweg 7, 52525 Heinsberg/); assert.match(info, /Auftraggeber Beispiel Versicherung AG/); assert.match(info, /Schaden-Nr\. S-2026-4711/);
   assert.equal(await page.locator('#pj-info input, #pj-info textarea').count(), 0, 'nur Ansicht');
