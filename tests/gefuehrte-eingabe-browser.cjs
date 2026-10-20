@@ -125,6 +125,50 @@ const name = process.argv[2] || 'chromium';
     assert.deepEqual(await page.evaluate(() => cardActions), []);
     assert.equal(await page.locator('#fp-z2').inputValue(), 'OG Testraum');
     await closePanel();
+    // Physischer Doppelklick auf „Bearbeiten“: dispatchEvent('dblclick') umgeht das Hit-Testing.
+    // Hier zwei echte Zeigerklicks (page.mouse) mit geprüften Zielen: Klick 1 trifft den Knopf und
+    // blendet das Overlay ein, Klick 2 (detail 2) trifft darum das Overlay – das Panel muss offen bleiben.
+    await page.evaluate(() => {
+      undoStack = []; projektStatus.dirty = false; updateProjektStatus();
+      window.pointerLog = [];
+      const describe = el => el.id ? '#' + el.id : el.tagName.toLowerCase() + '.' + String(el.className).split(' ')[0];
+      for (const type of ['click', 'dblclick']) document.addEventListener(type, e => pointerLog.push({type: e.type, detail: e.detail, target: describe(e.target)}), true);
+    });
+    // Sofort (html hat scroll-behavior:smooth, sonst ändert sich die Lage während der Messung) in die
+    // Fenstermitte: am unteren Rand läge die feste Leiste #lk-flow über dem Knopf.
+    await edits.nth(1).evaluate(el => el.scrollIntoView({block: 'center', behavior: 'instant'}));
+    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+    const editBox = await edits.nth(1).boundingBox(), dx = editBox.x + editBox.width / 2, dy = editBox.y + editBox.height / 2;
+    before = await state();
+    await page.mouse.move(dx, dy);
+    await page.mouse.down({clickCount: 1}); await page.mouse.up({clickCount: 1});
+    assert.deepEqual(await page.evaluate(() => pointerLog.slice()), [{type: 'click', detail: 1, target: 'button.btn'}], 'Klick 1 trifft den Knopf');
+    assert.equal(await panel.evaluate(el => el.classList.contains('open')), true, 'Klick 1 öffnet das Panel');
+    assert.equal(await page.evaluate(([x, y]) => document.elementFromPoint(x, y).id, [dx, dy]), 'fokus-overlay',
+      'Nach Klick 1 liegt das Overlay über dem Knopf – sonst prüft der Test den Fehler nicht');
+    const afterFirst = await state();
+    await page.waitForTimeout(80);
+    await page.mouse.down({clickCount: 2}); await page.mouse.up({clickCount: 2});
+    await page.waitForTimeout(300);
+    const pointerLog = await page.evaluate(() => pointerLog.splice(0));
+    assert.deepEqual(pointerLog, [
+      {type: 'click', detail: 1, target: 'button.btn'},
+      {type: 'click', detail: 2, target: '#fokus-overlay'},
+      {type: 'dblclick', detail: 2, target: '#fokus-overlay'}]);
+    assert.equal(await panel.evaluate(el => el.classList.contains('open')), true, 'Doppelklick lässt das Panel offen');
+    assert.equal(await page.locator('#fokus-overlay').evaluate(el => el.style.display), 'block');
+    assert.equal(await page.locator('#fokus-titel').textContent(), 'Probe 8 bearbeiten');
+    assert.equal(await page.locator('#fp-z2').inputValue(), 'OG Testraum');
+    assert.deepEqual(await state(), afterFirst, 'Doppelklick ändert weder Daten noch Speicherstatus noch Undo');
+    assert.deepEqual(afterFirst.data, before.data); assert.deepEqual(afterFirst.undo, before.undo);
+    assert.equal(afterFirst.status.dirty, false, 'Öffnen und Doppelklick markieren nichts als ungespeichert');
+    // Gewollt bleibt: ein einzelner Klick neben das Panel schließt es (und speichert wie bisher).
+    await page.mouse.move(dx, dy); await page.waitForTimeout(600);   // außerhalb der Doppelklickzeit
+    await page.mouse.down({clickCount: 1}); await page.mouse.up({clickCount: 1});
+    assert.deepEqual((await page.evaluate(() => pointerLog.splice(0))).map(e => e.target + ':' + e.detail), ['#fokus-overlay:1']);
+    assert.equal(await panel.evaluate(el => el.classList.contains('open')), false, 'Einzelklick auf das Overlay schließt weiterhin');
+    assert.equal(await page.locator('#fokus-overlay').evaluate(el => el.style.display), 'none');
+    assert.equal((await state()).status.dirty, true);
     // Echter Doppelklick auf die Karte und auf die Tabellenzeile öffnet dieselbe Probe.
     await cards.nth(1).locator('.karte-nr').dblclick();
     assert.equal(await page.locator('#fp-z2').inputValue(), 'OG Testraum');

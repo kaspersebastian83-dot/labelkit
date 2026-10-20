@@ -2094,7 +2094,7 @@ body:not(.lg) .btn-secondary:hover{border-color:var(--accent);color:var(--accent
     <button class="btn btn-primary btn-sm" onclick="fokusSpeichern();schließeFokusPanell()">✓ Speichern & Schließen</button>
   </div>
 </div>
-<div id="fokus-overlay" onclick="schließeFokusPanell()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:149"></div>
+<div id="fokus-overlay" onclick="fokusOverlayKlick(event)" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:149"></div>
 
 <!-- PROJEKTARCHIV MODAL -->
 <div class="modal-overlay" id="modal-archiv">
@@ -6540,6 +6540,14 @@ function öffneFokusPanell(idx, typ){
   document.getElementById('fokus-panel').classList.add('open');
   document.getElementById('fokus-overlay').style.display='block';
   setTimeout(()=>document.getElementById('fp-z2').focus(),150);
+}
+
+// Ein Klick neben das Panel schließt es. Der zweite Klick eines Doppelklicks auf „Bearbeiten“
+// (oder ein dritter Klick nach Doppelklick auf Karte/Zeile) trifft das gerade eingeblendete Overlay
+// mit event.detail > 1 und gehört noch zur Öffnen-Geste – er darf das Panel nicht gleich wieder schließen.
+function fokusOverlayKlick(event){
+  if(event&&event.detail>1) return;
+  schließeFokusPanell();
 }
 
 function schließeFokusPanell(){
