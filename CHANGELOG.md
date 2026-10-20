@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.30.10 – 20. Oktober 2026
+
+- Projektzentrale und Spektron-Leiste übergeben Projekte jetzt über #projekt im Fragment. Sonderzeichen bleiben erhalten; alte ?projekt-Links funktionieren weiterhin und werden nach dem Laden bereinigt. Projektwechsel laden auch bereits geöffnete App-Fenster neu; eine Warnung vor ungesicherten Eingaben kann den Wechsel abbrechen.
+
 ## 4.30.9 – Oktober 2026
 
 - „Schnelleingabe“ heißt in der Oberfläche konsistent „Geführte Eingabe“. Bestehende Felder, Strg+Umschalt+E sowie Weiter-/Zurück-/Beenden-Verhalten bleiben erhalten.
