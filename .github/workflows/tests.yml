@@ -69,3 +69,6 @@ jobs:
 
       - name: Shared save guard, completion races and stale save confirmations
         run: node tests/speicher-races-browser.cjs ${{ matrix.browser }}
+
+      - name: Guided PAK entry and direct card editing with keyboard and JSON round-trip
+        run: node tests/gefuehrte-eingabe-browser.cjs ${{ matrix.browser }}

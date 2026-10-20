@@ -2,7 +2,7 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.30.8** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.30.9** (Änderungen in `CHANGELOG.md`)
 
 ## Funktionen
 
@@ -44,6 +44,14 @@ In der **Projektzentrale** ein Projekt wählen und **„Proben erfassen → Labe
 
 Leere Vorbelegungsfelder lassen bestehende Angaben unverändert. Eine ausgefüllte ungültige Datums- oder Flächenangabe wird vor der Aktion zurückgewiesen; neue Proben erfordern eine ganze Anzahl von 1 bis 96. Abbrechen, Escape und Enter auf der vorausgewählten Abbrechen-Schaltfläche verändern weder Daten noch Rückgängig-Historie oder Speicherstatus. Jede tatsächliche Aktion lässt sich mit Strg/⌘+Z in einem Schritt rückgängig machen. Andere Probenarten bleiben erhalten; beim Hinzufügen verschieben sich ihre fortlaufenden Nummern nach der bestehenden gemeinsamen Nummerierung.
 
+## Geführte Eingabe und PAK-Karten (ab 4.30.9)
+
+**Geführte Eingabe** (bisher „Schnelleingabe“) führt mit denselben Feldern Probe für Probe durch die vorhandene PAK-Liste. Starten über die Schaltfläche oder **Strg+Umschalt+E**; ohne PAK-Proben wird wie bisher eine Probe angelegt. **Weiter** bzw. Enter und **Zurück** übernehmen die Felder der aktuellen Probe. **Beenden** und Escape schließen wie bisher ohne zusätzliche Übernahme der noch nicht mit Weiter/Zurück bestätigten Felder.
+
+In der **Kartenansicht** öffnet **Bearbeiten** das vorhandene Seitenpanel für genau diese Probe. Die Schaltfläche ist per Tab erreichbar und mit Enter oder Leertaste bedienbar. Doppelklick auf Karte bzw. Tabellenzeile bleibt möglich. Der Panelkopf zeigt die bestehende fortlaufende Probennummer sowie Raum/Ort und Matrix, sofern vorhanden. Die Nummer entspricht auch nach Hinzufügen, Entfernen, Startnummeränderung und Ansichtswechsel der Karte und Tabelle.
+
+Das Panel übernimmt Feldeingaben weiterhin direkt; **Speichern & Schließen** bestätigt sie und schließt das Panel. Die Projektdatei wird anschließend über **Zwischenstand speichern** gesichert. Das bloße Öffnen legt keine Probe an und verändert weder Daten noch Speicherstatus oder Rückgängig-Historie. Das bestehende Schließverhalten bleibt erhalten: Beim Schließen werden Felder übernommen und der Stand als ungespeichert markiert, auch ohne bewusste Änderung. Einzelne Feldänderungen in Eingabe und Panel erzeugen wie bisher keinen eigenen Rückgängig-Schritt; bestehende Rückgängig-Aktionen wie Hinzufügen, Entfernen oder Startnummeränderung bleiben erhalten.
+
 ## Zwischenstand speichern (ab 4.30.8)
 
 Oben steht in jedem Reiter **Zwischenstand speichern**. Die Schaltfläche und **Strg/⌘+S** verwenden denselben Speicherweg und speichern ausschließlich die JSON-Projektdatei – auch wenn Pflichtangaben fehlen. Es entstehen keine Laboraufträge, Druckdokumente oder Textbausteine.
@@ -84,7 +92,7 @@ Keine echten Projektdaten, Laboraufträge oder Exporte in das öffentliche Repos
 
 ## Entwicklung und Prüfungen
 
-Die App steht in `index.html` (`APP_VERSION`, derzeit 4.30.8). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
+Die App steht in `index.html` (`APP_VERSION`, derzeit 4.30.9). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
 
 Mit Node.js aus dem Repository-Ordner ausführen:
 
@@ -116,11 +124,13 @@ node tests/zwischenstand-browser.cjs chromium
 node tests/zwischenstand-browser.cjs webkit
 node tests/speicher-races-browser.cjs chromium
 node tests/speicher-races-browser.cjs webkit
+node tests/gefuehrte-eingabe-browser.cjs chromium
+node tests/gefuehrte-eingabe-browser.cjs webkit
 ```
 
 GitHub führt alle Prüfungen bei jedem Pull Request automatisch aus (`.github/workflows/tests.yml`, Chromium und WebKit).
 
-Die Prüfungen decken den Sammel-Export mit simulierten Browser-Schnittstellen, Abbruch, Schreibfehler und Browserhinweise sowie die Feldbögen (Blattzahl, Formular-ID, Vorbelegung, Maskierung von Eingaben, Leerformular) und die Erfassung (Änderungsprotokoll, Prüfung, Plausibilitätshinweise, Scan-Dateinamen, Prüfsummen) ab. Echte Ordnerdialoge, Druckausgaben und die Darstellung in Office müssen zusätzlich praktisch geprüft werden.
+Die Prüfungen decken den Sammel-Export mit simulierten Browser-Schnittstellen, Abbruch, Schreibfehler und Browserhinweise sowie die Feldbögen (Blattzahl, Formular-ID, Vorbelegung, Maskierung von Eingaben, Leerformular) und die Erfassung (Änderungsprotokoll, Prüfung, Plausibilitätshinweise, Scan-Dateinamen, Prüfsummen) ab. Die Prüfungen für geführte Eingabe und PAK-Karten verwenden ausschließlich synthetische Daten und prüfen Tastatur, eindeutige Probenauswahl, Datenerhalt, JSON-Speichern/Laden, bestehendes Undo und die Darstellung bei 1280 und 390 px. Optional schreibt `SCREENSHOT_DIR` Bildschirmfotos außerhalb des Repositorys. Echte Ordnerdialoge, Druckausgaben und die Darstellung in Office müssen zusätzlich praktisch geprüft werden.
 
 ## Firmenspezifische Inhalte und Lizenz
 
