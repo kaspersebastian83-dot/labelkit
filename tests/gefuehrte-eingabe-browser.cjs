@@ -140,7 +140,10 @@ const name = process.argv[2] || 'chromium';
       await edits.first().focus(); await page.keyboard.press('Alt+Tab');
     }
     assert.equal(await edits.nth(1).evaluate(el => el === document.activeElement), true);
-    await page.keyboard.press('Enter');
+    // Die vorhandene Panelöffnung fokussiert nach 150 ms. Ein Timer einer
+    // zuvor rasch geschlossenen Probe darf die Testtaste nicht umleiten.
+    await edits.nth(1).press('Enter');
+    assert.equal(await panel.evaluate(el => el.classList.contains('open')), true, 'Enter öffnet das Panel');
     await page.waitForFunction(() => document.activeElement.id === 'fp-z2');
     before = await state();
     await page.locator('#fp-z2').fill('OG gezielt bearbeitet');
@@ -175,7 +178,8 @@ const name = process.argv[2] || 'chromium';
     assert.equal(changed.nextId, before.nextId); assert.deepEqual(changed.undo, before.undo);
     assert.equal(changed.status.dirty, true);
     // Auch Leertaste aktiviert den nativen Button.
-    await edits.nth(1).focus(); await page.keyboard.press('Space');
+    await edits.nth(1).focus(); await edits.nth(1).press('Space');
+    assert.equal(await panel.evaluate(el => el.classList.contains('open')), true, 'Leertaste öffnet das Panel');
     await page.waitForFunction(() => document.activeElement.id === 'fp-z2');
     assert.equal(await page.locator('#fp-z2').inputValue(), 'OG gezielt bearbeitet');
     await panel.locator('#fp-prev-btn').click();
