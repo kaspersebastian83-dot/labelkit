@@ -145,7 +145,30 @@ const name = process.argv[2] || 'chromium';
     before = await state();
     await page.locator('#fp-z2').fill('OG gezielt bearbeitet');
     await page.locator('#fp-notiz').fill('Nur diese Probe ändern');
-    await panel.getByRole('button', {name: '✓ Speichern & Schließen', exact: true}).click();
+    const panelSave = panel.getByRole('button', {name: '✓ Speichern & Schließen', exact: true});
+    try {
+      await panelSave.click();
+    } catch (error) {
+      // Linux-CI: einen außerhalb des Viewports liegenden Knopf diagnostizieren,
+      // ohne Klick zu erzwingen, Assertion abzuschwächen oder zu wiederholen.
+      console.error('Panel-Speicherdiagnose', JSON.stringify(await page.evaluate(() => {
+        const info = selector => {
+          const el = document.querySelector(selector);
+          if (!el) return null;
+          const style = getComputedStyle(el);
+          return {className: el.className, rect: el.getBoundingClientRect().toJSON(),
+            client: [el.clientWidth, el.clientHeight], scroll: [el.scrollLeft, el.scrollTop, el.scrollWidth, el.scrollHeight],
+            position: style.position, transform: style.transform, overflow: style.overflow,
+            minHeight: style.minHeight, flex: style.flex};
+        };
+        return {viewport: [innerWidth, innerHeight], pageScroll: [scrollX, scrollY],
+          active: document.activeElement?.id, fonts: document.fonts.status,
+          panel: info('#fokus-panel'), header: info('.fokus-panel-header'),
+          body: info('.fokus-panel-body'), footer: info('.fokus-panel-footer'),
+          button: info('.fokus-panel-footer > button'), overlay: info('#fokus-overlay')};
+      })));
+      throw error;
+    }
     changed = await state();
     assert.deepEqual(changed.data.proben, before.data.proben.map((p, i) => i === 1 ? {...p, z2: 'OG gezielt bearbeitet', notiz: 'Nur diese Probe ändern'} : p));
     for (const key of ['chloridProben', 'asbestProben', 'sonstigeProben']) assert.deepEqual(changed.data[key], before.data[key]);
