@@ -1,5 +1,12 @@
 # Änderungen
 
+## 4.30.9 – Oktober 2026
+
+- „Schnelleingabe“ heißt in der Oberfläche konsistent „Geführte Eingabe“. Bestehende Felder, Strg+Umschalt+E sowie Weiter-/Zurück-/Beenden-Verhalten bleiben erhalten.
+- Jede PAK-Karte bietet eine sichtbare, per Tastatur bedienbare Schaltfläche „Bearbeiten“ zum vorhandenen Panel; Klicks lösen keine zusätzliche Kartenaktion aus. Doppelklick bleibt möglich.
+- Der PAK-Panelkopf zeigt dieselbe fortlaufende Nummer wie Karte/Tabelle sowie Raum/Ort und Matrix. Karten und Panel bleiben auch bei schmalen Fenstern nutzbar.
+- Browserregressionen prüfen synthetische Proben, Tastatur, korrekte Auswahl nach Listen- und Nummerierungsänderungen, Daten-/Status-Erhalt beim Öffnen, gezielte Bearbeitung, JSON-Speichern/Laden und bestehendes Undo bei 1280/390 px. Datenformat und Speicher-/Bearbeitungslogik bleiben unverändert.
+
 ## 4.30.8 – Oktober 2026
 
 - Zwischenstand und Abschluss verwenden eine gemeinsame Speichersperre. Veraltete Vorgänge nach Daten-, Projekt- oder Zielordnerwechseln bestätigen keinen aktuellen Speichererfolg; Regressionstests prüfen beide Startrichtungen und die tatsächlich geschriebenen Dateiinhalte.
