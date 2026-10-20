@@ -4,6 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<script>
+// Projektübergabe: Fragment hat Vorrang; alte Query-Links früh und ohne Anfrage bereinigen.
+const PROJEKT_URL = (() => {
+  const start = new URL(location.href);
+  const projekt = new URLSearchParams(start.hash.slice(1)).get('projekt') ?? start.searchParams.get('projekt');
+  function setzen(name){
+    const url = new URL(location.href);
+    // Fremde Fragmentbestandteile (auch reine Anker wie #fotos) unverändert erhalten.
+    const teile = url.hash.slice(1).split('&').filter(t => t && !new URLSearchParams(t).has('projekt'));
+    if (name !== null) teile.push('projekt=' + encodeURIComponent(name));
+    url.searchParams.delete('projekt');
+    url.hash = teile.join('&');
+    if (url.href !== location.href) try{ history.replaceState(history.state, '', url); }catch(e){}
+  }
+  if (start.searchParams.has('projekt')) setzen(projekt);
+  return { projekt, setzen };
+})();
+</script>
 <meta name="theme-color" content="#5469b8">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -9469,7 +9487,7 @@ const PROJEKTORDNER=(function(){
     updateProjekt();
     if(datei)markSaved(datei.name,LAB_DIR);
     zeigen();
-    try{history.replaceState(null,'','?projekt='+encodeURIComponent(dir.name));}catch(e){}
+    try{PROJEKT_URL.setzen(dir.name);}catch(e){}
     try{window.MosaikLeiste&&MosaikLeiste.aktualisieren();}catch(e){}
     flash(datei?'Projekt '+dir.name+': „'+datei.name+'“ geladen – gespeichert wird in „'+LAB_DIR+'“':'Projekt '+dir.name+': gespeichert wird in „'+LAB_DIR+'“');
   }
@@ -9489,7 +9507,7 @@ const PROJEKTORDNER=(function(){
   }
   const knopf=document.getElementById('projekt-ordner');
   if(knopf&&originalPicker){knopf.hidden=false;knopf.onclick=waehlen;}
-  const start=new URLSearchParams(location.search).get('projekt');
+  const start=PROJEKT_URL.projekt;
   if(start)ausZentrale(start);
   return {state,oeffnen,ausZentrale,parse,projektdaten};
 })();
@@ -10516,7 +10534,7 @@ if(document.readyState!=='loading')fbeEventsBinden();
       catch(e){ res(false); }
     }); });
   }
-  function urlName(){ try{ return new URLSearchParams(location.search).get('projekt') || ''; }catch(e){ return ''; } }
+  function urlName(){ try{ return new URLSearchParams(location.hash.slice(1)).get('projekt') ?? new URLSearchParams(location.search).get('projekt') ?? ''; }catch(e){ return ''; } }
   function href(app, projekt){ return (app[0] === ich ? '' : app[3]) + (projekt ? '?projekt=' + encodeURIComponent(projekt) : ''); }   // die eigene App relativ zur aktuellen Seite (auch ohne den Pfad /<App>/)
 
   /* Ordnerstand: nur Namen prüfen, Fotos nur über die eine Datei (der Ordner kann tausende Bilder enthalten) */
