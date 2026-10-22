@@ -35,7 +35,7 @@ Es gibt keine Schreib-/Create- oder Reparaturzugriffe auf _Projekt.json und kein
 Änderung der vorhandenen Dateiformate. Speichern, Probenimporte und F1-Prüfungen
 bleiben eigenständige Abläufe.
 
-Prüfung: 26 Node-Readerfälle und zehn vollständige Browserfälle je Chromium/WebKit,
+Prüfung: 26 Node-Readerfälle und elf vollständige Browserfälle je Chromium/WebKit,
 einschließlich der verbindlichen Fälle A–D. Browserfälle verwenden ausschließlich
 synthetische In-Memory-Dateihandles und prüfen echte UI- und Exportfunktionen, ohne
 API-Skips. Bestehende Node-/Browsersuites laufen unverändert weiter. Die F1-Suites
@@ -50,3 +50,12 @@ Ein erfolgreicher Dateilesevorgang belegt die vom Browser gelieferten Bytes, kei
 Garantie über SMB-Caches oder Änderungen nach diesem Zeitpunkt. Es werden keine
 Projektdaten automatisch repariert oder geschrieben. Bestehende WebKit-Skips der
 nativen Ordner-API bleiben in den Testprotokollen sichtbar.
+
+Zusätzliche Regression: Die Kürzelvalidierung der Feldprotokollerfassung erfolgt
+vor der asynchronen Aktualisierung. Eine spätere Kürzeleingabe darf keine zuvor
+abgelehnte Erfassung nachträglich auslösen. Ein zwischenzeitlich gewechseltes
+Projekt oder neu aufgebautes Erfassungsformular beendet die Fortsetzung.
+
+Die bisherige regelmäßige Aktualisierung bleibt erhalten: Bei sichtbarer App wird
+auch nach 20 Sekunden erneut gelesen. Laufende Lesevorgänge werden dabei nicht
+überholt; die Leiste zeigt denselben geprüften Stand wie Dokumente und Warnbereich.

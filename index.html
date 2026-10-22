@@ -9541,6 +9541,7 @@ const PROJEKTORDNER=(function(){
     el.title='Aus den Projektdaten der Projektzentrale – dort ändern. Auf dem Auftragsschein steht nur das Objekt.';
   }
   window.addEventListener('focus',()=>{if(state.proj)ladePj();});
+  setInterval(()=>{if(!document.hidden&&state.proj&&!reader.state.checking)void ladePj();},20000);
   function zeigen(){
     const k=document.getElementById('projekt-kennung');if(!k)return;
     k.hidden=!state.proj;
@@ -10332,8 +10333,9 @@ function fbeNeuId(){
 }
 function fbeNeuDialog(){fbeUi.neu=true;fbeRender();fbeNeuId();}
 async function fbeAnlegen(){
-  if(!await PROJEKTORDNER.vorExport())return;
   const von=fbeBrauchtKuerzel();if(!von)return;
+  const context=PROJEKTORDNER.state.proj,form=document.getElementById('fbe-neu-n');
+  if(!await PROJEKTORDNER.vorExport()||PROJEKTORDNER.state.proj!==context||document.getElementById('fbe-neu-n')!==form)return;
   const typ=document.querySelector('input[name="fbe-neu-typ"]:checked')?.value||'asbest';
   const nr=document.getElementById('fbe-neu-nr').value.trim(),lfd=document.getElementById('fbe-neu-lfd').value.trim();
   if(!nr||!lfd){flash('Projekt-Nr. und lfd. Nr. angeben (stehen in der Formular-ID auf dem Bogen).');return;}
