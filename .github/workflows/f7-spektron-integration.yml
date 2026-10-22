@@ -1,0 +1,70 @@
+name: F7 Spektron integration
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: f7-integration-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  combined-suite:
+    name: Spektron with LabelKit F7 and PlanKit F7
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: label
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          repository: kaspersebastian83-dot/Probenplan
+          ref: fix/f7-project-data-freshness
+          path: plan
+          persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          repository: kaspersebastian83-dot/Projektzentrale
+          ref: 4716c0b57284bdf3a0dcdb657bb99059bbf7da77
+          path: central
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Record both exact F7 heads in temporary integration manifest
+        working-directory: central
+        env:
+          LABEL_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          node --test tests/integration/provenance.test.mjs
+          export PLAN_SHA=$(git -C ../plan rev-parse HEAD)
+          node -e "const fs=require('fs'),p='tests/integration/stand.json',m=JSON.parse(fs.readFileSync(p));for(const s of [process.env.LABEL_SHA,process.env.PLAN_SHA])if(!/^[a-f0-9]{40}$/.test(s))throw Error('Invalid F7 SHA');m.labelkit=process.env.LABEL_SHA;m.Probenplan=process.env.PLAN_SHA;fs.writeFileSync(p,JSON.stringify(m,null,2)+'\n');console.log(JSON.stringify(m,null,2));"
+          node tests/integration/prepare.mjs
+          cmp ../label/index.html tests/.integration-work/labelkit/index.html
+          for file in main.ts folder.ts project-data.js annex-run.ts suite-bar.ts; do
+            cmp "../plan/src/$file" "tests/.integration-work/Probenplan/src/$file"
+          done
+          node -e "const fs=require('fs'),extract=s=>s.slice(s.indexOf('/* F7-READER-START'),s.indexOf('/* F7-READER-ENDE */')).replace(/\r\n/g,'\n');if(extract(fs.readFileSync('../label/index.html','utf8'))!==extract(fs.readFileSync('../plan/src/project-data.js','utf8')))throw Error('Reader implementations differ');"
+      - name: Pinned integration browser
+        run: |
+          npm install --no-save --no-package-lock --prefix "$RUNNER_TEMP/pw" playwright@1.56.1
+          echo "PLAYWRIGHT_MODULE=$RUNNER_TEMP/pw/node_modules/playwright" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Full existing producer-consumer and security integration tests
+        working-directory: central
+        run: node tests/integration/run.mjs --security
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f7-spektron-both-heads
+          path: |
+            central/tests/integration/results/
+            central/tests/integration/stand.json
+          if-no-files-found: warn
+          retention-days: 14

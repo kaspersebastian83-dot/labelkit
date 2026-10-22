@@ -1,0 +1,52 @@
+F7 – Aktualität gemeinsamer Projektdaten
+
+Basis: main 9495e373aa897577171c921e6b65b676e1a7c663.
+Kompatibilität: F1 PR #26, dc0ac2624b6895bb3131d904c483bd66dfb05788.
+
+LabelKit behält nach einem fehlgeschlagenen Lesen von _Projekt.json die zuletzt
+bestätigten Angaben. Ein eigener, nicht durch Speicher-/Exportmeldungen löschbarer
+Warnbereich und eine Kennzeichnung bei den Projektangaben und in der Leiste weisen
+auf die mögliche Veraltung hin. Eine explizite Wiederholung kann auch erneut um
+Leserecht bitten. Erst ein erfolgreicher Lesevorgang entfernt die Warnung.
+
+Unterschieden werden erfolgreiches Lesen, bestätigte Abwesenheit einer Datei,
+ungültiges JSON/UTF-8, nicht unterstütztes Format, fehlendes Leserecht,
+Verbindungsfehler/Zeitüberschreitung und sonstige Lesefehler. NotFound gilt nur dann
+als fehlende Datei, wenn der Projektordner auflistbar ist und die Datei dort nicht
+vorhanden ist. Eine erstmals fehlende Datei erzeugt keine Netzwerk-Warnung.
+Eine nach erfolgreichem Lesen verschwundene Datei erhält die alten Angaben mit
+Warnung. Ein gültiges leeres JSON-Objekt ist dagegen ein erfolgreicher leerer Stand.
+
+Auftragsschein-RTF/PDF, Feldbogendruck und Übernahme der Vorgaben in eine neue
+Feldprotokollerfassung lesen vor Verwendung erneut. Bei weiterhin unsicherem Stand
+ist eine ausdrückliche Bestätigung erforderlich; Abbruch erzeugt kein Dokument.
+Diese Zustimmung gilt nur für diesen Vorgang und entfernt die Warnung nicht.
+Automatisch vorbelegte Feldbogenwerte werden nach erfolgreicher Aktualisierung
+erneuert, solange sie nicht manuell geändert wurden. Druckfenster werden bei einem
+Abbruch geschlossen; das vorgelagerte Öffnen erhält den bestehenden Popup-Ablauf.
+
+Projektidentität und laufende Anfrage werden getrennt geprüft. Ein überholtes oder
+verspätetes Ergebnis kann weder ein anderes Projekt noch eine jüngere Fehlerwarnung
+überschreiben. Nach zehn Sekunden erhält ein noch offener Leseversuch einen
+Zeitüberschreitungsstatus; sein späteres Ergebnis wird nicht nachträglich übernommen.
+
+Die Leselogik entspricht bytegleich dem F7-Reader von PlanKit (ohne Modulexport).
+Es gibt keine Schreib-/Create- oder Reparaturzugriffe auf _Projekt.json und keine
+Änderung der vorhandenen Dateiformate. Speichern, Probenimporte und F1-Prüfungen
+bleiben eigenständige Abläufe.
+
+Prüfung: 26 Node-Readerfälle und zehn vollständige Browserfälle je Chromium/WebKit,
+einschließlich der verbindlichen Fälle A–D. Browserfälle verwenden ausschließlich
+synthetische In-Memory-Dateihandles und prüfen echte UI- und Exportfunktionen, ohne
+API-Skips. Bestehende Node-/Browsersuites laufen unverändert weiter. Die F1-Suites
+werden zusätzlich auf einem temporären F7+F1-Checkout ausgeführt. Die gemeinsame
+Spektron-CI zeichnet die exakten LabelKit-/PlanKit-F7-SHAs im Testmanifest auf und
+führt die vorhandene Produzenten-/Konsumenten- und Sicherheitssuite aus.
+
+Grenzen: Keine praktischen Windows-, SMB-, RDP- oder Netzunterbrechungsversuche.
+DOM-Fehlercodes können die physische Ursache eines Netzlaufwerkfehlers nicht immer
+unterscheiden; generische Lesefehler werden deshalb ausdrücklich als solche gezeigt.
+Ein erfolgreicher Dateilesevorgang belegt die vom Browser gelieferten Bytes, keine
+Garantie über SMB-Caches oder Änderungen nach diesem Zeitpunkt. Es werden keine
+Projektdaten automatisch repariert oder geschrieben. Bestehende WebKit-Skips der
+nativen Ordner-API bleiben in den Testprotokollen sichtbar.

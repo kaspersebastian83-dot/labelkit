@@ -5954,6 +5954,7 @@ function renderAuftragsschein(){
 }
 
 async function exportAuftragsscheinPDF(){
+  if(!await PROJEKTORDNER.vorExport())return;
   renderAuftragsschein();
   const content=document.getElementById('auftragsschein-output').innerHTML;
   if(!content||content.includes('empty-state')){flash('Keine Proben vorhanden');return;}
@@ -7241,7 +7242,8 @@ function projektArchivLoeschen(nr){
 }
 
 // ── RTF / WORD EXPORT ─────────────────────────────────
-function exportAuftragsscheinRTF(){
+async function exportAuftragsscheinRTF(){
+  if(!await PROJEKTORDNER.vorExport())return;
   const nr=document.getElementById('proj-nr').value.trim()||'Projekt';
   const heute=new Date().toLocaleDateString('de-DE');
   const notiz=(document.getElementById('auftragsschein-notiz')||{}).value||'';
@@ -9412,6 +9414,7 @@ body[data-density="luftig"] tbody td{padding:14px 10px}
 .pj-info{margin-left:14px;font-size:12px;font-weight:400;color:#6b8199;display:inline-flex;gap:4px 16px;flex-wrap:wrap}
 .pj-info[hidden]{display:none}
 .pj-info b{font-weight:600;color:#21303e}
+.pj-warning{position:sticky;top:0;z-index:1000;background:#fff0cf;color:#603b00;border:2px solid #bd7900;padding:10px 16px;display:flex;align-items:center;gap:12px;font-size:14px}.pj-warning[hidden],#pj-refresh[hidden]{display:none}.pj-warning span{flex:1}
 .projekt-hinweis{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:9999;background:#fff;border:1px solid #c2d6ec;border-radius:10px;box-shadow:0 8px 30px rgba(20,40,70,.2);padding:14px 18px;display:flex;align-items:center;gap:12px;font-size:13px}
 /* Eigene Zeile hält Speicheraktion und Status auch bei schmaler Ansicht lesbar. */
 .zwischenstand-leiste{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;padding:10px 24px;background:var(--surface);border-bottom:1px solid var(--border)}
@@ -9428,9 +9431,77 @@ body[data-density="luftig"] tbody td{padding:14px 10px}
      • Projektordner „<JJ>.<Nummer> <Schadenort>“, LabelKit schreibt in den Unterordner „Laboraufträge“
    Mit ?projekt=<Ordnername> oder „📁 Projekt“ ersetzt der Projektordner jeden Ordnerdialog: Speichern, Laborübergaben und
    Protokolle landen direkt in „Laboraufträge“. Die neueste …_Daten.json dort wird beim Öffnen geladen. */
+/* F7-READER-START: same read-only state machine in LabelKit and PlanKit. */
+function createProjectDataReader(onChange = () => {}, timeout = 10000) {
+  let context = null, serial = 0;
+  const empty = () => ({status: 'idle', data: {}, file: null, known: false, stale: false, checking: false});
+  let state = empty();
+  const notify = () => onChange(state);
+  const failure = error => ({status: error?.name === 'SyntaxError' || error?.name === 'EncodingError' ? 'invalid'
+    : ['NotAllowedError', 'SecurityError'].includes(error?.name) ? 'permission'
+    : ['NetworkError', 'TimeoutError'].includes(error?.name) || (typeof navigator !== 'undefined' && navigator.onLine === false) ? 'network' : 'read-error'});
+  async function read(dir, request) {
+    try {
+      if (dir.queryPermission && await dir.queryPermission({mode: 'read'}) !== 'granted') {
+        if (!request || !dir.requestPermission || await dir.requestPermission({mode: 'read'}) !== 'granted') return {status: 'permission'};
+      }
+      const original = await (await dir.getFileHandle('_Projekt.json')).getFile();
+      const bytes = await original.arrayBuffer();
+      let text;
+      try { text = new TextDecoder('utf-8', {fatal: true}).decode(bytes); }
+      catch { return {status: 'invalid'}; }
+      const data = JSON.parse(text);
+      if (!data || typeof data !== 'object' || Array.isArray(data)) return {status: 'invalid'};
+      if ((data.format !== undefined && data.format !== 'mosaik-projekt') || (data.version !== undefined && data.version !== 1)) return {status: 'unsupported'};
+      // Memory snapshot: a confirmed stale export must not pretend that a later
+      // unreadable/replaced disk file supplied these values or its checksum.
+      return {status: 'ok', data, file: new File([bytes], '_Projekt.json', {lastModified: original.lastModified})};
+    } catch (error) {
+      if (error?.name !== 'NotFoundError') return failure(error);
+      // A missing file is not the same as an inaccessible/disconnected directory.
+      try {
+        for await (const h of dir.values()) if (h.name === '_Projekt.json') return {status: 'read-error'};
+        return {status: 'missing'};
+      } catch (listingError) { return failure(listingError); }
+    }
+  }
+  return {
+    get context() { return context; }, get state() { return state; },
+    select(next) {
+      if (context === next) return;
+      context = next; serial++; state = empty(); notify();
+    },
+    async refresh(request = false) {
+      if (!context) return false;
+      const origin = context, ticket = ++serial;
+      state = {...state, checking: true}; notify();
+      let timer;
+      const result = await Promise.race([read(origin.dir, request), new Promise(resolve => {
+        timer = setTimeout(() => resolve({status: 'network'}), timeout);
+      })]);
+      clearTimeout(timer);
+      if (context !== origin || serial !== ticket) return false;
+      if (result.status === 'ok') state = {...result, known: true, stale: false, checking: false};
+      else if (result.status === 'missing' && !state.known) state = {...empty(), status: 'missing'};
+      else state = {...state, status: result.status, stale: true, checking: false};
+      notify(); return true;
+    }
+  };
+}
+function projectDataWarning(state) {
+  const reasons = {missing: 'Die zuvor geladene _Projekt.json fehlt jetzt.', permission: 'Der Lesezugriff auf _Projekt.json fehlt.',
+    invalid: '_Projekt.json enthält ungültige oder unvollständige Projektdaten.', unsupported: '_Projekt.json verwendet ein nicht unterstütztes Format.',
+    network: '_Projekt.json konnte wegen einer Verbindungsunterbrechung oder Zeitüberschreitung nicht aktualisiert werden.',
+    'read-error': '_Projekt.json konnte nicht gelesen werden. Bitte auch die Verbindung zum Projektordner prüfen.'};
+  return state.stale ? (reasons[state.status] || 'Die Aktualisierung ist noch nicht bestätigt.') +
+    ' Gemeinsame Projektdaten möglicherweise veraltet. ' + (state.known ? 'Die zuletzt erfolgreich gelesenen Angaben bleiben erhalten.' : 'Es liegen noch keine bestätigten Angaben vor.') : '';
+}
+/* F7-READER-ENDE */
+
 const PROJEKTORDNER=(function(){
   const LAB_DIR='Laboraufträge';
-  const state={proj:null,pj:null};
+  const state={proj:null,pj:null,pjStatus:null};
+  const reader=createProjectDataReader(pjChanged);
   const parse=name=>{const m=/^(\d{2})\.(\d{2,6})(?:[\s_-]+(.*))?$/.exec(String(name).normalize('NFC').trim());return m?{nr:m[1]+'.'+m[2],ort:(m[3]||'').trim()}:null;};
   const archiv=()=>new Promise(res=>{try{const r=indexedDB.open('mosaik-suite',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{try{const g=r.result.transaction('kv').objectStore('kv').get('archiv');g.onsuccess=()=>{r.result.close();res(g.result||null);};g.onerror=()=>{r.result.close();res(null);};}catch(e){res(null);}};r.onerror=()=>res(null);}catch(e){res(null);}});
   const permission=async(h,request)=>{const o={mode:'readwrite'};try{if(!h.queryPermission||await h.queryPermission(o)==='granted')return true;return !!request&&!!h.requestPermission&&await h.requestPermission(o)==='granted';}catch(e){return false;}};
@@ -9440,18 +9511,33 @@ const PROJEKTORDNER=(function(){
   const originalPicker=window.showDirectoryPicker?window.showDirectoryPicker.bind(window):null;
   if(originalPicker)window.showDirectoryPicker=async function(options){return state.proj?state.proj.lab:originalPicker(options);};
   /* Projektdaten (_Projekt.json der Projektzentrale): hier nur lesen und anzeigen – geändert wird in der Projektzentrale. */
-  async function ladePj(){
-    const proj=state.proj;let pj=null;
-    if(proj){try{const fh=await proj.dir.getFileHandle('_Projekt.json');const o=JSON.parse(await (await fh.getFile()).text());if(o&&typeof o==='object')pj=o;}catch(e){/* keine oder halb geschriebene Datei: Anzeige bleibt wie sie ist */if(e&&e.name!=='NotFoundError'&&state.proj===proj&&state.pj)return;}}
-    if(state.proj!==proj)return;
-    state.pj=pj;zeigenPj();
+  function pjChanged(status){
+    state.pj=status.known?status.data:null; state.pjStatus=status;
+    zeigenPj();
+    const warning=document.getElementById('pj-warning'),button=document.getElementById('pj-refresh');
+    if(warning){warning.hidden=!state.proj||!status.stale;warning.querySelector('span').textContent=projectDataWarning(status);}
+    if(button){button.hidden=!state.proj;button.disabled=status.checking;button.textContent=status.checking?'Projektdaten …':'Projektdaten ↻';button.dataset.status=status.status;button.dataset.stale=String(status.stale);button.title=status.status==='missing'&&!status.stale?'Keine _Projekt.json im erreichbaren Projektordner vorhanden.':projectDataWarning(status);}
+    if(typeof fbSynchronisiereProjekt==='function')fbSynchronisiereProjekt();
+    if(typeof renderAuftragsschein==='function')renderAuftragsschein();
+    try{window.MosaikLeiste&&MosaikLeiste.aktualisieren();}catch(e){}
   }
+  async function ladePj(request=false){reader.select(state.proj);return reader.refresh(request);}
+  async function vorExport(){
+    const proj=state.proj;if(!proj)return true;
+    if(!await ladePj()||state.proj!==proj)return false;
+    if(!reader.state.stale)return true;
+    return confirm(projectDataWarning(reader.state)+'\n\nDiese Angaben für diesen Vorgang trotzdem ausdrücklich verwenden?');
+  }
+  window.SpektronProjectData=name=>state.proj&&state.proj.name===name?reader.state:null;
+  document.querySelector('header').insertAdjacentHTML('afterend','<div id="pj-warning" class="pj-warning" role="alert" hidden><span></span><button class="btn btn-secondary btn-sm" id="pj-retry">Erneut einlesen</button></div>');
+  document.getElementById('projekt-kennung').insertAdjacentHTML('afterend','<button id="pj-refresh" class="btn btn-secondary btn-sm" hidden>Projektdaten neu einlesen</button>');
+  for(const id of ['pj-retry','pj-refresh'])document.getElementById(id).onclick=()=>ladePj(true);
   function projektdaten(){const d=state.pj||{},t=k=>String(d[k]==null?'':d[k]).trim();return{objekt:t('objekt'),auftraggeber:t('auftraggeber'),schadennummer:t('schadennummer')};}
   function zeigenPj(){
     const el=document.getElementById('pj-info');if(!el)return;
     const d=projektdaten(),teile=[['Objekt',d.objekt],['Auftraggeber',d.auftraggeber],['Schaden-Nr.',d.schadennummer]].filter(x=>x[1]);
     el.hidden=!state.proj||!teile.length;
-    el.innerHTML=teile.map(([k,v])=>'<span>'+k+' <b>'+esc(v)+'</b></span>').join('');
+    el.innerHTML=teile.map(([k,v])=>'<span>'+k+' <b>'+esc(v)+'</b></span>').join('')+(state.pjStatus?.stale?' <strong>möglicherweise veraltet</strong>':'');
     el.title='Aus den Projektdaten der Projektzentrale – dort ändern. Auf dem Auftragsschein steht nur das Objekt.';
   }
   window.addEventListener('focus',()=>{if(state.proj)ladePj();});
@@ -9486,7 +9572,7 @@ const PROJEKTORDNER=(function(){
       if(!confirm('Es sind noch Proben von Projekt „'+document.getElementById('proj-nr').value.trim()+'“ erfasst.\nFür „'+dir.name+'“ mit leerer Erfassung beginnen?'))return;
       undoSnapshot();applyProjektData({proben:[],chloridProben:[],asbestProben:[],sonstigeProben:[],brandgeruchProben:[],pn98Proben:[]});
     }
-    state.proj={dir,lab,name:dir.name,nr:p.nr,ort:p.ort};state.pj=null;ladePj();
+    state.proj={dir,lab,name:dir.name,nr:p.nr,ort:p.ort};state.pj=null;void ladePj();
     if(typeof letzterSpeicherOrdner!=='undefined')letzterSpeicherOrdner=lab;
     const nrEl=document.getElementById('proj-nr');if(nrEl&&!nrEl.value.trim()){nrEl.value=p.nr;}
     if(typeof pn98Projekt==='object'){if(!pn98Projekt.ort&&p.ort)pn98Projekt.ort=p.ort;if(!pn98Projekt.schaden)pn98Projekt.schaden=p.nr;if(typeof setPn98ProjektFelderUi==='function')setPn98ProjektFelderUi();}
@@ -9515,7 +9601,7 @@ const PROJEKTORDNER=(function(){
   if(knopf&&originalPicker){knopf.hidden=false;knopf.onclick=waehlen;}
   const start=PROJEKT_URL.projekt;
   if(start)ausZentrale(start);
-  return {state,oeffnen,ausZentrale,parse,projektdaten};
+  return {state,oeffnen,ausZentrale,parse,projektdaten,aktualisieren:ladePj,vorExport};
 })();
 </script>
 <script>
@@ -9724,18 +9810,33 @@ function fbRender(){
   document.getElementById('fb-info').textContent=seiten.length+' '+(seiten.length===1?'Blatt':'Blätter')+' · '+n+' '+FB_TYPEN[typ].einheit[n===1?0:1]+' · Formular-ID '+(o.leer?'leer':fbFormularId(typ,o.nr,o.lfd));
 }
 /** Vorbelegung: Projektordner (_Projekt.json) vor LabelKit-Feldern; leere Felder werden gefüllt, mit erzwingen alle. */
+var fbPjVorlage=null;
+function fbProjektWerte(){
+  const proj=PROJEKTORDNER.state.proj,pj=PROJEKTORDNER.state.pj||{},pn=(typeof pn98Projekt!=='undefined'&&pn98Projekt)||{};
+  return {'fb-nr':(proj&&proj.nr)||document.getElementById('proj-nr')?.value.trim()||pn.schaden||'',
+    'fb-objekt':String(pj.objekt||'').trim()||pn.ort||(proj&&proj.ort)||'',
+    'fb-ag':String(pj.auftraggeber||'').trim(),'fb-datum':fbDatum(pj.ortstermin)||pn.pndatum||fbHeute(),'fb-labor':String(pn.labor||'').trim()};
+}
+function fbSynchronisiereProjekt(){
+  if(!fbPjVorlage)return;
+  const proj=PROJEKTORDNER.state.proj,status=PROJEKTORDNER.state.pjStatus;
+  if(status&&(status.stale||status.checking))return;
+  const values=fbProjektWerte();
+  for(const [id,old] of Object.entries(fbPjVorlage.values)){
+    const el=document.getElementById(id);if(el&&el.value===old){el.value=values[id];fbPjVorlage.values[id]=values[id];}
+  }
+  fbPjVorlage.context=proj;fbRender();
+}
 async function fbVorbelegen(erzwingen){
-  const g=id=>document.getElementById(id),setze=(id,wert)=>{if(wert&&(erzwingen||!g(id).value.trim()))g(id).value=wert;};
-  let pj={};const proj=(typeof PROJEKTORDNER!=='undefined'&&PROJEKTORDNER.state&&PROJEKTORDNER.state.proj)||null;
-  if(proj&&proj.dir){try{const fh=await proj.dir.getFileHandle('_Projekt.json');const o=JSON.parse(await (await fh.getFile()).text());if(o&&typeof o==='object')pj=o;}catch(e){/* keine Projektdaten vorhanden */}}
-  const pn=(typeof pn98Projekt!=='undefined'&&pn98Projekt)||{};
-  setze('fb-nr',(proj&&proj.nr)||g('proj-nr')?.value.trim()||pn.schaden||'');
-  setze('fb-objekt',String(pj.objekt||'').trim()||pn.ort||(proj&&proj.ort)||'');
-  setze('fb-ag',String(pj.auftraggeber||'').trim());
-  setze('fb-datum',fbDatum(pj.ortstermin)||pn.pndatum||fbHeute());
-  setze('fb-labor',String(pn.labor||'').trim());
+  const proj=PROJEKTORDNER.state.proj;
+  if(proj&&(!await PROJEKTORDNER.aktualisieren()||PROJEKTORDNER.state.proj!==proj))return;
+  const values=fbProjektWerte(),saved={};
+  for(const [id,value] of Object.entries(values)){
+    const el=document.getElementById(id);if(value&&(erzwingen||!el.value.trim())){el.value=value;saved[id]=value;}
+  }
+  fbPjVorlage={context:proj,values:{...(fbPjVorlage&&fbPjVorlage.context===proj?fbPjVorlage.values:{}),...saved}};
   fbRender();
-  if(erzwingen)flash(Object.keys(pj).length?'Angaben aus dem Projektordner übernommen ✓':'Angaben übernommen ✓');
+  if(erzwingen){if(PROJEKTORDNER.state.pjStatus?.stale)flash('Aktualisierung fehlgeschlagen – gemeinsame Projektdaten möglicherweise veraltet.');else flash('Angaben übernommen ✓');}
 }
 /** Zum Unterreiter „Ausgefüllte Bögen erfassen & Scans ablegen“. */
 function fbZurErfassung(){
@@ -9754,9 +9855,10 @@ function fbSchriften(){
   for(const sheet of document.styleSheets){let rules;try{rules=sheet.cssRules;}catch(e){continue;}for(const r of rules)if(r.type===5&&/IBM Plex/.test(r.cssText))css+=r.cssText+'\n';}
   return css;
 }
-function fbDrucken(){
-  const o=fbOptionen(),seiten=fbSeiten(o);
+async function fbDrucken(){
   const win=window.open('','_blank','width=900,height=700');if(!win){alert('Popup wurde blockiert – bitte Popups für diese Seite erlauben.');return;}
+  if(!fbOptionen().leer&&PROJEKTORDNER.state.proj&&!await PROJEKTORDNER.vorExport()){win.close();return;}
+  const o=fbOptionen(),seiten=fbSeiten(o);
   const titel=(o.leer?'Feldprotokoll':fbFormularId(o.typ,o.nr,o.lfd))+' – '+FB_TYPEN[o.typ].name.replace(/\//g,'');
   win.document.write('<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>'+fbEsc(titel)+'</title><style>'+fbSchriften()+FB_CSS
     +'@page{size:A4 portrait;margin:0}html,body{margin:0;padding:0;background:#fff}@media screen{body{background:#e9edf2}.fb-page{margin:12px auto;box-shadow:0 2px 12px rgba(0,0,0,.15)}}'
@@ -10229,7 +10331,8 @@ function fbeNeuId(){
   const el=document.getElementById('fbe-neu-id');if(el)el.textContent=fbFormularId(typ,document.getElementById('fbe-neu-nr').value,document.getElementById('fbe-neu-lfd').value);
 }
 function fbeNeuDialog(){fbeUi.neu=true;fbeRender();fbeNeuId();}
-function fbeAnlegen(){
+async function fbeAnlegen(){
+  if(!await PROJEKTORDNER.vorExport())return;
   const von=fbeBrauchtKuerzel();if(!von)return;
   const typ=document.querySelector('input[name="fbe-neu-typ"]:checked')?.value||'asbest';
   const nr=document.getElementById('fbe-neu-nr').value.trim(),lfd=document.getElementById('fbe-neu-lfd').value.trim();
@@ -10585,7 +10688,9 @@ if(document.readyState!=='loading')fbeEventsBinden();
     }
     if (!proj) return null;
     var s = { label: false, fotos: false, plan: false, beleg: false, objekt: '' };
-    try{
+    var activeData = window.SpektronProjectData && window.SpektronProjectData(name);
+    if (activeData) s.objekt = String(activeData.data.objekt || '').trim();
+    else try{
       var pj = await proj.getFileHandle('_Projekt.json').then(function(f){ return f.getFile(); }).then(function(f){ return f.text(); }).catch(function(){ return ''; });
       if (pj){ var j = JSON.parse(pj), o = j && (typeof j.objekt === 'string' ? j.objekt : j.daten && j.daten.objekt); if (typeof o === 'string') s.objekt = o.trim(); }   // Projektzentrale schreibt die Felder direkt in _Projekt.json (ältere Testdateien: unter „daten“)
     }catch(e3){}
@@ -10673,7 +10778,10 @@ if(document.readyState!=='loading')fbeEventsBinden();
       var pb = h('button', { class: 'ml-proj', type: 'button', 'aria-haspopup': 'menu', 'aria-expanded': 'false', title: 'Anderes Projekt öffnen' }, h('b', { text: name }), h('span', { text: '▾', 'aria-hidden': 'true' }));
       pb.onclick = function(ev){ ev.stopPropagation(); oeffnePop(pb); };
       bar.appendChild(pb);
-      if (stand && stand.objekt) bar.appendChild(h('span', { class: 'ml-obj', text: stand.objekt, title: stand.objekt }));
+      var shared = window.SpektronProjectData && window.SpektronProjectData(name);
+      var objekt = shared ? String(shared.data.objekt || '').trim() : stand && stand.objekt;
+      var suffix = shared && shared.stale ? ' · möglicherweise veraltet' : shared && shared.checking ? ' · wird geprüft' : '';
+      if (objekt) bar.appendChild(h('span', { class: 'ml-obj', text: objekt + suffix, title: objekt + suffix }));
       bar.appendChild(h('span', { class: 'ml-sp' }));
       var steps = h('span', { class: 'ml-steps' });
       var nx = naechster();
