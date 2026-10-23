@@ -35,7 +35,7 @@ assert.deepEqual(plain(sp.kopf.anlass), []);
 assert.throws(() => A.fbeNeu({typ: 'radon'}), /Unbekannter Formulartyp/);
 
 // Alle Felder des Papierbogens sind im Schema und jede Feldkennung ist eindeutig.
-for (const typ of ['asbest', 'schimmel', 'pn98']) {
+for (const typ of ['asbest', 'asbestmat', 'schimmel', 'pn98']) {
   const s = A.FBE_SCHEMA[typ];
   const kopf = s.kopf.flatMap(a => a.felder).map(f => f.k), mp = s.mp.map(f => f.k);
   assert.equal(new Set(kopf).size, kopf.length, typ + ': Kopffelder eindeutig');

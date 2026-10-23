@@ -43,7 +43,7 @@ const url = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
     const i = l.querySelector('input').getBoundingClientRect();
     return {w: i.width, h: i.height, up: getComputedStyle(l).textTransform};
   }));
-  assert.equal(opt.length, 4, 'drei Formulartypen und Leerformular');
+  assert.equal(opt.length, 5, 'vier Formulartypen und Leerformular');
   for (const o of opt) { assert.ok(o.w <= 22 && o.h <= 22, 'Auswahlkästchen höchstens 22 px, ist ' + o.w + 'x' + o.h); assert.equal(o.up, 'none'); }
   // Druck: Bogenhöhe knapp unter A4 (Safari rundet die druckbare Höhe ab) und Umbruch nur zwischen den Bögen, nie danach
   const pr = await page.evaluate(() => { const el = document.createElement('div'); el.innerHTML = fbSeiten(fbOptionen()).join(''); document.body.appendChild(el);

@@ -67,3 +67,18 @@ assert.match(pn[0], /mind\. 4/);
 assert.doesNotMatch(fbSeiten({...base, typ: 'pn98', leer: true, labor: 'Labor X'}).join(''), /Labor X|26\.0142/);
 
 console.log('feldboegen: OK');
+
+// Materialprobe Asbest: Blatt 1 mit zwei Proben, Folgeblätter mit je vier
+assert.equal(fbBlattzahl('asbestmat', 1), 1);
+assert.equal(fbBlattzahl('asbestmat', 2), 1);
+assert.equal(fbBlattzahl('asbestmat', 3), 2);
+assert.equal(fbBlattzahl('asbestmat', 6), 2);
+assert.equal(fbBlattzahl('asbestmat', 7), 3);
+assert.equal(fbFormularId('asbestmat', '26.0142', '1'), '26.0142-AM-01');
+{
+  const am = fbSeiten({...base, typ: 'asbestmat', n: 7});
+  assert.equal(am.length, 3);
+  assert.equal((am.join('').match(/<b>Probe \d+<\/b>/g) || []).length, 7, 'jede Probe genau einmal');
+  assert.match(am[0], /Materialprobe Asbest/);
+}
+console.log('Materialprobe Asbest: ok');
