@@ -30,6 +30,7 @@ jobs:
       - run: node tests/pak-vorbelegung.cjs
       - run: node tests/projektzuordnung.cjs
       - run: node tests/project-data.cjs
+      - run: node tests/ordnername.cjs
 
   browser-tests:
     name: Browser tests (${{ matrix.browser }})
@@ -75,6 +76,9 @@ jobs:
 
       - name: Shared save guard, completion races and stale save confirmations
         run: node tests/speicher-races-browser.cjs ${{ matrix.browser }}
+
+      - name: Place without staff code and „Ihr Kürzel“ from the Projektzentrale
+        run: node tests/ort-kuerzel-browser.cjs ${{ matrix.browser }}
 
       - name: Guided PAK entry and direct card editing with keyboard and JSON round-trip
         run: node tests/gefuehrte-eingabe-browser.cjs ${{ matrix.browser }}
