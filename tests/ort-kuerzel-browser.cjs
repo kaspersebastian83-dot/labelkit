@@ -70,6 +70,11 @@ const LISTE = {format: 'spektron-mitarbeiter', version: 1, personen: [
     assert.equal(await page.evaluate(() => localStorage.getItem('mosaik-kuerzel')), 'ZZ');
     assert.equal(await kennung(), '26.0150 Teststadt');
 
+    // 2b) „Ich bin“ zeigt auf eine inzwischen inaktive Person: kein automatisches Kürzel
+    await seed(LISTE, {'spektron-ich': 'Alt'});
+    await oeffnen();
+    assert.equal(await page.evaluate(() => localStorage.getItem('mosaik-kuerzel')), null);
+
     // 3) ohne „Ich bin“: kein Kürzel gesetzt
     await seed(LISTE, {});
     await oeffnen();
