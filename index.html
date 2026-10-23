@@ -4260,18 +4260,29 @@ function importProjektJSON(e){
   r.onload=ev=>{
     try{
       const data=JSON.parse(ev.target.result);
+      const zielNr=typeof PROJEKTORDNER!=='undefined'?PROJEKTORDNER.state.proj?.nr:'';
+      if(!projektZuordnungPruefen(data,zielNr,file.name))return;
       const aktuelleProben=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length;
       if(aktuelleProben>0&&!confirm('Diese JSON ersetzt alle Reiter vollständig:\nPAK, Chlorid, Asbest, Sonstige, Brandgeruch und PN 98.\n\nAktuelle Projektdaten wirklich ersetzen?'))return;
       undoSnapshot();
-      applyProjektData(data);
+      applyProjektData(data,zielNr);
       const gesamt=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length;
       markSaved(file.name,'geladen');
       flash(`${gesamt} Proben aus einer Projektdatei geladen (PAK: ${proben.length} · Chlorid: ${chloridProben.length} · Asbest: ${asbestProben.length} · Sonstige: ${sonstigeProben.length} · Brandgeruch: ${brandgeruchProben.length} · PN 98: ${pn98Proben.length}) ✓`);
     }catch(err){
-      alert('Fehler beim Laden. Bitte eine gültige Projektdatei (.json) wählen.');
+      alert('Fehler beim Laden von „'+file.name+'“: '+err.message);
     }
   };
   r.readAsText(file);e.target.value='';
+}
+
+// Vor jeder Übernahme in einen Projektordner prüfen; bei Abbruch bleibt der bisherige Stand erhalten.
+function projektZuordnungPruefen(data,zielNr,quelle){
+  if(!zielNr)return true;
+  const nr=String(data?.projekt?.nr??'').trim();
+  if(nr&&nr!==zielNr)throw new Error('Projektzuordnung blockiert: „'+quelle+'“ gehört zu Projekt '+nr+', der aktive Projektordner zu '+zielNr+'. Bitte die Datei und den Projektordner prüfen und das passende Projekt öffnen.');
+  if(!nr)return confirm('„'+quelle+'“ enthält keine Projektnummer (ältere Datei).\nDie Zugehörigkeit zu Projekt '+zielNr+' kann nicht automatisch geprüft werden.\n\nHaben Sie die Datei geprüft und gehört sie zu diesem Projekt? Nur dann mit OK übernehmen.');
+  return true;
 }
 
 function applyProjektData(data,fallbackNr){
@@ -4309,7 +4320,7 @@ function applyProjektData(data,fallbackNr){
   feldprotokolle=Array.isArray(data.feldprotokolle)?data.feldprotokolle:[];
 
   projektUiStateAnwenden(data);
-  if(fallbackNr&&!document.getElementById('proj-nr').value) document.getElementById('proj-nr').value=fallbackNr;
+  if(fallbackNr&&!String(data?.projekt?.nr??'').trim()) document.getElementById('proj-nr').value=fallbackNr;
   document.getElementById('probe-startnr').value=probenStartNr;
   const bgDatEl=document.getElementById('bg-datum');if(bgDatEl)bgDatEl.value=brandgeruchDatum;
   setPn98ProjektFelderUi();
@@ -7223,11 +7234,13 @@ function projektArchivOeffnen(idx){
     const aktuelleProben=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length;
     if(aktuelleProben>0&&!confirm('Aktuelles Projekt verwerfen und "'+a.nr+'" laden?'))return;
     const d=JSON.parse(a.data);
-    applyProjektData(d,a.nr);
+    const zielNr=typeof PROJEKTORDNER!=='undefined'&&PROJEKTORDNER.state.proj?PROJEKTORDNER.state.proj.nr:a.nr;
+    if(!projektZuordnungPruefen(d,zielNr,'Archiveintrag '+a.nr))return;
+    applyProjektData(d,zielNr);
     markSaved(buildProjektSaveData().filename,'Archiv');
     document.getElementById('modal-archiv').classList.remove('open');
     flash('"'+a.nr+'" geladen ✓');
-  }catch(e){alert('Fehler beim Laden.');}
+  }catch(e){alert('Fehler beim Laden aus dem Archiv: '+e.message);}
 }
 
 function projektArchivLoeschen(nr){
@@ -9481,10 +9494,12 @@ const PROJEKTORDNER=(function(){
     const datei=await neuesteDaten(lab);
     if(datei){
       if(vorhanden&&projektStatus.dirty&&!confirm('In „'+LAB_DIR+'“ liegt „'+datei.name+'“.\nDie aktuell erfassten, nicht gespeicherten Proben werden dadurch ersetzt.\n\nProjektdatei laden?'))return;
-      try{undoSnapshot();applyProjektData(JSON.parse(await datei.text()),p.nr);}catch(e){alert('„'+datei.name+'“ konnte nicht geladen werden: '+e.message);return;}
+      try{const data=JSON.parse(await datei.text());if(!projektZuordnungPruefen(data,p.nr,datei.name))return;undoSnapshot();applyProjektData(data,p.nr);}catch(e){alert('„'+datei.name+'“ konnte nicht geladen werden: '+e.message);return;}
     }else if(vorhanden&&document.getElementById('proj-nr').value.trim()&&document.getElementById('proj-nr').value.trim()!==p.nr){
       if(!confirm('Es sind noch Proben von Projekt „'+document.getElementById('proj-nr').value.trim()+'“ erfasst.\nFür „'+dir.name+'“ mit leerer Erfassung beginnen?'))return;
-      undoSnapshot();applyProjektData({proben:[],chloridProben:[],asbestProben:[],sonstigeProben:[],brandgeruchProben:[],pn98Proben:[]});
+      undoSnapshot();applyProjektData({proben:[],chloridProben:[],asbestProben:[],sonstigeProben:[],brandgeruchProben:[],pn98Proben:[]},p.nr);
+    }else if(vorhanden&&!document.getElementById('proj-nr').value.trim()){
+      if(!projektZuordnungPruefen({projekt:{nr:''}},p.nr,'Aktuelle Erfassung'))return;
     }
     state.proj={dir,lab,name:dir.name,nr:p.nr,ort:p.ort};state.pj=null;ladePj();
     if(typeof letzterSpeicherOrdner!=='undefined')letzterSpeicherOrdner=lab;
