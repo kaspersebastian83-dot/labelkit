@@ -132,7 +132,7 @@ node tests/gefuehrte-eingabe-browser.cjs chromium
 node tests/gefuehrte-eingabe-browser.cjs webkit
 ```
 
-GitHub führt alle Prüfungen bei jedem Pull Request automatisch aus (`.github/workflows/tests.yml`, Chromium und WebKit).
+GitHub führt alle Prüfungen bei jedem Pull Request automatisch aus (`.github/workflows/tests.yml`, Chromium; die WebKit-Aufrufe oben sind lokal optional). Es gibt nur diesen einen Test-Workflow; zusätzliche Kompatibilitäts- und Integrations-Workflows wurden am 23.10.2026 entfernt.
 
 Die Prüfungen decken den Sammel-Export mit simulierten Browser-Schnittstellen, Abbruch, Schreibfehler und Browserhinweise sowie die Feldbögen (Blattzahl, Formular-ID, Vorbelegung, Maskierung von Eingaben, Leerformular) und die Erfassung (Änderungsprotokoll, Prüfung, Plausibilitätshinweise, Scan-Dateinamen, Prüfsummen) ab. Die Prüfungen für geführte Eingabe und PAK-Karten verwenden ausschließlich synthetische Daten und prüfen Tastatur, eindeutige Probenauswahl, Datenerhalt, JSON-Speichern/Laden, bestehendes Undo und die Darstellung bei 1280 und 390 px. Optional schreibt `SCREENSHOT_DIR` Bildschirmfotos außerhalb des Repositorys. Echte Ordnerdialoge, Druckausgaben und die Darstellung in Office müssen zusätzlich praktisch geprüft werden.
 
