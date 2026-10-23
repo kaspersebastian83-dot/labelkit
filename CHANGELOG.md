@@ -1,5 +1,10 @@
 # Änderungen
 
+## 4.32.0 – 23. Oktober 2026
+
+- Projektordner „26.0123 Köln Nad“: Liegt im Archivordner die Mitarbeiterliste der Projektzentrale, steht der Ort ohne Kürzel – in der Kopfzeile und als Vorbelegung „Ort der Probenahme“ (PN 98) bei neuen Projekten. Bereits gespeicherte Angaben bleiben unverändert.
+- „Ihr Kürzel“: Ist noch keines gespeichert und wurde in der Projektzentrale „Ich bin …“ gewählt, übernimmt LabelKit beim Öffnen eines Projekts das App-Kürzel aus der Mitarbeiterliste (Hinweis in der Meldung). Ein vorhandenes Kürzel wird nie überschrieben. Das Kürzelfeld bietet die Kürzel der Liste zur Auswahl an.
+
 ## 4.31.0 – 23. Oktober 2026
 
 - Die Spektron-Leiste oben zeigt „Nr. Ort · zuständige Person“: Liegt im Archivordner die Mitarbeiterliste der Projektzentrale, wird das Kürzel am Ende des Projektordners erkannt und mit Namen angezeigt; eine in der Projektzentrale abweichend gewählte Person hat Vorrang.

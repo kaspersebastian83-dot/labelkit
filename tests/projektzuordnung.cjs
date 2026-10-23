@@ -19,7 +19,7 @@ function fixture(data,approval=false){
   const c={console,state,PROJEKTORDNER:{state},LAB_DIR:'Laboraufträge',speicherKontextRevision:10,
     proben:[{id:9,z2:'BISHERIGE PROBE'}],chloridProben:[],asbestProben:[],sonstigeProben:[],brandgeruchProben:[],pn98Proben:[],feldprotokolle:[],pn98Projekt:{},projektStatus:{dirty:false},
     document:{getElementById:k=>elements.get(k)||null},confirm:m=>{prompts.push(m);return m.includes('keine Projektnummer')?approval:true;},alert:m=>alerts.push(m),
-    permission:async()=>true,parse:()=>({nr:'26.0101',ort:'Muster'}),subdir:async()=>({name:'Laboraufträge'}),neuesteDaten:async()=>file,
+    permission:async()=>true,parse:()=>({nr:'26.0101',ort:'Muster'}),archiv:async()=>null,maPersonenAus:async()=>null,kuerzelAuswahl:()=>{},kuerzelVorschlag:()=>'',fbeKuerzel:()=>'XY',fbeKuerzelSetzen:()=>{},subdir:async()=>({name:'Laboraufträge'}),neuesteDaten:async()=>file,
     undoSnapshot:()=>events.push('undo'),markSaved:()=>events.push('saved'),flash:()=>{},zeigen:()=>{},ladePj:()=>{},
     localStorage:{getItem:()=>JSON.stringify([{nr:'26.0101',data:JSON.stringify(data)}])},buildProjektSaveData:()=>({filename:'Muster_Daten.json'}),
     FileReader:class{readAsText(){this.onload({target:{result:JSON.stringify(data)}});}}};

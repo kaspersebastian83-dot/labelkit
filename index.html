@@ -1737,7 +1737,7 @@ body:not(.lg) .btn-secondary:hover{border-color:var(--accent);color:var(--accent
       <button class="btn btn-secondary btn-sm" onclick="fbeNeuDialog()">+ Neues Feldprotokoll erfassen</button>
       <div class="bar-sep"></div>
       <label for="fbe-kuerzel" title="Steht bei jeder Erfassung, Prüfung, Änderung und Scan-Ablage im Protokoll">Ihr Kürzel</label>
-      <input type="text" id="fbe-kuerzel" maxlength="12" style="width:80px;font-family:var(--mono)" oninput="fbeKuerzelSetzen(this.value)" placeholder="z. B. SK">
+      <input type="text" id="fbe-kuerzel" list="ma-kuerzel" maxlength="12" style="width:80px;font-family:var(--mono)" oninput="fbeKuerzelSetzen(this.value)" placeholder="z. B. SK">
       <div class="bar-sep"></div>
       <button class="btn btn-secondary btn-sm" onclick="schnellSpeichern()" title="Projektdaten speichern (Strg+S)">💾 Speichern</button>
     </div>
@@ -3101,7 +3101,7 @@ body:not(.lg) .btn-secondary:hover{border-color:var(--accent);color:var(--accent
 <div id="flash" style="display:none" class="flash"></div>
 
 <script>
-const APP_VERSION='4.31.0';
+const APP_VERSION='4.32.0';
 const MATRICES=['Wischprobe','Bauschutt','Material (hoher org. Anteil)','Material (mineralisch)','Luft (Raumluft)','Sonstige'];
 const BEAUFSCHLAGUNG=['gereinigt','mit Belag','leicht verrußt','verrußt','mit Ruß','mit Kondensat','mit Staub'];
 const OBERFLAECHEN=['Aufsicht','Ansicht','Untersicht'];
@@ -9511,11 +9511,72 @@ function projectDataWarning(state) {
 }
 /* F7-READER-ENDE */
 
+/* ---------- Projektordner „JJ.Nummer Ort Kürzel“ und Mitarbeiterliste (wie Projektzentrale) ---------- */
+const PROJ_RE = /^(\d{2})\.(\d{2,6})(?:[\s_-]+(.*))?$/;
+/* SPEKTRON-ORDNERNAME v1 – in allen Apps identisch halten.
+   Liest den Ordnernamen von hinten: Am Ende wird ein Kürzel der Mitarbeiterliste gesucht (bis zu drei Wörter, längster Treffer
+   zuerst; verglichen ohne Groß-/Kleinschreibung, Leerzeichen und Punkte, also „Dr. Ka“ = „Dr.Ka“ = „dr ka“). Alles zwischen
+   Projektnummer und Kürzel ist der Ort, mit oder ohne Straße. Nichts wird geraten: Kein Treffer → Ort = ganzer Rest, Hinweis.
+   Ohne Mitarbeiterliste wird nichts abgetrennt (Verhalten wie vor 1.12). Kennung bleibt immer der volle Ordnername. */
+const maNorm = s => String(s ?? '').normalize('NFC').toLowerCase().replace(/[\s.]+/g, '');
+function leseProjektordner(name, personen){
+  const m = PROJ_RE.exec(String(name).normalize('NFC').trim());
+  if (!m) return null;
+  const rest = (m[3] || '').trim();
+  const r = { nr: `${m[1]}.${m[2]}`, yy: m[1], ort: rest, key: (+m[1]) * 1e6 + (+m[2]), kuerzel: '', hinweis: '' };
+  if (!Array.isArray(personen) || !personen.length) return r;
+  const woerter = [...rest.matchAll(/[^\s_]+/g)];
+  for (let n = Math.min(3, woerter.length); n >= 1; n--){
+    const ende = maNorm(woerter.slice(-n).map(w => w[0]).join(''));
+    const p = personen.find(x => x && maNorm(x.ordnerKuerzel) === ende);
+    if (!p) continue;
+    r.kuerzel = String(p.ordnerKuerzel).trim();
+    r.ort = rest.slice(0, woerter[woerter.length - n].index).replace(/[\s_-]+$/, '');
+    if (!r.ort) r.hinweis = 'Im Ordnernamen fehlt der Ort.';
+    return r;
+  }
+  r.hinweis = rest ? 'Kein bekanntes Kürzel am Ende des Ordnernamens.' : 'Im Ordnernamen fehlen Ort und Kürzel.';
+  return r;
+}
+/* SPEKTRON-ORDNERNAME-ENDE */
+/* Mitarbeiterliste der Projektzentrale (<Archivordner>/_Spektron-Mitarbeiter.json) – hier nur lesen.
+   Ohne Datei, ohne Leserecht oder bei unbekanntem Format: null (dann Verhalten wie bisher). */
+const MA_FILE = '_Spektron-Mitarbeiter.json';
+async function maPersonenAus(archiv){
+  try{
+    if (!archiv || !archiv.getFileHandle) return null;
+    if (archiv.queryPermission && (await archiv.queryPermission({ mode: 'read' })) !== 'granted') return null;
+    const o = JSON.parse(await (await (await archiv.getFileHandle(MA_FILE)).getFile()).text());
+    return o && o.format === 'spektron-mitarbeiter' && Array.isArray(o.personen) ? o.personen.filter(p => p && typeof p.ordnerKuerzel === 'string' && p.ordnerKuerzel.trim()) : null;
+  }catch(e){ return null; }
+}
+/** „Ich bin …“ aus der Projektzentrale (gleicher Browser-Speicher) → App-Kürzel aus der Mitarbeiterliste, sonst ''. */
+function kuerzelVorschlag(personen){
+  try{
+    const ich = (localStorage.getItem('spektron-ich') || '').trim();
+    if (!ich) return '';
+    const p = (personen || []).find(x => x.aktiv !== false && maNorm(x.ordnerKuerzel) === maNorm(ich));   // inaktive Personen nie automatisch übernehmen
+    const k = p ? String(p.appKuerzel || '').trim() : '';
+    return /^[A-Za-zÄÖÜäöü]{1,6}$/.test(k) ? k.toUpperCase() : '';
+  }catch(e){ return ''; }
+}
+/** Auswahlliste der App-Kürzel für ein Eingabefeld (id der datalist). */
+function kuerzelAuswahl(id, personen){
+  let dl = document.getElementById(id);
+  if (!dl){ dl = document.createElement('datalist'); dl.id = id; document.body.appendChild(dl); }
+  dl.innerHTML = '';
+  for (const p of personen || []){
+    const k = String(p.appKuerzel || '').trim();
+    if (!k || p.aktiv === false) continue;
+    const o = document.createElement('option'); o.value = k.toUpperCase(); o.label = p.name || ''; dl.appendChild(o);
+  }
+}
+
 const PROJEKTORDNER=(function(){
   const LAB_DIR='Laboraufträge';
   const state={proj:null,pj:null,pjStatus:null};
   const reader=createProjectDataReader(pjChanged);
-  const parse=name=>{const m=/^(\d{2})\.(\d{2,6})(?:[\s_-]+(.*))?$/.exec(String(name).normalize('NFC').trim());return m?{nr:m[1]+'.'+m[2],ort:(m[3]||'').trim()}:null;};
+  const parse=(name,personen)=>{const r=leseProjektordner(name,personen);return r?{nr:r.nr,ort:r.ort}:null;};   // Ort ohne Kürzel, wenn die Mitarbeiterliste vorliegt
   const archiv=()=>new Promise(res=>{try{const r=indexedDB.open('mosaik-suite',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{try{const g=r.result.transaction('kv').objectStore('kv').get('archiv');g.onsuccess=()=>{r.result.close();res(g.result||null);};g.onerror=()=>{r.result.close();res(null);};}catch(e){res(null);}};r.onerror=()=>res(null);}catch(e){res(null);}});
   const permission=async(h,request)=>{const o={mode:'readwrite'};try{if(!h.queryPermission||await h.queryPermission(o)==='granted')return true;return !!request&&!!h.requestPermission&&await h.requestPermission(o)==='granted';}catch(e){return false;}};
   async function subdir(dir,name,create){try{return await dir.getDirectoryHandle(name);}catch(e){}const want=name.normalize('NFC').toLowerCase();for await(const h of dir.values())if(h.kind==='directory'&&h.name.normalize('NFC').toLowerCase()===want)return h;return create?dir.getDirectoryHandle(name,{create:true}):null;}
@@ -9574,7 +9635,8 @@ const PROJEKTORDNER=(function(){
   }
   async function oeffnen(dir){
     if(!await permission(dir,true)){flash('Ohne Schreibrecht auf den Projektordner kann LabelKit dort nicht speichern.');return;}
-    const p=parse(dir.name);if(!p){flash('„'+dir.name+'“ ist kein Projektordner (erwartet z. B. „26.0123 Köln“).');return;}
+    const personen=await maPersonenAus(await archiv());
+    const p=parse(dir.name,personen);if(!p){flash('„'+dir.name+'“ ist kein Projektordner (erwartet z. B. „26.0123 Köln“).');return;}
     let lab=await subdir(dir,LAB_DIR,false);
     if(!lab){if(!confirm('Im Projekt „'+dir.name+'“ gibt es keinen Unterordner „'+LAB_DIR+'“. Jetzt anlegen?'))return;lab=await subdir(dir,LAB_DIR,true);}
     const vorhanden=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length;
@@ -9593,11 +9655,14 @@ const PROJEKTORDNER=(function(){
     const nrEl=document.getElementById('proj-nr');if(nrEl&&!nrEl.value.trim()){nrEl.value=p.nr;}
     if(typeof pn98Projekt==='object'){if(!pn98Projekt.ort&&p.ort)pn98Projekt.ort=p.ort;if(!pn98Projekt.schaden)pn98Projekt.schaden=p.nr;if(typeof setPn98ProjektFelderUi==='function')setPn98ProjektFelderUi();}
     updateProjekt();
+    kuerzelAuswahl('ma-kuerzel',personen);
+    let kzHinweis='';
+    if(!fbeKuerzel()){const v=kuerzelVorschlag(personen);if(v){fbeKuerzelSetzen(v);const kz=document.getElementById('fbe-kuerzel');if(kz)kz.value=v;kzHinweis=' · Ihr Kürzel „'+v+'“ aus der Projektzentrale („Ich bin …“) übernommen';}}
     if(datei)markSaved(datei.name,LAB_DIR);
     zeigen();
     try{PROJEKT_URL.setzen(dir.name);}catch(e){}
     try{window.MosaikLeiste&&MosaikLeiste.aktualisieren();}catch(e){}
-    flash(datei?'Projekt '+dir.name+': „'+datei.name+'“ geladen – gespeichert wird in „'+LAB_DIR+'“':'Projekt '+dir.name+': gespeichert wird in „'+LAB_DIR+'“');
+    flash((datei?'Projekt '+dir.name+': „'+datei.name+'“ geladen – gespeichert wird in „'+LAB_DIR+'“':'Projekt '+dir.name+': gespeichert wird in „'+LAB_DIR+'“')+kzHinweis);
   }
   async function ausZentrale(name){
     const root=await archiv();
