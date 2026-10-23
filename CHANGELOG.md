@@ -1,5 +1,12 @@
 # Änderungen
 
+## 4.33.0 – 23. Oktober 2026
+
+- Asbestproben: Die Spalten „Beaufschlagung“ und „Oberflächenart“ (aus der PAK-Wischprobe übernommen) sind ersetzt durch **Bauteil / Material**, **Bindung** (fest / schwach / unklar) und **Zustand** (intakt, brandbeaufschlagt, geplatzt / zerstört, Bruchstücke im Brandschutt). Alle drei sind Textfelder mit Vorschlägen; eigene Bauteile werden im Browser gemerkt. Gilt auch im Bearbeiten-Panel.
+- „Wischprobe“ ist keine Asbest-Matrix mehr; neue Asbestproben starten ohne Matrix (Ampel rot, bis eine gewählt ist). Raumluft bleibt und erhält „Asbestfasern REM/EDX · VDI 3492“ als Untersuchungsparameter; Bindung und Zustand entfallen dort.
+- Etikett zeigt Raum und Bauteil, die Laborübergabe Raum, Bauteil und Bindung. Gespeichert wird weiter in z3/z4 (plus neues Feld `zustand`), daher übernimmt PlanKit die Beschreibung ohne Änderung. Ältere Projektdateien behalten ihre Werte, auch eine alte Matrix „Wischprobe“.
+- Neuer Feldbogen **Materialprobe Asbest** (Formular-ID …-AM-…): Projekt, Anlass und Baujahr, Probenahme (Schutz, Entnahme, Verpackung, Versiegelung), je Probe Raum, Bauteil, Bindung, Zustand, „Gleiches Material auch in“ und Bemerkung. Blatt 1 mit zwei Proben, Folgeblätter mit je vier. Erfassung am Schreibtisch mit Scan-Ablage, Vier-Augen-Prüfung und Hinweisen (fehlende/doppelte Proben-Nr., fehlendes Bauteil oder Bindung).
+
 ## 4.32.0 – 23. Oktober 2026
 
 - Projektordner „26.0123 Köln Nad“: Liegt im Archivordner die Mitarbeiterliste der Projektzentrale, steht der Ort ohne Kürzel – in der Kopfzeile und als Vorbelegung „Ort der Probenahme“ (PN 98) bei neuen Projekten. Bereits gespeicherte Angaben bleiben unverändert.

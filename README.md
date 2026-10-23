@@ -2,11 +2,11 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.30.10** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.33.0** (Änderungen in `CHANGELOG.md`)
 
-## Neu in 4.30.10 · 20.10.2026
+## Neu in 4.33.0 · 23.10.2026
 
-Projektzentrale und Spektron-Leiste übergeben Projekte jetzt über #projekt im Fragment. Sonderzeichen bleiben erhalten; alte ?projekt-Links funktionieren weiterhin und werden nach dem Laden bereinigt. Projektwechsel laden auch bereits geöffnete App-Fenster neu; eine Warnung vor ungesicherten Eingaben kann den Wechsel abbrechen.
+Asbestproben sind jetzt auf Materialproben nach Brand zugeschnitten: Bauteil / Material, Bindung und Zustand (mit Vorschlägen) statt der PAK-Spalten, keine Asbest-Wischprobe mehr, Raumluft mit VDI 3492. Neuer Feldbogen „Materialprobe Asbest“ zum Ausfüllen vor Ort mit derselben Erfassung und Scan-Ablage wie die anderen Bögen.
 
 ## Funktionen
 
@@ -14,7 +14,7 @@ Projektzentrale und Spektron-Leiste übergeben Projekte jetzt über #projekt im 
 - Etiketten und Laborübergaben erstellen
 - Brandgeruch-Bewertungen erfassen
 - PN-98-Probenahmeprotokolle und Textbausteine erstellen
-- Feldbögen für Raumluftmessungen (Asbest/KMF, Schimmelpilze) und Probenahmen nach PN 98 zum Ausdrucken und Ausfüllen von Hand, mit Projektdaten vorgedruckt (ab 4.25)
+- Feldbögen für Raumluftmessungen (Asbest/KMF, Schimmelpilze), Materialproben Asbest und Probenahmen nach PN 98 zum Ausdrucken und Ausfüllen von Hand, mit Projektdaten vorgedruckt (ab 4.25)
 - Ausgefüllte Feldbögen am Schreibtisch erfassen, Scans mit Prüfsumme im Projektordner unter „Feldprotokolle“ ablegen, Prüfung der Übertragung durch eine zweite Person und Änderungsprotokoll (ab 4.26)
 - Feldbogen Probenahme Feststoffe nach LAGA PN 98 zum Ausfüllen vor Ort, mit derselben Erfassung und Scan-Ablage (ab 4.27)
 - Projektdaten als JSON speichern und wieder importieren
