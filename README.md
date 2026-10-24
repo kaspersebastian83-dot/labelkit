@@ -85,7 +85,7 @@ Zwischenspeichern ist keine Freigabe für Laborunterlagen. Der Abschluss prüft 
 1. Proben erfassen und unter **Probenerfassung abschließen** die Vollständigkeit prüfen.
 2. **Alle EOL + Projektdatei speichern** anklicken.
 3. Den Projektordner auswählen. Die passenden Laborübergaben, zusätzliche Protokolle und die JSON-Projektdatei werden gemeinsam gespeichert.
-5. Zum Weiterarbeiten die JSON-Projektdatei über den Projektimport laden.
+4. Zum Weiterarbeiten die JSON-Projektdatei über den Projektimport laden.
 
 Die Ordnerauswahl kann abgebrochen werden. Bei einem Fehler startet der Sammel-Export keine automatischen Downloads. Bereits vollständig gespeicherte Dateien werden in der Fehlermeldung gezählt.
 
