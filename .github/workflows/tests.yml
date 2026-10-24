@@ -97,6 +97,8 @@ jobs:
         with:
           repository: kaspersebastian83-dot/aidkit
           path: aidkit
+      - name: Projektdatei behält frühere Textbaustein-Angaben
+        run: node tests/projektdatei-altwerte-browser.cjs ${{ matrix.browser }}
       - name: Wandblatt Bohrkerne – drucken, übertragen, Proben anlegen
         run: node tests/wandblatt-bohrkerne-browser.cjs ${{ matrix.browser }}
         env:

@@ -1,5 +1,12 @@
 # Änderungen
 
+## 4.36.0 – 24. Oktober 2026
+
+- Reiter **Textbausteine** entfernt (Funktion war nicht fertig entwickelt): Vorschau, Word-Export „Probenahmetexte“, Freigabe und Stile. Der Reiter „Probenerfassung abschließen“ passt wieder in die Leiste.
+- **Alle EOL + Projektdatei speichern** (vorher „… inkl. Textbausteine …“): keine Textbaustein-Freigabe mehr vor dem Speichern, keine Datei `…_Probenahmetexte_….docx` mehr. Laborübergaben, Protokolle und Projektdatei werden unverändert gespeichert; die Prüfung kritischer Probleme bleibt.
+- Projektdatei unverändert: Die vier früheren Angaben `pakPruefberichtNr`, `textblockLabor`, `textblockHeadings`, `textblockBrandTabelle` werden weiter gelesen (auch aus älteren Dateien) und beim Speichern unverändert zurückgeschrieben; ein neues Projekt startet leer. Geprüft: dieselbe Datei in 4.35.0 und 4.36.0 geladen und gespeichert ergibt denselben Inhalt (bis auf Zeitstempel und Version). Test: `tests/projektdatei-altwerte-browser.cjs`.
+- Titel und Versionsknopf folgen jetzt `APP_VERSION` (zeigten seit 4.34.0 noch „v4.33.0“).
+
 ## 4.35.0 – 24. Oktober 2026
 
 - Neuer Feldbogen **Bohrkerne (Wandblatt)** (Formular-ID …-BK-…) für systematische Bohrkerne aus Wänden, Böden und Decken, z. B. nach Heizölschäden. Blatt 1: Projekt, Untersuchung (Standard MKW C10–C40 und C10–C22), Tiefenstufen (bis drei, Standard 0–2 / 2–6 / 6–12 cm), Vorgabe Analyse/Rückstellung, Bohrung und Gefäß, Begehung mit Raumkürzeln und Wand A. Danach ein Wandblatt je Wand: Geschoss und Fläche zum Ankreuzen, Wandkennung, Raster 1–9 (Telefontastatur, von vorn gesehen), Tabelle mit vorgedruckten Endungen -1 … -9 und zwei freien Zeilen, je Kern Lage (Ecke, OKFF), Kernlänge, Material je Tiefe, Geruch und A/R je Tiefe.

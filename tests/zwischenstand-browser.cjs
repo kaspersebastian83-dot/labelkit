@@ -146,14 +146,14 @@ const name = process.argv[2] || 'chromium';
     assert.match(await status.textContent(), /Download gestartet.*bitte Datei prüfen/);
     assert.equal(await page.evaluate(() => projektStatus.dirty), true);
     assert.deepEqual(await snapshot(), noFolder);
-    // Abschluss bleibt gesperrt; Zwischenstand gibt keine Textbausteine frei.
+    // Abschluss bleibt gesperrt.
     await page.evaluate(() => abschlussSpeichernGeprueft(false));
     assert.equal(await page.locator('#btn-abschluss-speichern').isDisabled(), true);
     assert.match(await page.locator('#flash').textContent(), /Speichern gesperrt/);
     await page.waitForTimeout(500);
     assert.equal(downloads.length, downloadCount + 1);
     // In allen Reitern erreichbar; auch die Statusmeldung bleibt bei 390px vollständig lesbar.
-    for (const group of ['pak','chlorid','asbest','sonstige','brandgeruch','pn98','feldboegen','auftrag','textbausteine']) {
+    for (const group of ['pak','chlorid','asbest','sonstige','bohrkerne','brandgeruch','pn98','feldboegen','auftrag']) {
       await page.evaluate(group => switchMainTab(group), group);assert.equal(await button.isVisible(), true);
     }
     await page.setViewportSize({width: 390, height: 844});
