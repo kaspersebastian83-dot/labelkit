@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.38.1 – 24. Oktober 2026
+
+- Leiste oben in allen Apps wieder identisch (FotoKit-Projektzuordnung und offenes Menü wie in FotoKit, aktuelle Projektdaten wie in LabelKit/PlanKit); Speicherkandidaten und Kopien von PlanKit zählen nicht als Plan.
+
 ## 4.38.0 – 24. Oktober 2026
 
 - Bohrkerne: „Proben anlegen“ aus dem Wandblatt übernimmt Abstand zur linken Ecke (`bkEcke`), Höhe über OKFF (`bkOkff`), Wandlänge und -höhe (`bkWandL`, `bkWandH`, alle in m) und Geruch (`bkGeruch`) in die Probe – für die Wandansicht in PlanKit. Leere oder unlesbare Maße bleiben leer. Projektdatei nur ergänzt.
