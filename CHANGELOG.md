@@ -1,5 +1,10 @@
 # Änderungen
 
+## 4.37.1 – 24. Oktober 2026
+
+- Reiter „Probenprotokoll PN 98“ heißt kurz „PN 98“ (voller Name als Tooltip): Die Reiterleiste passt jetzt auch bei 1280 px Breite, „Probenerfassung abschließen“ wird nicht mehr abgeschnitten.
+- Willkommen-Fenster: Schritt 1 „Projekt öffnen“ (über die Projektzentrale; ohne sie Projektnummer oben eintragen).
+
 ## 4.37.0 – 24. Oktober 2026
 
 - **PN 98 → Laborproben**: Im Reiter „Probenprotokoll PN 98“ legt „→ Laborproben anlegen“ aus jedem Protokoll eine Probe unter „Sonstige Proben“ an (Etikett, Laborauftrag). Matrix und Untersuchungsparameter werden einmal für alle gewählt (nicht geraten; die letzte Wahl wird vorgeschlagen). Raum/Ort = Probenahmestelle, Beschreibung = Art der Probe · „PN 98 Nr. …“, damit Etikett, Laborauftrag und Protokoll zueinander passen. Datum = Probenahmedatum. Erneutes Anlegen ersetzt diese Proben (Verweis `pn98Quelle`) statt sie zu verdoppeln.
