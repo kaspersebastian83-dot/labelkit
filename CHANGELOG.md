@@ -6,6 +6,9 @@
 - Probenbezeichnung nach AidKit: Wandkennung + Endung + Tiefe, z. B. `EG-WZ-B-7-T2`.
 - Erfassung am Schreibtisch wie bei den anderen Bögen (Änderungsprotokoll, Prüfung, Scan-Ablage). Hinweise: Wandkennung unvollständig oder doppelt, Kernlänge fehlt, A/R unklar, Tiefenstufe länger als der Kern, Lage außerhalb der Wand, Raumkürzel nicht in der Liste.
 - „Proben anlegen“ erzeugt aus dem übertragenen Bogen alle Segmente als Bohrkernproben im Reiter „Sonstige“: volle Bezeichnung, Tiefe (letztes Segment endet am Kernende), Material, Raum, Untersuchung bzw. „Rückstellung“. Erneutes Anlegen ersetzt die Proben dieses Bogens statt sie zu verdoppeln. Etikett, Beschreibung und Laborübergabe zeigen die volle Bezeichnung.
+- Neuer Reiter **Bohrkerne**: Arbeitsplatz für alles rund um Bohrkerne – Wandblätter drucken, übertragene Bögen mit Status, Übersicht je Wand mit allen Kernen und Segmenten (A/R), Schnittpläne, Etiketten und Übergabe. Keine eigenen Daten: Proben bleiben unter „Sonstige Proben“, Bögen bei den Feldprotokollen. Hinweis, wenn ein Bogen nach dem Anlegen der Proben geändert wurde oder Proben noch fehlen.
+- **Schnittplan** (je Kern, nach Eurofins-Vorlage): Segmente aus dem Wandblatt zeigen Tiefenstufe, Probe und Auftrag – „analysieren“ oder fett „nur sägen und aufbewahren“ –, dazu die Untersuchung. „Ungebrochene Rückstellung des halben Bohrkerns“ kommt aus dem Wandblatt (neue Frage auf Blatt 1); ohne Angabe bleibt sie leer statt „Nein“. Im Bogen: „Schnittpläne dieses Bogens“.
+- Zurückgestellte Segmente heißen „Rückstellprobe – nicht analysieren“ (Untersuchungsparameter in der Laborübergabe), damit sie nicht mit dem halben Kern verwechselt werden.
 - Tabellen in der Erfassung können eigene Spalten haben (bisher fest die Schimmel-Probentabelle).
 - Raumkürzel und ID-Regeln lädt LabelKit aus AidKit (`../aidkit/konventionen.js`); ohne AidKit (offline) funktioniert alles, nur ohne diese Prüfungen.
 

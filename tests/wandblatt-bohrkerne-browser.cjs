@@ -67,7 +67,7 @@ assert.ok(fs.existsSync(path.join(roots['/aidkit/'], 'konventionen.js')), 'AidKi
     const proben = await page.evaluate(() => sonstigeProben.map(p => ({id: p.bkId, kern: p.bkBez, von: p.bkVon, bis: p.bkBis, notiz: p.notiz, z2: p.z2, z1: p.z1, quelle: p.bkQuelle, text: beschreibungSonstige(p)})));
     assert.deepEqual(proben.map(p => p.id), ['EG-WZ-B-1-T1', 'EG-WZ-B-1-T2', 'EG-WZ-B-7-T1', 'EG-WZ-B-7-T2', 'EG-WZ-B-7-T3'], 'in der Reihenfolge des Bogens');
     assert.deepEqual(proben.map(p => [p.von, p.bis]), [[0, 2], [2, 5], [0, 2], [2, 6], [6, 12]], 'letztes Segment endet am Kernende');
-    assert.equal(proben[1].notiz, 'Rückstellung', 'kleines r gilt als R'); assert.match(proben[0].notiz, /MKW/);
+    assert.equal(proben[1].notiz, 'Rückstellprobe – nicht analysieren', 'kleines r gilt als R'); assert.match(proben[0].notiz, /MKW/);
     assert.equal(proben[0].z2, 'EG Wohnzimmer', 'Raum für PlanKit/Raumbuch'); assert.equal(proben[0].z1, '26.0999');
     assert.equal(proben[2].text, 'EG-WZ-B-7-T1 · 0–2 cm · Putz · Gesamtl. 14 cm', 'Beschreibung für Laborübergabe');
     assert.ok(proben.every(p => p.quelle === '26.0999-BK-01'));
@@ -75,6 +75,24 @@ assert.ok(fs.existsSync(path.join(roots['/aidkit/'], 'konventionen.js')), 'AidKi
     // Erneut anlegen ersetzt statt zu verdoppeln
     await page.locator('#fbe-bk-panel button', {hasText: 'aktualisieren'}).click();
     assert.equal(await page.evaluate(() => sonstigeProben.length), 5);
+
+    // Schnittplan je Kern (Eurofins-Form): Tiefenstufe, Probe, Auftrag; halber Kern ohne Angabe nicht angekreuzt
+    const plan = await page.evaluate(() => { const g = bohrkernGruppen().get('EG-WZ-B-1'); return schnittplanSvg('EG-WZ-B-1', g, '26.0999', 5, g[0].bkRueck || ''); });
+    assert.match(plan, /T1: 0–2 cm → P\d+[\s\S]*analysieren/); assert.match(plan, /T2: 2–5 cm → P\d+[\s\S]*nur sägen und aufbewahren/);
+    assert.match(plan, /Untersuchung „analysieren“:<\/tspan> MKW/); assert.doesNotMatch(plan, /✓/, 'halber Kern: keine Angabe, kein Kreuz');
+
+    // Reiter „Bohrkerne“: Zahlen, Wand mit Kernen, Hinweis bei nachträglich geändertem Bogen
+    await page.evaluate(() => switchMainTab('bohrkerne'));
+    const bk = await page.locator('#bk-inhalt').innerText();
+    assert.match(bk, /1\s*Wand\s[\s\S]*2\s*Kerne[\s\S]*5\s*Segmente[\s\S]*4\s*analysieren[\s\S]*1\s*Rückstellprobe\b/);
+    assert.match(bk, /EG-WZ-B · EG Wohnzimmer/); assert.match(bk, /T2 2–5 cm · P\d+ · R/);
+    assert.match(bk, /26\.0999-BK-01[\s\S]*1 Wand · in Erfassung · 5 Proben/);
+    assert.doesNotMatch(bk, /nach dem Anlegen der Proben geändert/);
+    await page.locator('[data-bk-bogen]').click();
+    await set('mp.0.punkte.6.s3', 'R');
+    await page.evaluate(() => switchMainTab('bohrkerne'));
+    assert.match(await page.locator('#bk-inhalt').innerText(), /26\.0999-BK-01 wurde nach dem Anlegen der Proben geändert/);
+    if (process.env.SHOT) await page.locator('#bk-inhalt').screenshot({path: process.env.SHOT + '-reiter.png'});
     assert.deepEqual(errors, []);
     console.log(`OK ${name}: Wandblatt drucken, übertragen, Proben mit Probenbezeichnung anlegen`);
   } finally { if (browser) await browser.close(); server.close(); }

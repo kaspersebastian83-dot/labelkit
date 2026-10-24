@@ -6,7 +6,7 @@ Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben
 
 ## Neu in 4.35.0 · 24.10.2026
 
-- **Wandblatt Bohrkerne** (Reiter „Feldbögen“): Blatt 1 mit Untersuchung, Tiefenstufen und Begehung, danach ein Blatt je Wand. Vor Ort ergibt sich die Probenbezeichnung von selbst: Wandkennung + vorgedruckte Endung + Tiefe, z. B. `EG-WZ-B-7-T2` (Regeln: AidKit). Am Schreibtisch übertragen, dann „Proben anlegen“ – alle Segmente stehen im Reiter „Sonstige“, mit Bezeichnung auf Etikett und Laborübergabe.
+- **Wandblatt Bohrkerne** (Reiter „Feldbögen“): Blatt 1 mit Untersuchung, Tiefenstufen und Begehung, danach ein Blatt je Wand. Vor Ort ergibt sich die Probenbezeichnung von selbst: Wandkennung + vorgedruckte Endung + Tiefe, z. B. `EG-WZ-B-7-T2` (Regeln: AidKit). Am Schreibtisch übertragen, dann „Proben anlegen“ – alle Segmente stehen im Reiter „Sonstige“, mit Bezeichnung auf Etikett und Laborübergabe. Neuer Reiter **Bohrkerne** führt Wandblätter, Übertragung, Übersicht je Wand, Schnittpläne (je Kern, mit „analysieren“ / „nur sägen und aufbewahren“), Etiketten und Übergabe zusammen.
 
 ## Neu in 4.34.0 · 24.10.2026
 

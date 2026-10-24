@@ -942,6 +942,7 @@ body:not(.lg) .btn-secondary:hover{border-color:var(--accent);color:var(--accent
   <button class="main-tab"        id="main-chlorid" onclick="switchMainTab('chlorid')">Chlorid-Wischproben</button>
   <button class="main-tab"        id="main-asbest"   onclick="switchMainTab('asbest')">Asbestproben</button>
   <button class="main-tab"        id="main-sonstige" onclick="switchMainTab('sonstige')">Sonstige Proben</button>
+  <button class="main-tab"        id="main-bohrkerne" onclick="switchMainTab('bohrkerne')">Bohrkerne</button>
   <button class="main-tab"        id="main-brandgeruch" onclick="switchMainTab('brandgeruch')">Brandgeruch</button>
   <button class="main-tab"        id="main-pn98"     onclick="switchMainTab('pn98')">Probenprotokoll PN 98</button>
   <button class="main-tab"        id="main-feldboegen" onclick="switchMainTab('feldboegen')">Feldbögen</button>
@@ -1596,6 +1597,10 @@ body:not(.lg) .btn-secondary:hover{border-color:var(--accent);color:var(--accent
 
 <!-- TAB: AUFTRAGSSCHEIN -->
 
+<!-- TAB: BOHRKERNE (v4.35.0) – Arbeitsplatz über den vorhandenen Daten: Wandblätter, Übertragung, Übersicht je Wand, Labor -->
+<div id="tab-bohrkerne" class="tab-content">
+  <div class="container" id="bk-inhalt"></div>
+</div>
 <div id="tab-brandgeruch" class="tab-content">
   <div class="container">
     <div class="step-label"><span class="step-nr">1</span><span class="step-title">Projektnummer</span></div>
@@ -2164,6 +2169,8 @@ body:not(.lg) .btn-secondary:hover{border-color:var(--accent);color:var(--accent
           <li>Neuer Feldbogen „Bohrkerne (Wandblatt)“: Blatt 1 mit Untersuchung, Tiefenstufen und Begehung (Raumkürzel, Wand A), danach ein Blatt je Wand mit Raster 1–9 und vorgedruckten Endungen.</li>
           <li>Vor Ort: Wandkennung einmal oben eintragen (z. B. EG-WZ-B) – Beutel = Wandkennung + Endung + Tiefe, z. B. EG-WZ-B-7-T2.</li>
           <li>Am Schreibtisch übertragen wie die anderen Bögen; „Proben anlegen“ erzeugt alle Segmente im Reiter „Sonstige“ (A = Untersuchung, R = Rückstellung), mit Bezeichnung auf Etikett und Laborübergabe.</li>
+          <li>Neuer Reiter „Bohrkerne“: Wandblätter, Übertragung, Übersicht je Wand mit allen Kernen und Segmenten, Schnittpläne, Etiketten und Übergabe an einer Stelle.</li>
+          <li>Schnittplan je Kern zeigt Tiefenstufe, Probe und „analysieren“ bzw. „nur sägen und aufbewahren“.</li>
           <li>Raumkürzel und Regeln kommen aus AidKit, dem Handbuch der Suite.</li>
         </ul>
       </div>
@@ -3332,7 +3339,7 @@ function switchMainTab(group){
   document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('main-'+group).classList.add('active');
   // Unter-Tab-Leisten
-  ['pak','chlorid','asbest','sonstige','brandgeruch','pn98','feldboegen','auftrag','textbausteine'].forEach(g=>{
+  ['pak','chlorid','asbest','sonstige','bohrkerne','brandgeruch','pn98','feldboegen','auftrag','textbausteine'].forEach(g=>{
     const el=document.getElementById('sub-tabs-'+g);
     if(el) el.style.display=g===group?'flex':'none';
   });
@@ -3373,13 +3380,15 @@ function switchMainTab(group){
     switchTab('pn98',btn);
     document.querySelectorAll('#sub-tabs-pn98 .sub-tab').forEach(t=>t.classList.remove('active'));
     btn.classList.add('active');
+  } else if(group==='bohrkerne'){
+    switchTab('bohrkerne',null);bkRender();
   } else if(group==='auftrag'){
     switchTab('auftragsschein',null);
   } else if(group==='textbausteine'){
     switchTab('textbausteine',null);
   }
   // Beim Wechsel des Hauptreiters immer oben beginnen (v4.6.0)
-  if(group==='auftrag'||group==='textbausteine'){ window.scrollTo(0,0); }
+  if(group==='auftrag'||group==='textbausteine'||group==='bohrkerne'){ window.scrollTo(0,0); }
 }
 
 function updateProjektHeader(){
@@ -4917,7 +4926,7 @@ function renderSonstigeEtiketten(){
       const z1=isBK?(p.bkId||p.bkBez||'–'):(p.z1||'–');
       const z2=isBK?(p.bkVon!==undefined&&p.bkVon!==''&&p.bkBis!==undefined&&p.bkBis!==''?`Tiefe: ${p.bkVon}–${p.bkBis} cm`:''):(p.z2||'');
       const z3=isBK?(p.bkGesamt?`Gesamtlänge: ${p.bkGesamt} cm`:''):(p.z3||'');
-      const z4=isBK?(p.bkId?[p.bkMaterial,p.bkStatus==='R'?'Rückstellung':''].filter(Boolean).join(' · '):(p.bkRueck?`Rückstellung: ${p.bkRueck}`:'')):(p.z4||'');
+      const z4=isBK?(p.bkId?[p.bkMaterial,p.bkStatus==='R'?'Rückstellprobe':''].filter(Boolean).join(' · '):(p.bkRueck?`Rückstellung: ${p.bkRueck}`:'')):(p.z4||'');
       return`<div class="etikett-item">
         <div class="etikett-top"><span class="etikett-probe-nr">Probe ${probeNr(p)}${isBK&&!p.bkId?' · '+esc(p.bkBez||''):''}</span><span class="etikett-datum">${datum}</span></div>
         <div class="etikett-zeilen">
@@ -5297,8 +5306,13 @@ function schnittplanSvg(bez, segs, projektNr, gesamt, rueck){
   // Segment-Beschriftungen (rechts) – kürzer halten
   const segLabels = sortedSegs.map((s,i)=>{
     const yMid=(cmToY(Number(s.bkVon))+cmToY(Number(s.bkBis)))/2;
-    return `<text x="${cylRight+30}" y="${yMid+4}" font-family="DM Sans, Arial, sans-serif" font-size="10.5" fill="#356aa8" font-weight="600">Seg. ${i+1}: ${s.bkVon}–${s.bkBis} cm → P${probeNr(s)}</text>`;
+    if(!s.bkId)return `<text x="${cylRight+30}" y="${yMid+4}" font-family="DM Sans, Arial, sans-serif" font-size="10.5" fill="#356aa8" font-weight="600">Seg. ${i+1}: ${s.bkVon}–${s.bkBis} cm → P${probeNr(s)}</text>`;
+    // Aus dem Wandblatt: Tiefenstufe, Probe und was das Labor mit dem Segment tun soll
+    const rueck=s.bkStatus==='R';
+    return `<text x="${cylRight+30}" y="${yMid-3}" font-family="DM Sans, Arial, sans-serif" font-size="10.5" fill="#356aa8" font-weight="600">T${escAll(s.bkSegment)}: ${s.bkVon}–${s.bkBis} cm → P${probeNr(s)}</text>
+      <text x="${cylRight+30}" y="${yMid+11}" font-family="DM Sans, Arial, sans-serif" font-size="10" font-weight="${rueck?'700':'400'}" fill="${rueck?'#9a5b00':'#222'}">${rueck?'nur sägen und aufbewahren':'analysieren'}</text>`;
   }).join('');
+  const untersuchung=[...new Set(sortedSegs.filter(s=>s.bkId&&s.bkStatus==='A').map(s=>String(s.notiz||'').trim()).filter(Boolean))].join(' · ');
 
   return `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" style="background:white">
@@ -5332,8 +5346,9 @@ function schnittplanSvg(bez, segs, projektNr, gesamt, rueck){
   ${rueck==='Nein'?`<text x="437" y="178" text-anchor="middle" font-family="DM Sans, Arial, sans-serif" font-size="14" font-weight="700">✓</text>`:''}
   <text x="450" y="178" font-family="DM Sans, Arial, sans-serif" font-size="11">Nein</text>
 
+  ${untersuchung?`<text x="20" y="198" font-family="DM Sans, Arial, sans-serif" font-size="10.5" fill="#222"><tspan font-weight="700">Untersuchung „analysieren“:</tspan> ${escAll(untersuchung)}</text>`:''}
   <!-- Trennlinie über Zylinder -->
-  <line x1="20" y1="200" x2="${W-20}" y2="200" stroke="#ddd" stroke-width="0.5"/>
+  <line x1="20" y1="${untersuchung?208:200}" x2="${W-20}" y2="${untersuchung?208:200}" stroke="#ddd" stroke-width="0.5"/>
 
   <!-- "Oben"-Beschriftung -->
   <ellipse cx="${cx}" cy="${cylTop}" rx="${cylW/2}" ry="${ellipseRy}" fill="#fafafa" stroke="#222" stroke-width="1"/>
@@ -5370,8 +5385,9 @@ function schnittplanSvg(bez, segs, projektNr, gesamt, rueck){
 </svg>`;
 }
 
-function schnittplaeneDrucken(){
+function schnittplaeneDrucken(nurQuelle){
   const groups=bohrkernGruppen();
+  if(nurQuelle)for(const [k,segs] of [...groups])if(!segs.some(p=>p.bkQuelle===nurQuelle))groups.delete(k);
   if(!groups.size){alert('Keine Bohrkern-Proben vorhanden. Erst über „＋ Bohrkern anlegen" anlegen oder Matrix einer Probe auf „Bohrkern" setzen.');return}
   const projnr=document.getElementById('sonstige-proj-nr')?.value.trim()||document.getElementById('proj-nr')?.value.trim()||'';
 
@@ -5399,7 +5415,7 @@ function schnittplaeneDrucken(){
     if(bkGesamt>0 && maxBis>bkGesamt){
       probleme.push(`„${bez}": Letzte Tiefe (${maxBis} cm) > Gesamtlänge (${bkGesamt} cm). Wird auf ${gesamtEffektiv} cm korrigiert.`);
     }
-    verwertbar.set(bez,{segs, gesamt:gesamtEffektiv, rueck:segs[0].bkRueck||'Nein'});
+    verwertbar.set(bez,{segs, gesamt:gesamtEffektiv, rueck:segs[0].bkRueck||''});
   }
 
   // Bei Problemen: User fragen
@@ -10061,6 +10077,7 @@ function fbBohrkernSeiten(o,h){
       +f('Vorgabe Analyse / Rückstellung',v(o.vorgabe)||undefined)
       +'<span class="fb-row"><span class="fb-gap">Bohrung:</span>'+cb('trocken')+cb('nass','fb-opt" style="margin-right:22px')+'<span class="fb-gap">Kern-Ø</span>'+ln(60)+'<span style="margin:0 22px 0 6px">mm</span><span class="fb-gap">Gerät</span>'+ln()+'</span>'
       +'<span class="fb-row"><span class="fb-gap">Gefäß:</span>'+cb('Braunglas')+cb('PE-Beutel')+'<span class="fb-cb"></span>'+ln(110)+'<span style="margin:0 8px 0 22px">Transport:</span>'+cb('kühl und dunkel','')+'</span>'
+      +'<span class="fb-row"><span class="fb-gap">Ungebrochene Rückstellung des halben Bohrkerns (Labor):</span>'+cb('ja')+cb('nein','')+'</span>'
     +'</div>'
     +'<span class="fb-sec">C · BEGEHUNG (VOR DER ERSTEN BOHRUNG)</span><div class="fb-col">'
       +'<span class="fb-note">Jedem Raum ein Kürzel geben und <b>Wand A</b> festlegen (Wand mit der Zugangstür; bei mehreren Türen die vom Flur), dann im Uhrzeigersinn B, C, D … – von oben gesehen. Boden BO, Decke DE. Wandkennung auf Klebeband an die Wand: sie steht dann auf jedem Wandfoto.</span>'
@@ -10333,7 +10350,8 @@ const FBE_SCHEMA={
         {k:'bohrung',l:'Bohrung',t:'wahl',o:['trocken','nass']},{k:'durchmesser',l:'Kern-Ø',t:'zahl',e:'mm'},
         {k:'geraet',l:'Gerät'},
         {k:'gefaess',l:'Gefäß',t:'mehr',o:['Braunglas','PE-Beutel']},{k:'gefaessSonstiges',l:'Gefäß: anderes'},
-        {k:'kuehl',l:'Transport kühl und dunkel',t:'ja'}]},
+        {k:'kuehl',l:'Transport kühl und dunkel',t:'ja'},
+        {k:'halbkern',l:'Ungebrochene Rückstellung des halben Bohrkerns',t:'wahl',o:['Ja','Nein']}]},
       {titel:'C · Begehung',felder:[
         {k:'begehung',l:'Räume',t:'tabelle',zeilen:9,breit:1,hinweis:'je Zeile ein Raum wie auf dem Bogen',
           sp:[{k:'geschoss',l:'Geschoss'},{k:'kuerzel',l:'Raumkürzel'},{k:'raum',l:'Raum'},{k:'wandA',l:'Wand A = Tür zu …'},{k:'waende',l:'Wände',t:'zahl'}],
@@ -10639,6 +10657,7 @@ function fbeBkKennung(w){
   const g=String((w||{}).geschoss||'').trim(),r=String((w||{}).raum||'').trim().toUpperCase(),fl=String((w||{}).flaeche||'').trim();
   return g&&r&&fl?g+'-'+r+'-'+fl:'';
 }
+const FBE_BK_RUECKSTELLPROBE='Rückstellprobe – nicht analysieren';
 const FBE_BK_MATERIAL={P:'Putz',Z:'Ziegel',KS:'Kalksandstein',PB:'Porenbeton',B:'Beton',E:'Estrich',F:'Fliese',N:'Naturstein',GK:'Gipskarton',H:'Holz'};
 function fbeBkKonv(){return typeof SpektronKonventionen!=='undefined'?SpektronKonventionen:null;}
 /** Segmente aller Wände: je Kern und Tiefenstufe mit A oder R ein Segment. Liefert {segmente, fehler:[{pfad,text}]}.
@@ -10849,7 +10868,8 @@ function fbeBohrkernPanel(rec){
       +'<p class="fbe-meta" style="font-family:var(--mono);margin:0 0 8px">'+segmente.slice(0,6).map(x=>fbEsc(x.id)).join(' · ')+(segmente.length>6?' …':'')+'</p>':'<p class="fbe-meta">Noch keine Kerne mit A oder R eingetragen.</p>')
     +(fehler.length?'<p style="color:#c0392b;margin:0 0 8px">'+fehler.length+' Zeile'+(fehler.length===1?'':'n')+' noch unklar – siehe Hinweise oben. Erst klären, dann anlegen.</p>':'')
     +'<button class="btn btn-primary btn-sm" onclick="fbeBohrkernAnlegen()"'+(segmente.length&&!fehler.length?'':' disabled')+'>'+(da?'Proben aktualisieren ('+da+' vorhanden)':'Proben anlegen')+'</button>'
-    +' <span class="fbe-meta">Reiter „Sonstige“ · Matrix Bohrkern · A = Untersuchung von Blatt 1, R = Rückstellung</span></div>';
+    +(da?' <button class="btn btn-secondary btn-sm" data-schnittplan="'+fbEsc(rec.formularId)+'">Schnittpläne dieses Bogens</button>':'')
+    +' <span class="fbe-meta">Reiter „Sonstige“ und „Bohrkerne“ · A = Untersuchung von Blatt 1, R = Rückstellprobe (nicht analysieren)</span></div>';
 }
 function fbeBohrkernAnlegen(){
   const rec=fbeAktiv();if(!rec||rec.typ!=='bohrkern')return;
@@ -10863,11 +10883,103 @@ function fbeBohrkernAnlegen(){
   const unters=String(rec.kopf.untersuchung||'').trim()||FB_BK_STANDARD.untersuchung,K=fbeBkKonv();
   const raumText=x=>{const name=K?K.raumName(x.raum.replace(/\d$/,'')):'';const nr=(/\d$/.exec(x.raum)||[''])[0];return x.geschoss+' '+(name?name+(nr?' '+nr:''):x.raum);};
   for(const x of segmente)sonstigeProben.push({id:sonstigeNextId++,datum,z1:String(rec.kopf.projektNr||'').trim(),z2:raumText(x),z3:'',z4:'',matrix:'Bohrkern',cm2:'',
-    notiz:x.status==='A'?unters:'Rückstellung',bkBez:x.kern,bkId:x.id,bkVon:x.von,bkBis:x.bis,bkGesamt:x.kernLaenge,bkRueck:'',bkSegment:x.stufe,
+    notiz:x.status==='A'?unters:FBE_BK_RUECKSTELLPROBE,bkBez:x.kern,bkId:x.id,bkVon:x.von,bkBis:x.bis,bkGesamt:x.kernLaenge,bkRueck:String(rec.kopf.halbkern||''),bkSegment:x.stufe,
     bkMaterial:x.material,bkStatus:x.status,bkQuelle:rec.formularId});
   const nr=String(rec.kopf.projektNr||'').trim(),sf=document.getElementById('sonstige-proj-nr');if(nr&&sf&&!sf.value.trim())sf.value=nr;
   renummerieren();renderSonstigeTable();fbeGeaendert();fbeRender();
   flash(segmente.length+' Bohrkern-Segmente aus '+rec.formularId+(alt.length?' aktualisiert':' angelegt')+' ✓ – Reiter „Sonstige“');
+}
+/* Reiter „Bohrkerne“: führt Wandblätter, Übertragung, Proben und Labor an einer Stelle zusammen.
+   Keine eigenen Daten: Proben bleiben in „Sonstige“ (Matrix Bohrkern), Bögen in den Feldprotokollen. */
+const BK_CSS=`
+#bk-inhalt .bk-schritte{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:6px 0 18px}
+#bk-inhalt .bk-karte{background:var(--card,#fff);border:1px solid var(--border,#dce8f5);border-radius:var(--radius,10px);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+#bk-inhalt .bk-karte h3{margin:0;font-size:14px;display:flex;gap:8px;align-items:center}
+#bk-inhalt .bk-karte h3 .step-nr{width:24px;height:24px;font-size:12px}
+#bk-inhalt .bk-karte p{margin:0;font-size:12.5px;color:var(--text-muted)}
+#bk-inhalt .bk-karte .btn{align-self:flex-start}
+#bk-inhalt .bk-zahlen{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;margin:0 0 12px}
+#bk-inhalt .bk-zahlen b{font-family:var(--mono);font-size:15px}
+#bk-inhalt .bk-wand{background:var(--card,#fff);border:1px solid var(--border,#dce8f5);border-radius:var(--radius,10px);margin:0 0 12px;overflow:hidden}
+#bk-inhalt .bk-wand-kopf{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 12px;padding:9px 14px;background:var(--accent-bg,#e6f0fb);font-size:13px}
+#bk-inhalt .bk-wand-kopf b{font-family:var(--mono)}
+#bk-inhalt table{width:100%;border-collapse:collapse;font-size:12.5px}
+#bk-inhalt th,#bk-inhalt td{text-align:left;padding:6px 10px;border-top:1px solid var(--border,#edf1f5);vertical-align:middle;color:var(--text)}
+#bk-inhalt td.bk-kern{font-family:var(--mono);font-weight:600;color:var(--accent-2,#356aa8)}
+#bk-inhalt th{font-size:11px;color:var(--text-muted);font-weight:600}
+#bk-inhalt .bk-chip{display:inline-flex;gap:5px;align-items:baseline;border:1px solid #bcd3ee;background:#f4f9fe;border-radius:6px;padding:2px 7px;margin:2px 4px 2px 0;font-family:var(--mono);font-size:11.5px;white-space:nowrap}
+#bk-inhalt .bk-chip.r{border-color:#e8c27a;background:#fff8e8;color:#7a5000}
+#bk-inhalt .bk-warn{background:#fff8e8;border:1px solid #f0c040;border-radius:var(--radius,10px);padding:10px 14px;font-size:13px;color:#7a5000;margin:0 0 12px}
+#bk-inhalt .bk-leer{color:var(--text-muted);font-size:13px}
+`;
+function bkStatusVon(rec){
+  const {segmente,fehler}=fbeBohrkernSegmente(rec),da=fbeBohrkernVorhandene(rec);
+  const sig=a=>a.map(x=>[x.id,x.von,x.bis,x.status].join('|')).sort().join(';');
+  const veraltet=da.length&&sig(segmente)!==sig(da.map(p=>({id:p.bkId,von:p.bkVon,bis:p.bkBis,status:p.bkStatus})));
+  return {segmente,fehler,da,veraltet};
+}
+function bkZuDruck(){
+  const r=document.querySelector('input[name="fb-typ"][value="bohrkern"]');if(r)r.checked=true;
+  switchMainTab('feldboegen');fbRender();
+}
+function bkBogenOeffnen(id){fbZurErfassung();fbeWaehle(id);}
+function bkNeuerBogen(){const r=document.querySelector('input[name="fb-typ"][value="bohrkern"]');if(r)r.checked=true;fbZurErfassung();fbeNeuDialog();}
+function bkSonstigeUnterreiter(name,i){
+  switchMainTab('sonstige');const b=document.querySelectorAll('#sub-tabs-sonstige .sub-tab')[i];
+  switchTab(name,b);document.querySelectorAll('#sub-tabs-sonstige .sub-tab').forEach(t=>t.classList.toggle('active',t===b));
+}
+/** Bohrkernproben nach Wand gruppieren: aus Wandblättern über die Wandkennung, übrige (Assistent) je Kern. */
+function bkWaende(){
+  const waende=new Map();
+  for(const p of sonstigeProben){
+    if(p.matrix!=='Bohrkern')continue;
+    const kern=String(p.bkBez||'(ohne Bezeichnung)'),wand=p.bkQuelle&&p.bkId?kern.replace(/-[^-]+$/,''):'';
+    const key=wand?'w:'+wand:'x';
+    if(!waende.has(key))waende.set(key,{wand,raum:wand?p.z2:'',quelle:p.bkQuelle||'',kerne:new Map()});
+    const w=waende.get(key);if(!w.kerne.has(kern))w.kerne.set(kern,[]);w.kerne.get(kern).push(p);
+  }
+  for(const w of waende.values())for(const segs of w.kerne.values())segs.sort((a,b)=>(Number(a.bkVon)||0)-(Number(b.bkVon)||0));
+  return [...waende.values()].sort((a,b)=>(a.wand?0:1)-(b.wand?0:1));
+}
+function bkRender(){
+  const box=document.getElementById('bk-inhalt');if(!box)return;
+  if(!document.getElementById('bk-style')){const st=document.createElement('style');st.id='bk-style';st.textContent=BK_CSS;document.head.append(st);}
+  const boegen=feldprotokolle.filter(r=>r.typ==='bohrkern'),waende=bkWaende();
+  const alle=sonstigeProben.filter(p=>p.matrix==='Bohrkern'),kerne=new Set(alle.map(p=>p.bkBez));
+  const rueck=alle.filter(p=>p.bkStatus==='R').length;
+  const status=boegen.map(r=>({r,...bkStatusVon(r)}));
+  const warn=[];
+  for(const x of status){
+    if(x.veraltet)warn.push('<b>'+fbEsc(x.r.formularId)+'</b> wurde nach dem Anlegen der Proben geändert – im Bogen „Proben aktualisieren“.');
+    else if(!x.da.length&&x.segmente.length&&!x.fehler.length)warn.push('<b>'+fbEsc(x.r.formularId)+'</b> ist übertragen, die Proben sind noch nicht angelegt.');
+  }
+  let h='<div class="step-label" style="margin-top:8px"><span class="step-title" style="font-size:20px">Bohrkerne</span></div>'
+    +'<p style="margin:-6px 0 14px;color:var(--text-muted);font-size:13px">Alles zu Bohrkernen an einer Stelle. Die Proben selbst stehen weiter unter „Sonstige Proben“ (Matrix Bohrkern) – hier wird nichts doppelt gespeichert.</p>'
+    +'<div class="bk-schritte">'
+    +'<div class="bk-karte"><h3><span class="step-nr">1</span>Wandblätter drucken</h3><p>Blatt 1 mit Untersuchung, Tiefenstufen und Begehung, dann ein Blatt je Wand. Probenbezeichnung vor Ort: Wandkennung + Endung + Tiefe.</p><button class="btn btn-secondary btn-sm" onclick="bkZuDruck()">🖨 Wandblätter</button></div>'
+    +'<div class="bk-karte"><h3><span class="step-nr">2</span>Übertragen</h3>'
+      +(boegen.length?status.map(x=>'<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px"><button class="btn btn-secondary btn-sm" style="min-height:0;padding:3px 9px;font-family:var(--mono)" data-bk-bogen="'+fbEsc(x.r.id)+'">'+fbEsc(x.r.formularId)+'</button><span>'+x.r.mp.length+' '+(x.r.mp.length===1?'Wand':'Wände')+' · '+fbEsc(fbeStatus(x.r).kurz)+' · '+(x.da.length?x.da.length+' Proben':'keine Proben')+'</span></div>').join(''):'<p>Noch kein Wandblatt übertragen.</p>')
+      +'<button class="btn btn-secondary btn-sm" onclick="bkNeuerBogen()">＋ Bogen erfassen</button></div>'
+    +'<div class="bk-karte"><h3><span class="step-nr">3</span>Prüfen</h3><p>Übersicht unten: je Wand die Kerne mit ihren Segmenten, A = analysieren, R = Rückstellprobe.</p></div>'
+    +'<div class="bk-karte"><h3><span class="step-nr">4</span>Labor</h3><p>Schnittplan je Kern dem Bohrkern beilegen. Etiketten und Übergabe wie bei den sonstigen Proben.</p>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn btn-primary btn-sm" onclick="schnittplaeneDrucken()"'+(kerne.size?'':' disabled')+'>✂ Schnittpläne ('+kerne.size+')</button>'
+      +'<button class="btn btn-secondary btn-sm" onclick="bkSonstigeUnterreiter(\'sonstige-etiketten\',1)">Etiketten</button><button class="btn btn-secondary btn-sm" onclick="bkSonstigeUnterreiter(\'sonstige-uebergabe\',2)">Übergabe</button></div></div>'
+    +'</div>';
+  if(warn.length)h+='<div class="bk-warn">'+warn.join('<br>')+'</div>';
+  const z=(n,e,m)=>'<span><b>'+n+'</b> '+(n===1?e:m)+'</span>',nw=waende.filter(w=>w.wand).length;
+  h+='<div class="bk-zahlen">'+z(nw,'Wand','Wände')+z(kerne.size,'Kern','Kerne')+z(alle.length,'Segment','Segmente')+z(alle.length-rueck,'analysieren','analysieren')+z(rueck,'Rückstellprobe','Rückstellproben')+'</div>';
+  if(!alle.length)h+='<p class="bk-leer">Noch keine Bohrkernproben. Sie entstehen aus einem übertragenen Wandblatt („Proben anlegen“) oder einzeln über „＋ Bohrkern anlegen“ unter „Sonstige Proben“.</p>';
+  for(const w of waende){
+    h+='<div class="bk-wand"><div class="bk-wand-kopf"><span>'+(w.wand?'<b>'+fbEsc(w.wand)+'</b> · '+fbEsc(w.raum||''):'<b>Weitere Bohrkerne</b> (einzeln angelegt)')+'</span>'
+      +'<span>'+w.kerne.size+' '+(w.kerne.size===1?'Kern':'Kerne')+(w.quelle?' · aus '+fbEsc(w.quelle):'')+'</span></div>'
+      +'<table><thead><tr><th style="width:150px">Kern</th><th style="width:70px">Länge</th><th>Segmente</th></tr></thead><tbody>'
+      +[...w.kerne].map(([kern,segs])=>'<tr><td class="bk-kern">'+fbEsc(kern)+'</td><td>'+(segs[0].bkGesamt?fbEsc(segs[0].bkGesamt)+' cm':'–')+'</td><td>'
+        +segs.map(p=>'<span class="bk-chip'+(p.bkStatus==='R'?' r':'')+'" title="'+fbEsc(beschreibungSonstige(p))+'">'+(p.bkId?'T'+fbEsc(p.bkSegment):'Seg.')+' '+fbEsc(p.bkVon)+'–'+fbEsc(p.bkBis)+' cm · P'+probeNr(p)+(p.bkId?' · '+(p.bkStatus==='R'?'R':'A'):'')+'</span>').join('')
+        +'</td></tr>').join('')
+      +'</tbody></table></div>';
+  }
+  box.innerHTML=h;
+  if(!box.dataset.gebunden){box.dataset.gebunden='1';box.addEventListener('click',e=>{const b=e.target.closest('[data-bk-bogen]');if(b)bkBogenOeffnen(b.dataset.bkBogen);});}
 }
 
 function fbeFeldHtml(rec,f,pfad,wert){
@@ -10965,6 +11077,7 @@ function fbeEventsBinden(){
     const b=e.target.closest('button');const a=e.target.closest('a[data-geh]');
     if(a){const el=box.querySelector('[data-p="'+CSS.escape(a.dataset.geh)+'"]:not(div)')||box.querySelector('[data-p="'+CSS.escape(a.dataset.geh)+'"]');if(el){el.scrollIntoView({block:'center',behavior:'smooth'});if(el.focus)el.focus({preventScroll:true});}return;}
     if(!b)return;
+    if(b.dataset.schnittplan){schnittplaeneDrucken(b.dataset.schnittplan);return;}
     const rec=fbeAktiv();if(!rec)return;
     if(b.dataset.unl){const ctx=fbeCtx();if(rec.abgeschlossen&&!ctx.von){fbeBrauchtKuerzel();return;}const an=!rec.unl[b.dataset.unl];if(fbeSetzeUnleserlich(rec,b.dataset.unl,an,ctx)){fbeGeaendert();}
       const f=b.closest('.fbe-f');if(f)f.classList.toggle('ist-unl',an);b.setAttribute('aria-pressed',String(an));if(rec.abgeschlossen)fbeKopfAktualisieren(rec);else fbeHinweiseZeigen(rec);return;}
