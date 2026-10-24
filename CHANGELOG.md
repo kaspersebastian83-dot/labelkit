@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.39.0 – 24. Oktober 2026
+
+- Pflichtangaben wie in Projektzentrale und FotoKit: leere Pflichtfelder je Probe sind gelb hervorgehoben – Projektnummer, Probenahmedatum, Raum/Ort (bei Bohrkernen die BK-Bezeichnung), bei „Sonstige Proben“ auch die Untersuchungsparameter (Labor und Abrechnung brauchen sie). Dieselben Felder wie die Prüfung „kritisch“ beim Abschluss. Ausgefüllt wieder normal; nichts wird blockiert.
+
 ## 4.38.1 – 24. Oktober 2026
 
 - Leiste oben in allen Apps wieder identisch (FotoKit-Projektzuordnung und offenes Menü wie in FotoKit, aktuelle Projektdaten wie in LabelKit/PlanKit); Speicherkandidaten und Kopien von PlanKit zählen nicht als Plan.
