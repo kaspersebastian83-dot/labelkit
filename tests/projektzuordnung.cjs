@@ -23,7 +23,7 @@ function fixture(data,approval=false){
     undoSnapshot:()=>events.push('undo'),markSaved:()=>events.push('saved'),flash:()=>{},zeigen:()=>{},ladePj:()=>{},
     localStorage:{getItem:()=>JSON.stringify([{nr:'26.0101',data:JSON.stringify(data)}])},buildProjektSaveData:()=>({filename:'Muster_Daten.json'}),
     FileReader:class{readAsText(){this.onload({target:{result:JSON.stringify(data)}});}}};
-  for(const n of ['setPn98ProjektFelderUi','updateProjekt','renummerieren','renderTable','renderChloridTable','renderAsbestTable','renderSonstigeTable','renderBrandgeruchTable','renderBrandgeruchExport','renderPn98Cards','renderPn98Export','renderProbenTextbausteine','fbeRender'])c[n]=()=>{};
+  for(const n of ['setPn98ProjektFelderUi','updateProjekt','renummerieren','renderTable','renderChloridTable','renderAsbestTable','renderSonstigeTable','renderBrandgeruchTable','renderBrandgeruchExport','renderPn98Cards','renderPn98Export','fbeRender'])c[n]=()=>{};
   vm.createContext(c);vm.runInContext(code,c);
   return{c,elements,events,alerts,prompts,previous};
 }

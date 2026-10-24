@@ -2,7 +2,11 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.35.0** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.36.0** (Änderungen in `CHANGELOG.md`)
+
+## Neu in 4.36.0 · 24.10.2026
+
+Reiter **Textbausteine** entfernt (nie fertig entwickelt). „Alle EOL + Projektdatei speichern“ fragt keine Textbaustein-Freigabe mehr ab und legt keine Datei „…_Probenahmetexte_….docx“ mehr an; sonst speichert es dieselben Dateien wie bisher. Die vier früheren Angaben (Prüfberichtsnummer, Labor, zwei Häkchen) bleiben in der Projektdatei erhalten und werden unverändert zurückgeschrieben. Titel und Versionsknopf zeigen die Version jetzt automatisch.
 
 ## Neu in 4.35.0 · 24.10.2026
 
@@ -21,12 +25,12 @@ Asbestproben sind jetzt auf Materialproben nach Brand zugeschnitten: Bauteil / M
 - PAK- und Chlorid-Wischproben, Asbestproben und sonstige Proben erfassen
 - Etiketten und Laborübergaben erstellen
 - Brandgeruch-Bewertungen erfassen
-- PN-98-Probenahmeprotokolle und Textbausteine erstellen
+- PN-98-Probenahmeprotokolle erstellen
 - Feldbögen für Raumluftmessungen (Asbest/KMF, Schimmelpilze), Materialproben Asbest und Probenahmen nach PN 98 zum Ausdrucken und Ausfüllen von Hand, mit Projektdaten vorgedruckt (ab 4.25)
 - Ausgefüllte Feldbögen am Schreibtisch erfassen, Scans mit Prüfsumme im Projektordner unter „Feldprotokolle“ ablegen, Prüfung der Übertragung durch eine zweite Person und Änderungsprotokoll (ab 4.26)
 - Feldbogen Probenahme Feststoffe nach LAGA PN 98 zum Ausfüllen vor Ort, mit derselben Erfassung und Scan-Ablage (ab 4.27)
 - Projektdaten als JSON speichern und wieder importieren
-- Gemeinsamer Export der Laborübergaben, Projektdatei und freigegebenen Textbausteine
+- Gemeinsamer Export der Laborübergaben und der Projektdatei
 - Projektdaten aus der Projektzentrale (`_Projekt.json`: Objekt, Auftraggeber, Schaden-Nr.) im Schritt „Projektnummer“ anzeigen; das Objekt steht auch auf dem Auftragsschein (ab 4.28)
 - „Ihr Kürzel“ gemeinsam mit BelegKit: einmal eintragen, gilt in beiden Apps (ab 4.27.2)
 - Schmale Leiste oben wie in FotoKit, PlanKit und BelegKit: Projekt mit Wechsel zu den zuletzt geöffneten, die vier Arbeitsschritte mit Haken und „Weiter: …“ zum nächsten offenen Schritt (ab 4.29)
@@ -42,7 +46,7 @@ Alternativ läuft die App auch als einzelne Datei: Repository herunterladen und 
 
 In der **Projektzentrale** ein Projekt wählen und **„Proben erfassen → LabelKit“** klicken – oder in LabelKit oben **„📁 Projekt“** und den Projektordner (z. B. `26.0123 Köln`) wählen. Danach:
 
-- Jeder Ordnerdialog entfällt: Speichern (auch Strg+S), Laborübergaben, Protokolle und Textbausteine landen direkt im Unterordner **„Laboraufträge“** des Projekts.
+- Jeder Ordnerdialog entfällt: Speichern (auch Strg+S), Laborübergaben und Protokolle landen direkt im Unterordner **„Laboraufträge“** des Projekts.
 - Die neueste `…_Daten.json` aus „Laboraufträge“ wird beim Öffnen automatisch geladen.
 - Projektnummer (z. B. `26.0123`) und Schadenort kommen aus dem Ordnernamen; die Kennung steht oben in der Kopfzeile.
 - Der Archivordner wird aus dem gemeinsamen Browser-Speicher der Projektzentrale übernommen (IndexedDB `mosaik-suite`, Schlüssel `archiv`). Nach einem Browserneustart genügt „Zugriff erlauben und öffnen“.
@@ -76,12 +80,11 @@ Oben steht in jedem Reiter **Zwischenstand speichern**. Die Schaltfläche und **
 
 ## Probenerfassung abschließen und Laborunterlagen speichern
 
-Zwischenspeichern ist keine Freigabe für Laborunterlagen. Der Abschluss prüft weiterhin unter anderem Projektnummer, Datum, Raum/Ort und Probennummern sowie die erforderliche Textbausteinfreigabe. Der bestehende ausdrücklich bestätigte Ausnahmeweg bleibt erhalten.
+Zwischenspeichern ist keine Freigabe für Laborunterlagen. Der Abschluss prüft weiterhin unter anderem Projektnummer, Datum, Raum/Ort und Probennummern. Der bestehende ausdrücklich bestätigte Ausnahmeweg bleibt erhalten.
 
 1. Proben erfassen und unter **Probenerfassung abschließen** die Vollständigkeit prüfen.
-2. **Alle EOL + Projektdatei inkl. Textbausteine speichern** anklicken.
-3. Falls angefordert, die Textbausteine prüfen und freigeben.
-4. Den Projektordner auswählen. Die passenden Laborübergaben, zusätzliche Protokolle, freigegebene Word-Textbausteine und die JSON-Projektdatei werden gemeinsam gespeichert.
+2. **Alle EOL + Projektdatei speichern** anklicken.
+3. Den Projektordner auswählen. Die passenden Laborübergaben, zusätzliche Protokolle und die JSON-Projektdatei werden gemeinsam gespeichert.
 5. Zum Weiterarbeiten die JSON-Projektdatei über den Projektimport laden.
 
 Die Ordnerauswahl kann abgebrochen werden. Bei einem Fehler startet der Sammel-Export keine automatischen Downloads. Bereits vollständig gespeicherte Dateien werden in der Fehlermeldung gezählt.
@@ -104,7 +107,7 @@ Keine echten Projektdaten, Laboraufträge oder Exporte in das öffentliche Repos
 
 ## Entwicklung und Prüfungen
 
-Die App steht in `index.html` (`APP_VERSION`, derzeit 4.35.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
+Die App steht in `index.html` (`APP_VERSION`, derzeit 4.36.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
 
 Mit Node.js aus dem Repository-Ordner ausführen:
 
