@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.39.1 – 24. Oktober 2026
+
+- Hilfetexte: Willkommen-Fenster und Chlorid-Reiter nennen die heutigen Knöpfe („→ Ausgewählte übertragen“, „→ Alle übertragen“) und beschreiben das Speichern wie es ist (Strg+S = Zwischenstand, „Alle EOL + Projektdatei speichern“ beim Abschluss).
+
 ## 4.39.0 – 24. Oktober 2026
 
 - Pflichtangaben wie in Projektzentrale und FotoKit: leere Pflichtfelder je Probe sind gelb hervorgehoben – Projektnummer, Probenahmedatum, Raum/Ort (bei Bohrkernen die BK-Bezeichnung), bei „Sonstige Proben“ auch die Untersuchungsparameter (Labor und Abrechnung brauchen sie). Dieselben Felder wie die Prüfung „kritisch“ beim Abschluss. Ausgefüllt wieder normal; nichts wird blockiert.
