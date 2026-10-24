@@ -82,3 +82,5 @@ jobs:
 
       - name: Guided PAK entry and direct card editing with keyboard and JSON round-trip
         run: node tests/gefuehrte-eingabe-browser.cjs ${{ matrix.browser }}
+      - name: Raum/Ort-Vorschläge aus dem Projekt
+        run: node tests/raumorte-browser.cjs ${{ matrix.browser }}

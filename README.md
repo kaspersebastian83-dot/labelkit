@@ -2,7 +2,11 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.33.0** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.34.0** (Änderungen in `CHANGELOG.md`)
+
+## Neu in 4.34.0 · 24.10.2026
+
+„Raum / Ort“ schlägt zuerst die Räume des Projekts vor, in der Schreibweise der bisherigen Proben – damit gleiche Räume gleich heißen (Raumbuch in PlanKit). Gemerkt wird ein Raum erst beim Verlassen des Feldes.
 
 ## Neu in 4.33.0 · 23.10.2026
 
@@ -96,7 +100,7 @@ Keine echten Projektdaten, Laboraufträge oder Exporte in das öffentliche Repos
 
 ## Entwicklung und Prüfungen
 
-Die App steht in `index.html` (`APP_VERSION`, derzeit 4.30.10). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
+Die App steht in `index.html` (`APP_VERSION`, derzeit 4.34.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
 
 Mit Node.js aus dem Repository-Ordner ausführen:
 
@@ -130,6 +134,7 @@ node tests/speicher-races-browser.cjs chromium
 node tests/speicher-races-browser.cjs webkit
 node tests/gefuehrte-eingabe-browser.cjs chromium
 node tests/gefuehrte-eingabe-browser.cjs webkit
+node tests/raumorte-browser.cjs chromium
 ```
 
 GitHub führt alle Prüfungen bei jedem Pull Request automatisch aus (`.github/workflows/tests.yml`, Chromium; die WebKit-Aufrufe oben sind lokal optional). Es gibt nur diesen einen Test-Workflow; zusätzliche Kompatibilitäts- und Integrations-Workflows wurden am 23.10.2026 entfernt.

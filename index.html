@@ -3122,7 +3122,7 @@ body:not(.lg) .btn-secondary:hover{border-color:var(--accent);color:var(--accent
 <div id="flash" style="display:none" class="flash"></div>
 
 <script>
-const APP_VERSION='4.33.0';
+const APP_VERSION='4.34.0';
 const MATRICES=['Wischprobe','Bauschutt','Material (hoher org. Anteil)','Material (mineralisch)','Luft (Raumluft)','Sonstige'];
 const BEAUFSCHLAGUNG=['gereinigt','mit Belag','leicht verrußt','verrußt','mit Ruß','mit Kondensat','mit Staub'];
 const OBERFLAECHEN=['Aufsicht','Ansicht','Untersicht'];
@@ -6525,7 +6525,9 @@ function ladeRaumOrteVorschlaege(){
   try{const s=localStorage.getItem('raumorte-history');if(s)raumOrteHistory=JSON.parse(s);}catch(e){}
   aktualisiereRaumOrtDatalist();
 }
-function speicherRaumOrt(v){
+/** Beim Tippen nur die Vorschläge auffrischen; gemerkt wird ein Raum erst, wenn das Feld verlassen wird (kein „EG Kü“ in der Liste). */
+function speicherRaumOrt(v){ aktualisiereRaumOrtDatalist(); }
+function merkeRaumOrt(v){
   if(!v||v.trim().length<2)return;
   v=v.trim();
   raumOrteHistory=raumOrteHistory.filter(x=>x!==v);
@@ -6534,10 +6536,26 @@ function speicherRaumOrt(v){
   try{localStorage.setItem('raumorte-history',JSON.stringify(raumOrteHistory));}catch(e){}
   aktualisiereRaumOrtDatalist();
 }
-function aktualisiereRaumOrtDatalist(){
-  const dl=document.getElementById('raumorte-list');
-  if(dl)dl.innerHTML=raumOrteHistory.map(v=>'<option value="'+v.replace(/"/g,'&quot;')+'">').join('');
+/** Räume dieses Projekts (in der Reihenfolge ihres ersten Vorkommens), danach die zuletzt benutzten aus anderen Projekten.
+    Gleiche Schreibweise je Raum hält das Raumbuch in PlanKit sauber. */
+function raumOrteDesProjekts(){
+  const seen=new Set(),out=[];
+  for(const liste of [proben,chloridProben,asbestProben,sonstigeProben])
+    for(const p of liste||[]){const v=String(p&&p.z2||'').trim();if(v.length>=2&&!seen.has(v)){seen.add(v);out.push(v);}}
+  return out;
 }
+function aktualisiereRaumOrtDatalist(){
+  const dl=document.getElementById('raumorte-list');if(!dl)return;
+  const projekt=raumOrteDesProjekts(),rest=raumOrteHistory.filter(v=>!projekt.includes(v));
+  const opt=(v,label)=>'<option value="'+v.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')+'"'+(label?' label="'+label+'"':'')+'>';
+  dl.innerHTML=projekt.map(v=>opt(v,'in diesem Projekt')).join('')+rest.map(v=>opt(v,'')).join('');
+}
+document.addEventListener('focusin',e=>{if(e.target&&e.target.getAttribute&&e.target.getAttribute('list')==='raumorte-list')aktualisiereRaumOrtDatalist();});
+// Gemerkt wird nur, was getippt wurde – nicht ein Wert, den die App beim Weiterspringen ins Feld lädt.
+const raumGetippt=new WeakMap();
+const istRaumFeld=t=>t&&t.getAttribute&&t.getAttribute('list')==='raumorte-list';
+document.addEventListener('input',e=>{if(istRaumFeld(e.target))raumGetippt.set(e.target,e.target.value);});
+document.addEventListener('change',e=>{if(istRaumFeld(e.target)&&raumGetippt.get(e.target)===e.target.value)merkeRaumOrt(e.target.value);});
 
 // ── VON OBEN ÜBERNEHMEN ───────────────────────────────
 function uebernehmeFeldVonOben(rowIdx, feld){
@@ -6734,7 +6752,7 @@ function fokusAktualisieren(){
   fokusAmpelStatus(p);
 }
 
-function fokusSpeichern(){fokusAktualisieren();markUnsaved();}
+function fokusSpeichern(){fokusAktualisieren();const p=fokusListe()[fokusIdx];if(p)merkeRaumOrt(p.z2);markUnsaved();}
 
 function fokusNext(){
   fokusSpeichern();
@@ -6780,6 +6798,7 @@ function schnellSave(){
   p.matrix=document.getElementById('s-matrix').value;
   p.cm2=document.getElementById('s-cm2').value;
   p.notiz=document.getElementById('s-notiz').value;
+  merkeRaumOrt(p.z2);   // Enter springt weiter, bevor das Feld ein „change“ auslöst
   markUnsaved();
 }
 
