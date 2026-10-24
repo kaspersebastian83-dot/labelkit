@@ -47,6 +47,16 @@ ok('Segmente: ID, Tiefe am Kernende gekürzt, A/R, Material ausgeschrieben', () 
   assert.deepEqual(P(segmente.map(x => x.id)), ['EG-KZ2-B-7-T1', 'EG-KZ2-B-7-T2', 'EG-KZ2-B-7-T3', 'EG-KZ2-B-10-T1']);
   assert.deepEqual(P(segmente.map(x => [x.von, x.bis, x.status])), [[0, 2, 'A'], [2, 6, 'R'], [6, 9, 'A'], [0, 2, 'A']]);
   assert.equal(segmente[0].material, 'Putz'); assert.equal(segmente[2].gekuerzt, true); assert.deepEqual(P(fehler), []);
+  assert.deepEqual(P(segmente.map(x => [x.ecke, x.okff, x.wandL, x.wandH])[0]), ['', '', '', ''], 'ohne Lageangaben leer, nichts erfunden');
+});
+ok('Lage für die Wandansicht: Abstand, Höhe, Wandmaße in m (Komma oder Punkt), Unlesbares bleibt leer', () => {
+  const rec = neu();
+  Object.assign(rec.mp[0].w, {geschoss: 'EG', raum: 'WZ', flaeche: 'B', laenge: '4,20', hoehe: '2.5'});
+  zeile(rec, 0, 0, {ecke: '0,6', okff: '2,1', kern: '8', s1: 'A', geruch: '+'});
+  zeile(rec, 0, 1, {ecke: 'x', kern: '8', s1: 'A'});
+  const s = A.fbeBohrkernSegmente(rec).segmente;
+  assert.deepEqual(P([s[0].ecke, s[0].okff, s[0].wandL, s[0].wandH, s[0].geruch]), [0.6, 2.1, 4.2, 2.5, '+']);
+  assert.equal(s[1].ecke, '');
 });
 ok('nichts wird geraten: fehlende Angaben werden gemeldet, nicht ergänzt', () => {
   const rec = neu();
