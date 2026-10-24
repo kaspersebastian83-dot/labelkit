@@ -35,6 +35,13 @@ const name = process.argv[2] || 'chromium';
     assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('raumorte-history'))[0]), 'EG Wohnen', 'beim Verlassen gemerkt');
     await page.locator('#proben-tbody tr').nth(0).locator('input[list="raumorte-list"]').focus();
     assert.deepEqual((await options()).slice(0, 4), ['EG Küche', 'EG Flur', 'EG Wohnen', 'OG Bad']);
+    // Geführte Eingabe: Enter springt sofort zur nächsten Probe – der eingegebene Raum wird trotzdem gemerkt.
+    await page.evaluate(() => openSchnell());
+    await page.locator('#s-z2').fill('DG Studio'); await page.locator('#s-z2').press('Enter');
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem('raumorte-history'))[0] === 'DG Studio');
+    assert.equal(await page.locator('#s-z2').inputValue(), 'EG Flur', 'nächste Probe geladen');
+    await page.waitForFunction(() => document.activeElement.id === 's-datum'); await page.waitForTimeout(100);
+    assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('raumorte-history')).slice(0, 2)), ['DG Studio', 'EG Wohnen'], 'der Wert der nächsten Probe wird nicht als getippt gemerkt');
     assert.deepEqual(errors, []);
     console.log(`OK ${name}: Raum/Ort-Vorschläge aus dem Projekt, gemerkt erst beim Verlassen`);
   } finally { if (browser) await browser.close(); server.close(); }

@@ -6551,7 +6551,11 @@ function aktualisiereRaumOrtDatalist(){
   dl.innerHTML=projekt.map(v=>opt(v,'in diesem Projekt')).join('')+rest.map(v=>opt(v,'')).join('');
 }
 document.addEventListener('focusin',e=>{if(e.target&&e.target.getAttribute&&e.target.getAttribute('list')==='raumorte-list')aktualisiereRaumOrtDatalist();});
-document.addEventListener('change',e=>{if(e.target&&e.target.getAttribute&&e.target.getAttribute('list')==='raumorte-list')merkeRaumOrt(e.target.value);});
+// Gemerkt wird nur, was getippt wurde – nicht ein Wert, den die App beim Weiterspringen ins Feld lädt.
+const raumGetippt=new WeakMap();
+const istRaumFeld=t=>t&&t.getAttribute&&t.getAttribute('list')==='raumorte-list';
+document.addEventListener('input',e=>{if(istRaumFeld(e.target))raumGetippt.set(e.target,e.target.value);});
+document.addEventListener('change',e=>{if(istRaumFeld(e.target)&&raumGetippt.get(e.target)===e.target.value)merkeRaumOrt(e.target.value);});
 
 // ── VON OBEN ÜBERNEHMEN ───────────────────────────────
 function uebernehmeFeldVonOben(rowIdx, feld){
@@ -6748,7 +6752,7 @@ function fokusAktualisieren(){
   fokusAmpelStatus(p);
 }
 
-function fokusSpeichern(){fokusAktualisieren();markUnsaved();}
+function fokusSpeichern(){fokusAktualisieren();const p=fokusListe()[fokusIdx];if(p)merkeRaumOrt(p.z2);markUnsaved();}
 
 function fokusNext(){
   fokusSpeichern();
@@ -6794,6 +6798,7 @@ function schnellSave(){
   p.matrix=document.getElementById('s-matrix').value;
   p.cm2=document.getElementById('s-cm2').value;
   p.notiz=document.getElementById('s-notiz').value;
+  merkeRaumOrt(p.z2);   // Enter springt weiter, bevor das Feld ein „change“ auslöst
   markUnsaved();
 }
 
