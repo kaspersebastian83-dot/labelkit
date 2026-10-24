@@ -2,7 +2,11 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.34.0** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.35.0** (Änderungen in `CHANGELOG.md`)
+
+## Neu in 4.35.0 · 24.10.2026
+
+- **Wandblatt Bohrkerne** (Reiter „Feldbögen“): Blatt 1 mit Untersuchung, Tiefenstufen und Begehung, danach ein Blatt je Wand. Vor Ort ergibt sich die Probenbezeichnung von selbst: Wandkennung + vorgedruckte Endung + Tiefe, z. B. `EG-WZ-B-7-T2` (Regeln: AidKit). Am Schreibtisch übertragen, dann „Proben anlegen“ – alle Segmente stehen im Reiter „Sonstige“, mit Bezeichnung auf Etikett und Laborübergabe. Neuer Reiter **Bohrkerne** führt Wandblätter, Übertragung, Übersicht je Wand, Schnittpläne (je Kern, mit „analysieren“ / „nur sägen und aufbewahren“), Etiketten und Übergabe zusammen.
 
 ## Neu in 4.34.0 · 24.10.2026
 
@@ -100,7 +104,7 @@ Keine echten Projektdaten, Laboraufträge oder Exporte in das öffentliche Repos
 
 ## Entwicklung und Prüfungen
 
-Die App steht in `index.html` (`APP_VERSION`, derzeit 4.34.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
+Die App steht in `index.html` (`APP_VERSION`, derzeit 4.35.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
 
 Mit Node.js aus dem Repository-Ordner ausführen:
 

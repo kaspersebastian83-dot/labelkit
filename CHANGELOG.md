@@ -1,5 +1,17 @@
 # Änderungen
 
+## 4.35.0 – 24. Oktober 2026
+
+- Neuer Feldbogen **Bohrkerne (Wandblatt)** (Formular-ID …-BK-…) für systematische Bohrkerne aus Wänden, Böden und Decken, z. B. nach Heizölschäden. Blatt 1: Projekt, Untersuchung (Standard MKW C10–C40 und C10–C22), Tiefenstufen (bis drei, Standard 0–2 / 2–6 / 6–12 cm), Vorgabe Analyse/Rückstellung, Bohrung und Gefäß, Begehung mit Raumkürzeln und Wand A. Danach ein Wandblatt je Wand: Geschoss und Fläche zum Ankreuzen, Wandkennung, Raster 1–9 (Telefontastatur, von vorn gesehen), Tabelle mit vorgedruckten Endungen -1 … -9 und zwei freien Zeilen, je Kern Lage (Ecke, OKFF), Kernlänge, Material je Tiefe, Geruch und A/R je Tiefe.
+- Probenbezeichnung nach AidKit: Wandkennung + Endung + Tiefe, z. B. `EG-WZ-B-7-T2`.
+- Erfassung am Schreibtisch wie bei den anderen Bögen (Änderungsprotokoll, Prüfung, Scan-Ablage). Hinweise: Wandkennung unvollständig oder doppelt, Kernlänge fehlt, A/R unklar, Tiefenstufe länger als der Kern, Lage außerhalb der Wand, Raumkürzel nicht in der Liste.
+- „Proben anlegen“ erzeugt aus dem übertragenen Bogen alle Segmente als Bohrkernproben im Reiter „Sonstige“: volle Bezeichnung, Tiefe (letztes Segment endet am Kernende), Material, Raum, Untersuchung bzw. „Rückstellung“. Erneutes Anlegen ersetzt die Proben dieses Bogens statt sie zu verdoppeln. Etikett, Beschreibung und Laborübergabe zeigen die volle Bezeichnung.
+- Neuer Reiter **Bohrkerne**: Arbeitsplatz für alles rund um Bohrkerne – Wandblätter drucken, übertragene Bögen mit Status, Übersicht je Wand mit allen Kernen und Segmenten (A/R), Schnittpläne, Etiketten und Übergabe. Keine eigenen Daten: Proben bleiben unter „Sonstige Proben“, Bögen bei den Feldprotokollen. Hinweis, wenn ein Bogen nach dem Anlegen der Proben geändert wurde oder Proben noch fehlen.
+- **Schnittplan** (je Kern, nach Eurofins-Vorlage): Segmente aus dem Wandblatt zeigen Tiefenstufe, Probe und Auftrag – „analysieren“ oder fett „nur sägen und aufbewahren“ –, dazu die Untersuchung. „Ungebrochene Rückstellung des halben Bohrkerns“ kommt aus dem Wandblatt (neue Frage auf Blatt 1); ohne Angabe bleibt sie leer statt „Nein“. Im Bogen: „Schnittpläne dieses Bogens“.
+- Zurückgestellte Segmente heißen „Rückstellprobe – nicht analysieren“ (Untersuchungsparameter in der Laborübergabe), damit sie nicht mit dem halben Kern verwechselt werden.
+- Tabellen in der Erfassung können eigene Spalten haben (bisher fest die Schimmel-Probentabelle).
+- Raumkürzel und ID-Regeln lädt LabelKit aus AidKit (`../aidkit/konventionen.js`); ohne AidKit (offline) funktioniert alles, nur ohne diese Prüfungen.
+
 ## 4.34.0 – 24. Oktober 2026
 
 - **Raum / Ort**: Die Vorschläge zeigen zuerst die Räume dieses Projekts (genau so geschrieben wie bei den bisherigen Proben), danach die zuletzt benutzten aus anderen Projekten. So heißt die Küche in allen Proben gleich – wichtig für das Raumbuch in PlanKit. Neue Räume lassen sich weiterhin frei eintippen.

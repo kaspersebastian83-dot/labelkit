@@ -21,6 +21,11 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+      - name: AidKit (Raumkürzel und ID-Regeln, liegt auf GitHub Pages unter ../aidkit/)
+        uses: actions/checkout@v6
+        with:
+          repository: kaspersebastian83-dot/aidkit
+          path: aidkit
       - run: node tests/export-flow.cjs
       - run: node tests/browser-hint.cjs
       - run: node tests/feldboegen.cjs
@@ -31,6 +36,9 @@ jobs:
       - run: node tests/projektzuordnung.cjs
       - run: node tests/project-data.cjs
       - run: node tests/ordnername.cjs
+      - run: node tests/wandblatt-bohrkerne.cjs
+        env:
+          AIDKIT_DIR: aidkit
 
   browser-tests:
     name: Browser tests (${{ matrix.browser }})
@@ -84,3 +92,12 @@ jobs:
         run: node tests/gefuehrte-eingabe-browser.cjs ${{ matrix.browser }}
       - name: Raum/Ort-Vorschläge aus dem Projekt
         run: node tests/raumorte-browser.cjs ${{ matrix.browser }}
+      - name: AidKit (Raumkürzel und ID-Regeln, liegt auf GitHub Pages unter ../aidkit/)
+        uses: actions/checkout@v6
+        with:
+          repository: kaspersebastian83-dot/aidkit
+          path: aidkit
+      - name: Wandblatt Bohrkerne – drucken, übertragen, Proben anlegen
+        run: node tests/wandblatt-bohrkerne-browser.cjs ${{ matrix.browser }}
+        env:
+          AIDKIT_DIR: aidkit
