@@ -1,5 +1,10 @@
 # Änderungen
 
+## 4.34.0 – 24. Oktober 2026
+
+- **Raum / Ort**: Die Vorschläge zeigen zuerst die Räume dieses Projekts (genau so geschrieben wie bei den bisherigen Proben), danach die zuletzt benutzten aus anderen Projekten. So heißt die Küche in allen Proben gleich – wichtig für das Raumbuch in PlanKit. Neue Räume lassen sich weiterhin frei eintippen.
+- Gemerkt wird ein Raum erst beim Verlassen des Feldes; halb getippte Einträge wie „EG Kü“ landen nicht mehr in der Vorschlagsliste.
+
 ## 4.33.0 – 23. Oktober 2026
 
 - Asbestproben: Die Spalten „Beaufschlagung“ und „Oberflächenart“ (aus der PAK-Wischprobe übernommen) sind ersetzt durch **Bauteil / Material**, **Bindung** (fest / schwach / unklar) und **Zustand** (intakt, brandbeaufschlagt, geplatzt / zerstört, Bruchstücke im Brandschutt). Alle drei sind Textfelder mit Vorschlägen; eigene Bauteile werden im Browser gemerkt. Gilt auch im Bearbeiten-Panel.
