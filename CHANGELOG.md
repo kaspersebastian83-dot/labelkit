@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.38.0 – 24. Oktober 2026
+
+- Bohrkerne: „Proben anlegen“ aus dem Wandblatt übernimmt Abstand zur linken Ecke (`bkEcke`), Höhe über OKFF (`bkOkff`), Wandlänge und -höhe (`bkWandL`, `bkWandH`, alle in m) und Geruch (`bkGeruch`) in die Probe – für die Wandansicht in PlanKit. Leere oder unlesbare Maße bleiben leer. Projektdatei nur ergänzt.
+
 ## 4.37.1 – 24. Oktober 2026
 
 - Reiter „Probenprotokoll PN 98“ heißt kurz „PN 98“ (voller Name als Tooltip): Die Reiterleiste passt jetzt auch bei 1280 px Breite, „Probenerfassung abschließen“ wird nicht mehr abgeschnitten.
