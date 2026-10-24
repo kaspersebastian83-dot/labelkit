@@ -97,6 +97,8 @@ jobs:
         with:
           repository: kaspersebastian83-dot/aidkit
           path: aidkit
+      - name: PN 98 – Feldbogen → Protokolle → Laborproben
+        run: node tests/pn98-bruecke-browser.cjs ${{ matrix.browser }}
       - name: Projektdatei behält frühere Textbaustein-Angaben
         run: node tests/projektdatei-altwerte-browser.cjs ${{ matrix.browser }}
       - name: Wandblatt Bohrkerne – drucken, übertragen, Proben anlegen

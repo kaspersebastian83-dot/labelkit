@@ -1,5 +1,12 @@
 # Änderungen
 
+## 4.37.0 – 24. Oktober 2026
+
+- **PN 98 → Laborproben**: Im Reiter „Probenprotokoll PN 98“ legt „→ Laborproben anlegen“ aus jedem Protokoll eine Probe unter „Sonstige Proben“ an (Etikett, Laborauftrag). Matrix und Untersuchungsparameter werden einmal für alle gewählt (nicht geraten; die letzte Wahl wird vorgeschlagen). Raum/Ort = Probenahmestelle, Beschreibung = Art der Probe · „PN 98 Nr. …“, damit Etikett, Laborauftrag und Protokoll zueinander passen. Datum = Probenahmedatum. Erneutes Anlegen ersetzt diese Proben (Verweis `pn98Quelle`) statt sie zu verdoppeln.
+- **PN 98-Feldbogen → Protokolle**: Im übertragenen PN 98-Feldbogen übernimmt „Als PN 98-Protokolle übernehmen“ alle ausgefüllten Proben in den Reiter PN 98 (für das Word-Protokoll je Probe). Zuordnung: Proben-Nr., Uhrzeit, Entnahmestelle, Material, Mischprobe/Einzelprobe, Menge, Haufwerk, Farbe, Geruch, Konsistenz/Feuchte, Bemerkung und Foto-Nr.; aus Blatt 1 Schadstoffe, Witterung, Gerät, Gefäß/Transport, Lagerung. „unleserlich“ wird mitgeführt. Nicht auf dem Bogen und darum leer: Schadendatum, Witterungseinfluss, Hinweis an Untersuchungsstelle. Projektangaben (Schaden, Datum, Ort, Probenehmer, Grund, Labor) nur in leere Felder. Erneut ausführen ersetzt die Protokolle dieses Bogens.
+- Bestehende Funktionen unverändert: direkte Eingabe im Reiter PN 98, Probenrechner, Word-Export, Feldbogen-Erfassung mit Prüfung und Scan-Ablage. Neue Felder in der Projektdatei nur ergänzend (`pn98Quelle`).
+- Test: `tests/pn98-bruecke-browser.cjs`.
+
 ## 4.36.0 – 24. Oktober 2026
 
 - Reiter **Textbausteine** entfernt (Funktion war nicht fertig entwickelt): Vorschau, Word-Export „Probenahmetexte“, Freigabe und Stile. Der Reiter „Probenerfassung abschließen“ passt wieder in die Leiste.
