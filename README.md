@@ -2,7 +2,7 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.41.0** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.42.0** (Änderungen in `CHANGELOG.md`)
 
 ## Neu in 4.37.0 · 24.10.2026
 
@@ -37,7 +37,7 @@ Asbestproben sind jetzt auf Materialproben nach Brand zugeschnitten: Bauteil / M
 - Gemeinsamer Export der Laborübergaben und der Projektdatei
 - Projektdaten aus der Projektzentrale (`_Projekt.json`: Objekt, Auftraggeber, Schaden-Nr.) im Schritt „Projektnummer“ anzeigen; das Objekt steht auch auf dem Auftragsschein (ab 4.28)
 - „Ihr Kürzel“ gemeinsam mit BelegKit: einmal eintragen, gilt in beiden Apps (ab 4.27.2)
-- Schmale Leiste oben wie in FotoKit, PlanKit und BelegKit: Projekt mit Wechsel zu den zuletzt geöffneten, die vier Arbeitsschritte mit Haken und „Weiter: …“ zum nächsten offenen Schritt (ab 4.29)
+- Schmale Leiste oben wie in FotoKit, ResultKit, PlanKit und BelegKit: Projekt mit Wechsel zu den zuletzt geöffneten, die fünf Arbeitsschritte (ResultKit ab 4.42) mit Haken und „Weiter: …“ zum nächsten offenen Schritt (ab 4.29)
 - Immer im klassischen Design – ohne „Liquid Glass“, Konfetti und Töne (ab 4.30)
 
 ## Starten
@@ -111,7 +111,7 @@ Keine echten Projektdaten, Laboraufträge oder Exporte in das öffentliche Repos
 
 ## Entwicklung und Prüfungen
 
-Die App steht in `index.html` (`APP_VERSION`, derzeit 4.41.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
+Die App steht in `index.html` (`APP_VERSION`, derzeit 4.42.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
 
 Mit Node.js aus dem Repository-Ordner ausführen:
 
