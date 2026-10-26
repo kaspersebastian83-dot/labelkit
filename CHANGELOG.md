@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.42.0 – 26. Oktober 2026
+
+- Spektron-Leiste mit fünftem Schritt **ResultKit** (zwischen FotoKit und PlanKit): Laborergebnisse des Projekts – was zur Laborübergabe zurück ist und was noch fehlt. Haken, sobald die Ergebnisse in ResultKit übernommen sind (`Laborergebnisse/_Ergebnisse.json`). Die Leiste ist in allen Apps gleich; an LabelKit selbst ändert sich nichts.
+
 ## 4.41.0 – 26. Oktober 2026
 
 - Spektron-Leiste oben: rechts „💬 Rückmeldung“ (bei schmalem Fenster nur 💬, auf dem Handy im Projektmenü ▾). Öffnet das Rückmeldeformular in einem eigenen Fenster; Programm, Version und – bei geöffnetem Projekt – die Projektnummer sind schon eingetragen (nur die Nummer, kein Ort). Die Leiste ist in allen Apps gleich.
