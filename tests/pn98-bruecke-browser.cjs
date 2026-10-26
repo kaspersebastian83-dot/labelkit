@@ -96,6 +96,7 @@ const name = process.argv[2] || 'chromium';
     assert.equal(await page.evaluate(() => { pn98Projekt.pndatum = 'Ende Oktober'; return pn98LaborProben('Mischprobe', 'DepV')[0].datum; }), '');
     assert.equal(await page.evaluate(() => { pn98Projekt.pndatum = '31.02.2026'; return pn98LaborProben('Mischprobe', 'DepV')[0].datum; }), '');
     assert.equal(await page.evaluate(() => { pn98Projekt.pndatum = ''; return pn98LaborProben('Mischprobe', 'DepV')[0].datum === today(); }), true, 'leer → heute wie bisher');
+    assert.equal(await page.evaluate(() => { pn98Projekt.pndatum = '24.13.26'; return pn98LaborProben('Mischprobe', 'DepV')[0].datum; }), '', 'Monat 13 wird nicht umgerechnet');
 
     // Schadendatum „nicht bekannt“ (Knopf neben dem Kalender): Text bleibt so, Kalender leer, steht so auf dem Protokoll
     await page.locator('#pn98-schadendatum').fill('03.10.2026');
