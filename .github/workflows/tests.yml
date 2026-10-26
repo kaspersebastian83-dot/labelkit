@@ -37,6 +37,7 @@ jobs:
       - run: node tests/project-data.cjs
       - run: node tests/ordnername.cjs
       - run: node tests/wandblatt-bohrkerne.cjs
+      - run: node tests/hilfe-links.cjs
         env:
           AIDKIT_DIR: aidkit
 
