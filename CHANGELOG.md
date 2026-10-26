@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.40.0 – 26. Oktober 2026
+
+- Hilfe-Knöpfe ins Handbuch (AidKit), öffnen dasselbe Handbuch-Fenster direkt am Kapitel: oben „📘 Hilfe“ (LabelKit Schritt für Schritt); bei „Proben erfassen“ der PAK- und Chlorid-Wischproben „📘 Probenbezeichnung Wischproben“; bei den Sonstigen Proben und im Reiter Bohrkerne „📘 Probenbezeichnung Bohrkerne“ (im Reiter Bohrkerne zusätzlich „Schritt für Schritt“). Nur Links, an der Eingabe ändert sich nichts.
+
 ## 4.39.1 – 24. Oktober 2026
 
 - Hilfetexte: Willkommen-Fenster und Chlorid-Reiter nennen die heutigen Knöpfe („→ Ausgewählte übertragen“, „→ Alle übertragen“) und beschreiben das Speichern wie es ist (Strg+S = Zwischenstand, „Alle EOL + Projektdatei speichern“ beim Abschluss).
