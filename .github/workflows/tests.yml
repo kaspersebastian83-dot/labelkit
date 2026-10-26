@@ -93,6 +93,8 @@ jobs:
         run: node tests/gefuehrte-eingabe-browser.cjs ${{ matrix.browser }}
       - name: Raum/Ort-Vorschläge aus dem Projekt
         run: node tests/raumorte-browser.cjs ${{ matrix.browser }}
+      - name: Laborübergabe – Datum maskiert, Kopie ohne zusätzliche Zeilen
+        run: node tests/laboruebergabe-browser.cjs ${{ matrix.browser }}
       - name: AidKit (Raumkürzel und ID-Regeln, liegt auf GitHub Pages unter ../aidkit/)
         uses: actions/checkout@v6
         with:

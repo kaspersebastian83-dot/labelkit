@@ -72,6 +72,41 @@ const name = process.argv[2] || 'chromium';
     // Projektdatei: Verweise bleiben erhalten
     const saved = await page.evaluate(() => JSON.parse(buildProjektSaveData().content));
     assert.ok(saved.sonstigeProben.every(p => p.pn98Quelle !== undefined) && saved.pn98Proben.every(p => p.pn98Quelle === '26.0999-PN-01'));
+
+    // 4.43.0: Erneutes Anlegen ersetzt an derselben Stelle – eine später angelegte Probe schiebt sich nicht vor die etikettierten
+    const vorher = await page.evaluate(() => { addSonstige({z2: 'Keller', matrix: 'Wischprobe', notiz: 'PAK'}); renummerieren();
+      return {lab: sonstigeProben.map(p => [p._nr, p.id, p.z3 || p.z2]), prot: pn98Proben.map(p => [p.id, p.probennr])}; });
+    assert.deepEqual(vorher.lab.map(x => x[2]), ['Brandschutt · PN 98 Nr. MP1', 'Estrich · PN 98 Nr. MP2', 'Keller']);
+    await page.getByRole('button', {name: '→ Laborproben anlegen'}).click();
+    await page.locator('#modal-pn98-labor .btn-primary').click();
+    assert.deepEqual(await page.evaluate(() => sonstigeProben.map(p => [p._nr, p.id, p.z3 || p.z2])), vorher.lab, 'Nummern unverändert nach erneutem Anlegen');
+    // Feldbogen erneut übernehmen: gleiche Proben-Nr. behalten Platz und id, die Laborproben bleiben zugeordnet
+    await page.evaluate(() => { switchMainTab('feldboegen'); fbZurErfassung(); fbeWaehle(feldprotokolle[0].id); fbePn98Uebernehmen(); });
+    assert.deepEqual(await page.evaluate(() => pn98Proben.map(p => [p.id, p.probennr])), vorher.prot, 'Protokolle behalten id und Reihenfolge');
+    await page.evaluate(() => { switchMainTab('pn98'); pn98LaborDialog(); pn98LaborAnlegen(); });
+    assert.deepEqual(await page.evaluate(() => sonstigeProben.map(p => [p._nr, p.id, p.z3 || p.z2])), vorher.lab, 'auch nach erneutem Übernehmen des Bogens');
+    // Ersetzen: wirklich neue kommen ans Ende, entfallene verschwinden
+    assert.deepEqual(await page.evaluate(() => { let n = 50; const a = {id: 1, k: 'a'}, x = {id: 2, k: 'x'}, b = {id: 3, k: 'b'}, c = {id: 4, k: 'c'};
+      return anPlatzErsetzen([a, x, b, c], [a, b, c], [{k: 'c'}, {k: 'neu'}, {k: 'a'}], p => p.k, () => n++).map(p => p.k + p.id).join(' '); }),
+      'a1 x2 c4 neu50');
+
+    // Probenahmedatum mit zweistelliger Jahreszahl (wie auf dem Bogen); nicht lesbar → leer statt heute
+    assert.equal(await page.evaluate(() => { pn98Projekt.pndatum = '24.10.26'; return pn98LaborProben('Mischprobe', 'DepV')[0].datum; }), '2026-10-24');
+    assert.equal(await page.evaluate(() => { pn98Projekt.pndatum = '24.10.2026'; return pn98LaborProben('Mischprobe', 'DepV')[0].datum; }), '2026-10-24');
+    assert.equal(await page.evaluate(() => { pn98Projekt.pndatum = 'Ende Oktober'; return pn98LaborProben('Mischprobe', 'DepV')[0].datum; }), '');
+    assert.equal(await page.evaluate(() => { pn98Projekt.pndatum = '31.02.2026'; return pn98LaborProben('Mischprobe', 'DepV')[0].datum; }), '');
+    assert.equal(await page.evaluate(() => { pn98Projekt.pndatum = ''; return pn98LaborProben('Mischprobe', 'DepV')[0].datum === today(); }), true, 'leer → heute wie bisher');
+
+    // Schadendatum „nicht bekannt“ (Knopf neben dem Kalender): Text bleibt so, Kalender leer, steht so auf dem Protokoll
+    await page.locator('#pn98-schadendatum').fill('03.10.2026');
+    assert.equal(await page.locator('#pn98-schadendatum-picker').inputValue(), '2026-10-03');
+    await page.locator('#pn98-schadendatum-unbekannt').click();
+    assert.equal(await page.locator('#pn98-schadendatum').inputValue(), 'nicht bekannt');
+    assert.equal(await page.evaluate(() => pn98Projekt.schadendatum), 'nicht bekannt');
+    assert.equal(await page.locator('#pn98-schadendatum-picker').inputValue(), '');
+    await page.evaluate(() => { pn98OpenDatePicker('schadendatum'); setPn98ProjektFelderUi(); renderPn98Export(); });
+    assert.match(await page.locator('#pn98-export-preview').innerText(), /Schadendatum:\s*nicht bekannt/);
+    assert.equal(JSON.parse(await page.evaluate(() => buildProjektSaveData().content)).pn98Projekt.schadendatum, 'nicht bekannt');
     assert.deepEqual(errors, []);
     console.log(`OK ${name}: PN 98 Feldbogen → Protokolle → Laborproben`);
   } finally { if (browser) await browser.close(); server.close(); }

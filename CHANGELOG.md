@@ -1,5 +1,14 @@
 # Änderungen
 
+## 4.43.0 – 26. Oktober 2026
+
+- **Probennummern bleiben beim Aktualisieren**: „Proben aktualisieren“ im Bohrkern-Bogen, erneutes „→ Laborproben anlegen“ im Reiter PN 98 und erneutes Übernehmen eines PN 98-Feldbogens setzten die ersetzten Proben bisher ans Ende – später angelegte Proben (z. B. Materialproben) rückten davor und bereits etikettierte Proben bekamen neue Nummern (Etikett und Laborbericht passten nicht mehr zusammen). Jetzt übernimmt eine neu berechnete Probe Platz und Nummer der alten mit derselben Probenbezeichnung (`bkId`) bzw. demselben Protokoll (`pn98Quelle`, Proben-Nr.); nur wirklich neue kommen ans Ende.
+- **Rückgängig nur im geöffneten Projekt**: Beim Öffnen eines Projektordners und beim Laden einer Projektdatei wird der Rückgängig-Verlauf geleert. Bisher holte Strg+Z nach einem Projektwechsel die Proben des vorigen Projekts zurück, Strg+S schrieb sie dann in die Laboraufträge des neuen. Zusätzlich lehnt Strg+S das Speichern in den Laboraufträge-Ordner ab, wenn die Projektnummer der Daten nicht zum geöffneten Projektordner passt.
+- **PN 98-Probenahmedatum**: „24.10.26“ (zweistellige Jahreszahl, wie auf dem Feldbogen) wird gelesen. Bisher wurde daraus beim Anlegen der Laborproben stillschweigend das heutige Datum; ein nicht lesbares Datum bleibt jetzt leer (gelbe Pflichtzelle).
+- Probenahmedatum aus einer Projektdatei wird in Tabellen, Etiketten und Excel-Übergaben maskiert ausgegeben (kein HTML aus Dateiinhalt).
+- Zeilenumbrüche in „Untersuchungsparameter“ (Sonstige, Asbest) werden in der kopierten Laborübergabe zu „, “ – bisher entstanden beim Einfügen ins Laborsystem zusätzliche Zeilen. Spaltenreihenfolge unverändert.
+- **PN 98 – Schadendatum „nicht bekannt“**: Knopf neben dem Kalender trägt „nicht bekannt“ ein; so steht es auf den Protokollen.
+
 ## 4.42.0 – 26. Oktober 2026
 
 - Spektron-Leiste mit fünftem Schritt **ResultKit** (zwischen FotoKit und PlanKit): Laborergebnisse des Projekts – was zur Laborübergabe zurück ist und was noch fehlt. Haken, sobald die Ergebnisse in ResultKit übernommen sind (`Laborergebnisse/_Ergebnisse.json`). Die Leiste ist in allen Apps gleich; an LabelKit selbst ändert sich nichts.
