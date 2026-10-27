@@ -72,8 +72,14 @@ assert.ok(fs.existsSync(path.join(roots['/aidkit/'], 'konventionen.js')), 'AidKi
     assert.equal(proben[2].text, 'EG-WZ-B-7-T1 · 0–2 cm · Putz · Gesamtl. 14 cm', 'Beschreibung für Laborübergabe');
     assert.ok(proben.every(p => p.quelle === '26.0999-BK-01'));
 
-    // Erneut anlegen ersetzt statt zu verdoppeln
+    // Erneut anlegen ersetzt statt zu verdoppeln – an derselben Stelle: etikettierte Proben behalten ihre Nummer,
+    // auch wenn danach eine weitere Probe (Material) angelegt wurde (4.43.0)
+    const nrVorher = await page.evaluate(() => { addSonstige({z2: 'Keller Putz', matrix: 'Material (mineralisch)', notiz: 'PAK'}); renummerieren();
+      return sonstigeProben.map(p => [p._nr, p.id, p.bkId || p.z2]); });
+    assert.equal(nrVorher.at(-1)[2], 'Keller Putz');
     await page.locator('#fbe-bk-panel button', {hasText: 'aktualisieren'}).click();
+    assert.deepEqual(await page.evaluate(() => sonstigeProben.map(p => [p._nr, p.id, p.bkId || p.z2])), nrVorher, 'Nummern und ids unverändert, Materialprobe bleibt hinten');
+    await page.evaluate(() => { sonstigeProben = sonstigeProben.filter(p => p.z2 !== 'Keller Putz'); renummerieren(); renderSonstigeTable(); });
     assert.equal(await page.evaluate(() => sonstigeProben.length), 5);
 
     // Schnittplan je Kern (Eurofins-Form): Tiefenstufe, Probe, Auftrag; halber Kern ohne Angabe nicht angekreuzt
