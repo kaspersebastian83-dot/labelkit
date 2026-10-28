@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.44.0 – 28. Oktober 2026
+
+- **Vorbereitung „Spektron-Ordner“:** Die App-Daten eines Projekts ziehen später in den Unterordner `_Spektron`. LabelKit liest und schreibt die Projektdatei (`…_Daten.json`), liest die Projektdaten und schreibt das Ablage-Protokoll der Feldprotokolle jetzt über `spektron-ordner.js`. Excel-Übergaben, Protokolle und Scans bleiben in „Laboraufträge“ bzw. „Feldprotokolle“. Bis zum Umzug ändert sich nichts.
+
 ## 4.43.0 – 26. Oktober 2026
 
 - **Probennummern bleiben beim Aktualisieren**: „Proben aktualisieren“ im Bohrkern-Bogen, erneutes „→ Laborproben anlegen“ im Reiter PN 98 und erneutes Übernehmen eines PN 98-Feldbogens setzten die ersetzten Proben bisher ans Ende – später angelegte Proben (z. B. Materialproben) rückten davor und bereits etikettierte Proben bekamen neue Nummern (Etikett und Laborbericht passten nicht mehr zusammen). Jetzt übernimmt eine neu berechnete Probe Platz und Nummer der alten mit derselben Probenbezeichnung (`bkId`) bzw. demselben Protokoll (`pn98Quelle`, Proben-Nr.); nur wirklich neue kommen ans Ende.

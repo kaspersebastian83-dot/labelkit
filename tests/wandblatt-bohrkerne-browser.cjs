@@ -10,7 +10,7 @@ const name = process.argv[2] || 'chromium';
 const roots = {'/labelkit/': path.join(__dirname, '..'), '/aidkit/': path.resolve(process.env.AIDKIT_DIR || path.join(__dirname, '..', '..', 'aidkit'))};
 assert.ok(fs.existsSync(path.join(roots['/aidkit/'], 'konventionen.js')), 'AidKit gefunden unter ' + roots['/aidkit/']);
 (async () => {
-  const server = http.createServer((req, res) => {
+  const server = http.createServer((req, res) => {if (req.url.split('?')[0] === '/spektron-ordner.js') { res.writeHead(200, {'content-type': 'application/javascript; charset=utf-8'}); res.end(require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'spektron-ordner.js'))); return; } 
     const u = decodeURIComponent(req.url.split('?')[0]), pre = Object.keys(roots).find(p => u.startsWith(p));
     const file = pre && path.join(roots[pre], u.slice(pre.length) || 'index.html');
     if (!file || !file.startsWith(roots[pre]) || !fs.existsSync(file)) { res.writeHead(404); res.end(); return; }
