@@ -8576,12 +8576,17 @@ async function alleUebergabenSpeichernMitWord(options){
 }
 
 /** Spektron-Ordner: Die Projektdatei (…_Daten.json) des geöffneten Projekts liegt dort, wo spektron-ordner.js es sagt
-    (bisher „Laboraufträge“, künftig „_Spektron/LabelKit“). Excel-Übergaben und Protokolle bleiben im gewählten Ordner. */
+    (bisher „Laboraufträge“, künftig „_Spektron/LabelKit“) – bei jedem Speichern neu bestimmt, damit auch ein inzwischen
+    umgezogenes Projekt am richtigen Ort landet. Excel-Übergaben und Protokolle bleiben im gewählten Ordner. */
 async function zielOrdner(dir,name){
-  const p=typeof PROJEKTORDNER!=='undefined'?PROJEKTORDNER.state.proj:null;
-  if(!p||!p.daten||p.daten===p.lab||!/_Daten\.json$/i.test(name))return dir;
+  const p=typeof PROJEKTORDNER!=='undefined'?PROJEKTORDNER.state.proj:null,SO=typeof window!=='undefined'?window.SpektronOrdner:null;
+  if(!p||!SO||!p.dir||!/_Daten\.json$/i.test(name))return dir;
   const gleich=dir===p.lab||(typeof dir.isSameEntry==='function'&&await dir.isSameEntry(p.lab).catch(()=>false));
-  return gleich?p.daten:dir;
+  if(!gleich)return dir;
+  const r=await SO.ort(p.dir,'labelkit');
+  if(r.wo!=='neu')return dir;
+  p.daten=r.dir||(await SO.ort(p.dir,'labelkit',{anlegen:true})).dir;
+  return p.daten;
 }
 renderTable();
 updateMainTabBadges();
