@@ -9,7 +9,7 @@ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200"><rec
 let browser,server;
 (async()=>{
  let url=process.env.TEST_URL;
- if(!url){const dir=plan?path.join(root,'dist'):root;server=http.createServer((req,res)=>{
+ if(!url){const dir=plan?path.join(root,'dist'):root;server=http.createServer((req,res)=>{if (req.url.split('?')[0] === '/spektron-ordner.js') { res.writeHead(200, {'content-type': 'application/javascript; charset=utf-8'}); res.end(require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'spektron-ordner.js'))); return; } 
    const file=path.resolve(dir,new URL(req.url,'http://x').pathname.replace(/^\/+/, '')||'index.html');
    if(!file.startsWith(dir+path.sep)||!fs.existsSync(file)||fs.statSync(file).isDirectory()){res.statusCode=404;return res.end();}
    res.setHeader('Content-Type',({'.html':'text/html; charset=utf-8','.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml'})[path.extname(file)]||'application/octet-stream');res.end(fs.readFileSync(file));
