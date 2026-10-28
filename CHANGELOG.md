@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.45.0 – 28. Oktober 2026
+
+- **Spektron-Ordner ist da:** Neue Projekte (ab 26.0560) und per Projektzentrale umgezogene Projekte haben ihre Projektdatei (`…_Daten.json`) und das Ablage-Protokoll jetzt im Unterordner `_Spektron`. Noch nicht umgezogene Projekte werden weiter am bisherigen Ort gelesen und geschrieben (`spektron-ordner.js`, Umstellung aktiv). Excel-Übergaben, Protokolle und Scans bleiben, wo sie sind.
+
 ## 4.44.0 – 28. Oktober 2026
 
 - **Vorbereitung „Spektron-Ordner“:** Die App-Daten eines Projekts ziehen später in den Unterordner `_Spektron`. LabelKit liest und schreibt die Projektdatei (`…_Daten.json`), liest die Projektdaten und schreibt das Ablage-Protokoll der Feldprotokolle jetzt über `spektron-ordner.js`. Excel-Übergaben, Protokolle und Scans bleiben in „Laboraufträge“ bzw. „Feldprotokolle“. Bis zum Umzug ändert sich nichts.
