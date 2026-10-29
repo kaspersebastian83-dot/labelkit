@@ -5911,14 +5911,16 @@ async function alleUebergabenSpeichern(){
   if(window.showDirectoryPicker){
     try{
       const dir=await window.showDirectoryPicker({mode:'readwrite'});
-      const ziele=[];for(const f of files)ziele.push({dir:await zielOrdner(dir,f.name),name:f.name,f});
-      const ersetzen=await uebergabenFragen(ziele.filter(z=>!/_Daten\.json$/i.test(z.name))),daneben=[];
-      for(const z of ziele){const als=await sicherSpeichern(z.dir,z.name,z.f.content,{ersetzen});if(als!==z.name)daneben.push(als);}
+      // Projektdatei zuerst: bricht der Nutzer bei einem fremden Stand ab, wird auch keine Übergabe aus der veralteten Erfassung geschrieben
+      const ziele=[];for(const f of [...files].sort((x,y)=>(/_Daten\.json$/i.test(y.name)?1:0)-(/_Daten\.json$/i.test(x.name)?1:0)))ziele.push({dir:await zielOrdner(dir,f.name),name:f.name,f});
+      let ersetzen=null;const daneben=[],fragen=async()=>{if(ersetzen===null)ersetzen=await uebergabenFragen(ziele.filter(z=>!/_Daten\.json$/i.test(z.name)));return ersetzen;};
+      for(const z of ziele){const als=await sicherSpeichern(z.dir,z.name,z.f.content,{ersetzen:/_Daten\.json$/i.test(z.name)?false:await fragen()});if(als!==z.name)daneben.push(als);}
       markSaved(projDaten.filename,dir.name);
       flash('✓ '+files.length+' Dateien in „'+dir.name+'" gespeichert'+(daneben.length?' · neu daneben: '+daneben.join(', '):''));
       projektArchivAutoSave();
     } catch(err){
       if(err.name==='AbortError')flash('Speichern abgebrochen – Projektdatei nicht gespeichert');
+      else if(err.name==='KonfliktError'){alert(err.message);flash('Nicht gespeichert – '+err.message);}
       else{
         // Fallback: einzeln herunterladen
         files.forEach((f,i)=>setTimeout(()=>{
@@ -6971,6 +6973,7 @@ async function uebergabenFragen(ziele){
   return confirm((da.length===1?'Diese Datei gibt es im Ordner schon':'Diese Dateien gibt es im Ordner schon')+':\n• '+da.join('\n• ')
     +'\n\nOK = ersetzen (auch was dort von Hand nachbearbeitet wurde, geht verloren)\nAbbrechen = behalten und die neue Fassung daneben speichern, z. B. „… (2).xls“');
 }
+const konflikt=m=>Object.assign(Error(m),{name:'KonfliktError'});   // anderer Schreiber kam dazwischen – kein Download-Ersatz
 async function sicherSpeichern(dir,name,content,o={}){
   const lauf=async()=>{
     const vorhanden=await dateiSuchen(dir,name);
@@ -6986,7 +6989,7 @@ async function sicherSpeichern(dir,name,content,o={}){
       }
       const h=await dir.getFileHandle(ziel,{create:true}),w=await h.createWritable();
       try{   // direkt vor dem Schreiben noch einmal vergleichen (Schreiber offen – der bisherige Inhalt ist noch lesbar)
-        if(await dateiText(h)!==(platte||''))throw Error('„'+ziel+'“ wurde gerade eben geändert – nicht gespeichert. Bitte erneut speichern.');
+        if(await dateiText(h)!==(platte||''))throw konflikt('„'+ziel+'“ wurde gerade eben geändert – nicht gespeichert. Bitte erneut speichern.');
         await w.write(content);await w.close();
       }catch(e){await w.abort().catch(()=>{});throw e;}
       if(await dateiText(h)!==content)throw Error('„'+ziel+'“ konnte nach dem Speichern nicht bestätigt werden – bitte erneut speichern.');
@@ -7001,7 +7004,7 @@ async function sicherSpeichern(dir,name,content,o={}){
       for(let n=2;;n++){ziel=stamm+' ('+n+')'+endung;if(!namen.has(dateiSchluessel(ziel)))break;}
     }
     const h=await dir.getFileHandle(ziel,{create:true});
-    if(await dateiText(h))throw Error('„'+ziel+'“ wurde gerade von jemand anderem angelegt – bitte erneut speichern.');
+    if(await dateiText(h))throw konflikt('„'+ziel+'“ wurde gerade von jemand anderem angelegt – bitte erneut speichern.');
     await textSchreiben(h,content);
     return ziel;
   };
@@ -7040,6 +7043,7 @@ async function schnellSpeichern(){
       if(projektSpeicherStandAktuell(projDaten,kontext)){
         markSaved(projDaten.filename,ortName);
         flash('Zwischenstand in „'+ortName+'“ gespeichert ✓');
+        return true;   // für Aufrufer (z. B. Scan-Ablage): wirklich gespeichert
       }else{
         projektSpeicherStandVeraltet(true);
       }
@@ -8635,10 +8639,11 @@ async function alleUebergabenSpeichernMitWord(options){
   if(dir){
     let gespeichert=0;
     try{
-      const ziele=[];for(const f of files)ziele.push({dir:await zielOrdner(dir,f.name),name:f.name,f});
-      const ersetzen=await uebergabenFragen(ziele.filter(z=>!/_Daten\.json$/i.test(z.name))),daneben=[];
+      // Projektdatei zuerst: bricht der Nutzer bei einem fremden Stand ab, wird auch keine Übergabe aus der veralteten Erfassung geschrieben
+      const ziele=[];for(const f of [...files].sort((x,y)=>(/_Daten\.json$/i.test(y.name)?1:0)-(/_Daten\.json$/i.test(x.name)?1:0)))ziele.push({dir:await zielOrdner(dir,f.name),name:f.name,f});
+      let ersetzen=null;const daneben=[],fragen=async()=>{if(ersetzen===null)ersetzen=await uebergabenFragen(ziele.filter(z=>!/_Daten\.json$/i.test(z.name)));return ersetzen;};
       for(const z of ziele){
-        const als=await sicherSpeichern(z.dir,z.name,z.f.content,{ersetzen});if(als!==z.name)daneben.push(als);
+        const als=await sicherSpeichern(z.dir,z.name,z.f.content,{ersetzen:/_Daten\.json$/i.test(z.name)?false:await fragen()});if(als!==z.name)daneben.push(als);
         gespeichert++;
       }
       if(projektSpeicherStandAktuell(projDaten,kontext)){
@@ -11162,8 +11167,8 @@ async function fbeScansAblegen(dateien){
     }catch(e){fehler.push('Ablage-Protokoll: '+e.message);}
     fbeUi.scanIdx=rec.scans.length-1;
     fbeGeaendert();fbeRender();
-    if(typeof schnellSpeichern==='function')await schnellSpeichern();
-    flash(neu.length+' Scan'+(neu.length===1?'':'s')+' in „'+FBE_SCAN_ORDNER+'“ abgelegt und Projektdaten gespeichert ✓');
+    const gespeichert=typeof schnellSpeichern==='function'&&await schnellSpeichern()===true;
+    flash(neu.length+' Scan'+(neu.length===1?'':'s')+' in „'+FBE_SCAN_ORDNER+'“ abgelegt'+(gespeichert?' und Projektdaten gespeichert ✓':' · Projektdaten noch nicht gespeichert'+(speicherHinweis?' ('+speicherHinweis+')':'')));
   }
   if(fehler.length)alert('Nicht abgelegt:\n\n'+fehler.join('\n'));
 }

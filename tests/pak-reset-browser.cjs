@@ -108,8 +108,11 @@ const name = process.argv[2] || 'chromium';
       // Nur die Dateisystemgrenze nachbilden, alle Exportgeneratoren unverändert ausführen.
       const previousPicker = window.showDirectoryPicker, previousFolder = letzterSpeicherOrdner;
       const written = [];
-      window.showDirectoryPicker = async () => ({name: 'Synthetischer Exportordner', async getFileHandle(name) {
-        return {async createWritable() {return {async write(content) {written.push({name, content});}, async close() {}};}};
+      const disk = {};   // LabelKit liest vor dem Speichern, was schon im Ordner liegt
+      const handle = name => ({name, kind: 'file', async getFile() {return new File([disk[name] ?? ''], name);},
+        async createWritable() {let t = ''; return {async write(content) {t = content; written.push({name, content});}, async close() {disk[name] = t;}, async abort() {}};}});
+      window.showDirectoryPicker = async () => ({name: 'Synthetischer Exportordner', async *values() {for (const n of Object.keys(disk)) yield handle(n);}, async getFileHandle(name, o = {}) {
+        if (!(name in disk)) {if (!o.create) throw new DOMException('fehlt', 'NotFoundError'); disk[name] = '';} return handle(name);
       }});
       try {await alleUebergabenSpeichernMitWord({skipValidation: true}); return written;}
       finally {window.showDirectoryPicker = previousPicker; letzterSpeicherOrdner = previousFolder;}
