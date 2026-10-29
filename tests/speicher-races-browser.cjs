@@ -30,9 +30,10 @@ const browserName = process.argv[2] || 'chromium';
         applyProjektData({projekt: {nr: '26.0999'}, proben: [{id: 1, z1: '26.0999', datum: '2026-10-19', z2: 'Testraum', matrix: 'Wischprobe', cm2: '600', notiz: 'A'}]});
         window.disk = {};window.openWriters = 0;window.maxWriters = 0;window.jsonWrites = 0;
         window.pauseJson = true;window.resumeJson = null;window.failure = '';window.pickerCount = 0;
-        window.dir = {name: 'Laboraufträge', async *values() {}, async getFileHandle(name) {
+        window.dir = {name: 'Laboraufträge', async *values(){for(const name of Object.keys(disk))yield {name,kind:'file',getFile:async()=>new File([disk[name]],name)};}, async getFileHandle(name,o={}) {
           if (failure === 'handle') throw new DOMException('Kein Zugriff', 'NotAllowedError');
-          return {async createWritable() {
+          if(!(name in disk)){if(!o.create)throw new DOMException('Missing','NotFoundError');disk[name]='';}
+          return {getFile:async()=>new File([disk[name]],name),async createWritable() {
             if (failure === 'create') throw new DOMException('Kein Schreibrecht', 'NotAllowedError');
             openWriters++;maxWriters = Math.max(maxWriters, openWriters);
             let contents;
@@ -47,7 +48,7 @@ const browserName = process.argv[2] || 'chromium';
               openWriters--;
               if (failure === 'close') throw new Error('Schließen fehlgeschlagen');
               disk[name] = contents;
-            }};
+            },async abort(){}};
           }};
         }};
         window.showDirectoryPicker = async () => {
