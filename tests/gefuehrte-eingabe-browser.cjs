@@ -234,9 +234,11 @@ const name = process.argv[2] || 'chromium';
     // Zwischenstand: reale UI-Speicherung mit synthetischem Ordner an der Browsergrenze.
     await page.evaluate(() => {
       window.testWritten = null;
-      window.showDirectoryPicker = async () => ({name: 'Testordner', async getFileHandle(name) {
-        return {async createWritable() {return {async write(content) {window.testWritten = {name, content};}, async close() {}};}};
-      }});
+      const disk = {};   // synthetischer Ordner: LabelKit liest vor dem Speichern, was schon dort liegt
+      const handle = name => ({name, kind: 'file', async getFile() {return new File([disk[name] ?? ''], name);},
+        async createWritable() {let t = ''; return {async write(content) {t = content; window.testWritten = {name, content};}, async close() {disk[name] = t;}, async abort() {}};}});
+      window.showDirectoryPicker = async () => ({name: 'Testordner', async *values() {for (const n of Object.keys(disk)) yield handle(n);},
+        async getFileHandle(name, o = {}) {if (!(name in disk)) {if (!o.create) throw new DOMException('fehlt', 'NotFoundError'); disk[name] = '';} return handle(name);}});
       letzterSpeicherOrdner = null;
     });
     const save = page.locator('#btn-zwischenstand-speichern');

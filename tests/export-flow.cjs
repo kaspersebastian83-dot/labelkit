@@ -45,6 +45,9 @@ async function scenario({picker = 'ok', writeFailure = false, downloadApproval =
     if (picker !== 'ok') throw Object.assign(new Error(picker), {name: picker});
     return dir;
   };
+  // sicherSpeichern/uebergabenFragen haben eigene Tests (sicher-speichern.cjs) – hier nur der Ablauf des Exports
+  context.uebergabenFragen = async () => false;
+  context.sicherSpeichern = async (dir, name, content) => { const w = await (await dir.getFileHandle(name, {create: true})).createWritable(); await w.write(content); await w.close(); return name; };
   vm.createContext(context);
   vm.runInContext(saveGuardCode, context);
   vm.runInContext(exportCode, context);

@@ -1,5 +1,12 @@
 # Änderungen
 
+## 4.46.0 – 29. Oktober 2026
+
+- **Projektdatei:** Hat ein anderes LabelKit-Fenster oder ein anderer Rechner die …_Daten.json inzwischen geändert (oder wurde sie in dieser Sitzung nie von dort geladen), fragt LabelKit vor dem Speichern, statt still zu überschreiben. Abbrechen lässt die Datei unverändert, die Erfassung bleibt offen.
+- **Übergaben (Excel, Auftragsübersicht, Schnittplan, RTF):** Gibt es die Datei schon (z. B. am selben Tag von Hand nachbearbeitet), fragt LabelKit einmal: ersetzen – oder die neue Fassung daneben als „… (2)“ speichern.
+- **Projektwechsel:** Wird ein Projekt noch gelesen und inzwischen ein anderes geöffnet und bearbeitet, ersetzt das verspätete Laden die neuen Eingaben nicht mehr.
+- Meldungen nennen den tatsächlichen Ort der Projektdatei („_Spektron/LabelKit“ oder „Laboraufträge“).
+
 ## 4.45.1 – 29. Oktober 2026
 
 - Gemeinsames Modul spektron-ordner.js: Beim Umzug und bei der Ortswahl zählen in „Abrechnung“ nur noch die Dateien, die BelegKit selbst schreibt (Aufwand_<Kürzel>.json, _Abrechnung.json, <Nr>_Aufwand_<Datum>.json, _BelegKit_Sicherungen) – andere JSON dort bleiben liegen. Für LabelKit ändert sich nichts.
