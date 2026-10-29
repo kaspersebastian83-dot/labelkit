@@ -33,21 +33,22 @@ const name = process.argv[2] || 'chromium';
       addChloridProbe(); addAsbest(); addSonstige(); addBrandgeruchProbe(); addPn98Probe();
       renderTable();
       // Keine tatsächlichen Dateien oder gespeicherten Ordnerhandles verwenden.
-      window.testFiles = []; window.testClosed = []; window.testMode = 'ok'; window.testPickers = 0;
-      window.testDir = {name: 'Laboraufträge', async *values() {}, async getFileHandle(name) {
+      window.testDisk={};window.testFiles = []; window.testClosed = []; window.testMode = 'ok'; window.testPickers = 0;
+      window.testDir = {name: 'Laboraufträge', async *values(){for(const name of Object.keys(testDisk))yield {name,kind:'file',getFile:async()=>new File([testDisk[name]],name)};}, async getFileHandle(name,o={}) {
         if (testMode === 'handle-error') throw new DOMException('Zugriff verweigert', 'NotAllowedError');
-        return {async createWritable() {
+        if(!(name in testDisk)){if(!o.create)throw new DOMException('Missing','NotFoundError');testDisk[name]='';}
+        return {getFile:async()=>new File([testDisk[name]],name),async createWritable() {
           if (testMode === 'create-error') throw new DOMException('Schreibrecht verweigert', 'NotAllowedError');
-          return {
+          let pending;return {
             async write(content) {
               if (testMode === 'write-error') throw new Error('Datenträger voll');
-              testFiles.push({name, content});
+              pending=content;testFiles.push({name, content});
               if (testMode === 'delayed') await new Promise(resolve => {window.finishTestWrite = resolve;});
             },
             async close() {
               if (testMode === 'close-error') throw new Error('Abschluss fehlgeschlagen');
-              testClosed.push(name);
-            }
+              testDisk[name]=pending;testClosed.push(name);
+            },async abort(){}
           };
         }};
       }};

@@ -45,6 +45,7 @@ async function scenario({picker = 'ok', writeFailure = false, downloadApproval =
     if (picker !== 'ok') throw Object.assign(new Error(picker), {name: picker});
     return dir;
   };
+  context.sicherSpeichern=async(dir,name,content)=>{const w=await(await dir.getFileHandle(name,{create:true})).createWritable();await w.write(content);await w.close();};
   vm.createContext(context);
   vm.runInContext(saveGuardCode, context);
   vm.runInContext(exportCode, context);

@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.46.0 – 29. Oktober 2026
+
+- Projektwechsel ignorieren verspätete Lesevorgänge. Speichern prüft die tatsächlich geladene Projektdatei auf zwischenzeitliche Änderungen; vorhandene Übergaben werden unter einem neuen Namen ergänzt. Umgezogene Dateien behalten ihre Reihenfolge und Meldungen nennen den richtigen Datenordner.
+
 ## 4.45.0 – 28. Oktober 2026
 
 - **Spektron-Ordner ist da:** Neue Projekte (ab 26.0560) und per Projektzentrale umgezogene Projekte haben ihre Projektdatei (`…_Daten.json`) und das Ablage-Protokoll jetzt im Unterordner `_Spektron`. Noch nicht umgezogene Projekte werden weiter am bisherigen Ort gelesen und geschrieben (`spektron-ordner.js`, Umstellung aktiv). Excel-Übergaben, Protokolle und Scans bleiben, wo sie sind.

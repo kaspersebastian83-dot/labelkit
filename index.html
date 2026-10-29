@@ -2103,6 +2103,7 @@ body:not(.lg) .btn-secondary:hover{border-color:var(--accent);color:var(--accent
     </div>
     <div style="overflow-y:auto;padding:20px 28px;flex:1">
     <div style="display:flex;flex-direction:column;gap:16px">
+      <div><b>v4.46.0 · 29.10.2026</b><p>Projektwechsel und Speichern prüfen den geladenen Stand; vorhandene Übergaben bleiben erhalten. Umgezogene LabelKit-Dateien behalten ihre Reihenfolge.</p></div>
 
       <div style="border-left:3px solid #2f6fbf;padding-left:14px">
         <div style="font-family:var(--mono);font-size:11px;color:#2f6fbf;margin-bottom:4px">v4.45.0 · 28.10.2026 · Umzug</div>
@@ -3229,7 +3230,7 @@ body:not(.lg) .btn-secondary:hover{border-color:var(--accent);color:var(--accent
 <div id="flash" style="display:none" class="flash"></div>
 
 <script>
-const APP_VERSION='4.45.0';
+const APP_VERSION='4.46.0';
 // Titel und Versionsknopf folgen immer APP_VERSION (vorher von Hand gepflegt und dabei zweimal vergessen)
 document.title='LabelKit v'+APP_VERSION;
 document.querySelectorAll('button[title="Version und Änderungen anzeigen"]').forEach(b=>{b.textContent='v'+APP_VERSION;});
@@ -5269,10 +5270,7 @@ async function dokSchnittplanAktionFragen(fullHtml, dateiname, anzahl){
     if(window.showDirectoryPicker){
       try{
         const dir=await window.showDirectoryPicker({mode:'readwrite'});
-        const fh=await dir.getFileHandle(dateiname,{create:true});
-        const w=await fh.createWritable();
-        await w.write(fullHtml);
-        await w.close();
+        await sicherSpeichern(dir,dateiname,fullHtml);
         m.remove();
         flash(`${anzahl} Schnittplan${anzahl===1?'':'pläne'} gespeichert in „${dir.name}" ✓`);
       } catch(e){
@@ -5811,10 +5809,7 @@ async function exportAuftragsscheinPDF(){
   if(window.showDirectoryPicker){
     try{
       const dir=await window.showDirectoryPicker({mode:'readwrite'});
-      const fileHandle=await dir.getFileHandle(filename,{create:true});
-      const writable=await fileHandle.createWritable();
-      await writable.write(fullHtml);
-      await writable.close();
+      await sicherSpeichern(dir,filename,fullHtml);
       flash('Auftragsübersicht gespeichert in „'+dir.name+'" ✓');
     } catch(err){
       if(err.name!=='AbortError'){
@@ -5900,10 +5895,7 @@ async function alleUebergabenSpeichern(){
     try{
       const dir=await window.showDirectoryPicker({mode:'readwrite'});
       for(const f of files){
-        const fh=await (await zielOrdner(dir,f.name)).getFileHandle(f.name,{create:true});
-        const w=await fh.createWritable();
-        await w.write(f.content);
-        await w.close();
+        await sicherSpeichern(await zielOrdner(dir,f.name),f.name,f.content);
       }
       markSaved(projDaten.filename,dir.name);
       flash('✓ '+files.length+' Dateien in „'+dir.name+'" gespeichert');
@@ -6919,6 +6911,46 @@ function updateMainTabBadges(){
 
 // ── CTRL+S SPEICHERN ─────────────────────────────────
 let letzterSpeicherOrdner=null;
+
+// Expected bytes belong to the file actually opened, never to a fresh read taken at save time.
+const jsonStaende=[];
+function jsonStandMerken(dir,name,text){jsonStaende.push({dir,name,text});}
+async function gleicherSpeicherOrdner(a,b){return a===b||!!(a.isSameEntry&&await a.isSameEntry(b));}
+async function speicherText(dir,name){
+  for await(const h of dir.values())if(h.name.normalize('NFC').toLowerCase()===name.normalize('NFC').toLowerCase()){
+    if(h.kind!=='file')throw Error('Der Dateiname ist durch einen Ordner belegt.');
+    return {name:h.name,text:await(await h.getFile()).text()};
+  }
+  return {name,text:null};
+}
+async function sicherSpeichern(dir,name,content){
+  const run=async()=>{
+    if(/_Daten\.json$/i.test(name)){
+      let expected=null;
+      for(const s of jsonStaende)if(s.name.normalize('NFC').toLowerCase()===name.normalize('NFC').toLowerCase()&&await gleicherSpeicherOrdner(s.dir,dir))expected=s.text;
+      const old=await speicherText(dir,name);
+      if(old.text!==expected)throw Error('Die Projektdatei wurde anderweitig geändert oder noch nicht aus diesem Ordner geladen. Bitte zuerst die Projektdatei neu öffnen; Ihre Änderungen bleiben geöffnet.');
+      const h=await dir.getFileHandle(old.name,{create:true}),w=await h.createWritable();
+      try{
+        const latest=await speicherText(dir,old.name);
+        if(latest.text!==(expected===null?'':expected))throw Error('Projektdatei inzwischen geändert – nicht gespeichert.');
+        await w.write(content);await w.close();
+        if((await speicherText(dir,old.name)).text!==content)throw Error('Die gespeicherte Projektdatei konnte nicht bestätigt werden.');
+      }catch(e){await w.abort().catch(()=>{});throw e;}
+      jsonStandMerken(dir,old.name,content);return old.name;
+    }
+    // Human-readable handovers may have been annotated outside LabelKit. Keep every existing file.
+    const names=new Set();for await(const h of dir.values())names.add(h.name.normalize('NFC').toLowerCase());
+    const dot=name.lastIndexOf('.'),stem=dot<0?name:name.slice(0,dot),ext=dot<0?'':name.slice(dot);
+    let target=name;while(names.has(target.normalize('NFC').toLowerCase()))target=stem+' ('+crypto.randomUUID()+')'+ext;
+    if((await speicherText(dir,target)).text!==null)throw Error('Exportname inzwischen belegt. Bitte erneut speichern.');
+    const w=await(await dir.getFileHandle(target,{create:true})).createWritable();
+    try{await w.write(content);await w.close();}catch(e){await w.abort().catch(()=>{});throw e;}
+    return target;
+  };
+  return navigator.locks?navigator.locks.request('labelkit:datei:'+name.normalize('NFC').toLowerCase(),run):run();
+}
+
 async function schnellSpeichern(){
   const gesamt=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length;
   if(!gesamt){flash('Keine Proben zum Speichern');return;}
@@ -6945,10 +6977,7 @@ async function schnellSpeichern(){
       letzterSpeicherOrdner=dir;kontext.ordner=dir;
       // Derselbe zentrale JSON-Snapshot wie bisher, keine Abschlussprodukte.
       const ziel=await zielOrdner(dir,projDaten.filename),ortName=ziel===dir?dir.name:'Projektordner';
-      const fh=await ziel.getFileHandle(projDaten.filename,{create:true});
-      const w=await fh.createWritable();
-      await w.write(projDaten.content);
-      await w.close();
+      await sicherSpeichern(ziel,projDaten.filename,projDaten.content);
       // Während des Schreibens kann weitergearbeitet oder das Projekt gewechselt werden.
       // Nur der tatsächlich geschriebene Stand darf als gespeichert erscheinen.
       if(projektSpeicherStandAktuell(projDaten,kontext)){
@@ -6968,7 +6997,7 @@ async function schnellSpeichern(){
     }else{
       if(projektSpeicherKontextAktuell(kontext))letzterSpeicherOrdner=null;
       markUnsaved();
-      speicherHinweis='Speichern fehlgeschlagen · Änderungen noch nicht gespeichert. Bitte erneut speichern und Ordnerzugriff erlauben.';
+      speicherHinweis='Nicht gespeichert: '+e.message+' · Änderungen noch nicht gespeichert';
     }
     flash(speicherHinweis);
   }finally{
@@ -8550,10 +8579,7 @@ async function alleUebergabenSpeichernMitWord(options){
     let gespeichert=0;
     try{
       for(const f of files){
-        const fh=await (await zielOrdner(dir,f.name)).getFileHandle(f.name,{create:true});
-        const w=await fh.createWritable();
-        await w.write(f.content);
-        await w.close();
+        await sicherSpeichern(await zielOrdner(dir,f.name),f.name,f.content);
         gespeichert++;
       }
       if(projektSpeicherStandAktuell(projDaten,kontext)){
@@ -9596,7 +9622,7 @@ const PROJEKTORDNER=(function(){
   function zeigen(){
     const k=document.getElementById('projekt-kennung');if(!k)return;
     k.hidden=!state.proj;
-    if(state.proj){k.innerHTML='<b>'+esc(state.proj.nr)+'</b> '+esc(state.proj.ort);k.title='Projektordner „'+state.proj.name+'“ – gespeichert wird in „'+LAB_DIR+'“';document.title=state.proj.name+' · LabelKit';}
+    if(state.proj){k.innerHTML='<b>'+esc(state.proj.nr)+'</b> '+esc(state.proj.ort);k.title='Projektordner „'+state.proj.name+'“ – gespeichert wird in „'+state.proj.pfad+'“';document.title=state.proj.name+' · LabelKit';}
   }
   function hinweis(html,button,action){
     document.querySelector('.projekt-hinweis')?.remove();
@@ -9607,30 +9633,36 @@ const PROJEKTORDNER=(function(){
   }
   async function neuesteDaten(lab){
     let best=null;
-    for await(const h of lab.values()){if(h.kind!=='file'||!/_Daten\.json$/i.test(h.name))continue;const f=await h.getFile();if(!best||f.lastModified>best.lastModified)best=f;}
+    for await(const h of lab.values()){if(h.kind!=='file'||!/_Daten\.json$/i.test(h.name))continue;const f=window.SpektronOrdner?.dateiLesen?await window.SpektronOrdner.dateiLesen(lab,h):await h.getFile();if(!best||f.lastModified>best.lastModified)best=f;}
     return best;
   }
+  let oeffnenLauf=0;
   async function oeffnen(dir){
+    const lauf=++oeffnenLauf;
     if(!await permission(dir,true)){flash('Ohne Schreibrecht auf den Projektordner kann LabelKit dort nicht speichern.');return;}
     const personen=await maPersonenAus(await archiv());
     const p=parse(dir.name,personen);if(!p){flash('„'+dir.name+'“ ist kein Projektordner (erwartet z. B. „26.0123 Köln“).');return;}
     let lab=await subdir(dir,LAB_DIR,false);
     if(!lab){if(!confirm('Im Projekt „'+dir.name+'“ gibt es keinen Unterordner „'+LAB_DIR+'“. Jetzt anlegen?'))return;lab=await subdir(dir,LAB_DIR,true);}
-    const vorhanden=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length;
     // Spektron-Ordner (spektron-ordner.js): …_Daten.json in „Laboraufträge“ oder künftig „_Spektron/LabelKit“; ohne Modul wie bisher.
     const SO=typeof window!=='undefined'?window.SpektronOrdner:null;let daten=lab;
     if(SO){const lk=await SO.ort(dir,'labelkit');if(lk.wo==='neu')daten=lk.dir||(await SO.ort(dir,'labelkit',{anlegen:true})).dir;}
+    const datenPfad=SO?(await SO.ort(dir,'labelkit')).pfad:LAB_DIR;
     const datei=await neuesteDaten(daten);
+    if(lauf!==oeffnenLauf)return;
+    const datenText=datei?await datei.text():null;
+    if(lauf!==oeffnenLauf)return;
+    const vorhanden=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length;
     if(datei){
       if(vorhanden&&projektStatus.dirty&&!confirm('In „'+LAB_DIR+'“ liegt „'+datei.name+'“.\nDie aktuell erfassten, nicht gespeicherten Proben werden dadurch ersetzt.\n\nProjektdatei laden?'))return;
-      try{const data=JSON.parse(await datei.text());if(!projektZuordnungPruefen(data,p.nr,datei.name))return;applyProjektData(data,p.nr);}catch(e){alert('„'+datei.name+'“ konnte nicht geladen werden: '+e.message);return;}
+      try{const data=JSON.parse(datenText);if(!projektZuordnungPruefen(data,p.nr,datei.name))return;applyProjektData(data,p.nr);jsonStandMerken(daten,datei.name,datenText);}catch(e){alert('„'+datei.name+'“ konnte nicht geladen werden: '+e.message);return;}
     }else if(vorhanden&&document.getElementById('proj-nr').value.trim()&&document.getElementById('proj-nr').value.trim()!==p.nr){
       if(!confirm('Es sind noch Proben von Projekt „'+document.getElementById('proj-nr').value.trim()+'“ erfasst.\nFür „'+dir.name+'“ mit leerer Erfassung beginnen?'))return;
       applyProjektData({proben:[],chloridProben:[],asbestProben:[],sonstigeProben:[],brandgeruchProben:[],pn98Proben:[]},p.nr);
     }else if(vorhanden&&!document.getElementById('proj-nr').value.trim()){
       if(!projektZuordnungPruefen({projekt:{nr:''}},p.nr,'Aktuelle Erfassung'))return;
     }
-    state.proj={dir,lab,daten,name:dir.name,nr:p.nr,ort:p.ort};state.pj=null;void ladePj();
+    state.proj={dir,lab,daten,pfad:datenPfad,name:dir.name,nr:p.nr,ort:p.ort};state.pj=null;void ladePj();
     undoStack=[];  // Rückgängig nie über einen Projektwechsel hinweg
     if(typeof letzterSpeicherOrdner!=='undefined')letzterSpeicherOrdner=lab;
     const nrEl=document.getElementById('proj-nr');if(nrEl&&!nrEl.value.trim()){nrEl.value=p.nr;}
@@ -9639,11 +9671,11 @@ const PROJEKTORDNER=(function(){
     kuerzelAuswahl('ma-kuerzel',personen);
     let kzHinweis='';
     if(!fbeKuerzel()){const v=kuerzelVorschlag(personen);if(v){fbeKuerzelSetzen(v);const kz=document.getElementById('fbe-kuerzel');if(kz)kz.value=v;kzHinweis=' · Ihr Kürzel „'+v+'“ aus der Projektzentrale („Ich bin …“) übernommen';}}
-    if(datei)markSaved(datei.name,LAB_DIR);
+    if(datei)markSaved(datei.name,datenPfad);
     zeigen();
     try{PROJEKT_URL.setzen(dir.name);}catch(e){}
     try{window.MosaikLeiste&&MosaikLeiste.aktualisieren();}catch(e){}
-    flash((datei?'Projekt '+dir.name+': „'+datei.name+'“ geladen – gespeichert wird in „'+LAB_DIR+'“':'Projekt '+dir.name+': gespeichert wird in „'+LAB_DIR+'“')+kzHinweis);
+    flash((datei?'Projekt '+dir.name+': „'+datei.name+'“ geladen – gespeichert wird in „'+datenPfad+'“':'Projekt '+dir.name+': gespeichert wird in „'+datenPfad+'“')+kzHinweis);
   }
   async function ausZentrale(name){
     const root=await archiv();
