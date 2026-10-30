@@ -33,7 +33,7 @@ async function run(route,data,approval,accepted,promptCount){
   if(route==='manual')f.c.importProjektJSON({target:{files:[{}],value:'selected'}});
   if(route==='archive')f.c.projektArchivOeffnen(0);
   assert.equal(f.prompts.filter(m=>m.includes('keine Projektnummer')).length,promptCount,route);
-  if(accepted){assert.equal(f.c.proben[0].z2,'FREMDES PROJEKT');assert.equal(f.elements.get('proj-nr').value.trim(),'26.0101');assert.ok(f.events.includes('saved'));assert.equal(f.c.speicherKontextRevision,11);assert.deepEqual(f.alerts,[]);}
+  if(accepted){assert.equal(f.c.proben[0].z2,'FREMDES PROJEKT');assert.equal(f.elements.get('proj-nr').value.trim(),String(data.projekt?.nr??'').trim()||'26.0101');assert.ok(f.events.includes('saved'));assert.equal(f.c.speicherKontextRevision,11);assert.deepEqual(f.alerts,[]);}
   else{assert.equal(f.c.proben,old);assert.equal(f.c.state.proj,f.previous);assert.equal(f.c.state.pj,oldPj);assert.equal(f.elements.get('proj-nr').value,'26.0101');assert.equal(f.c.speicherKontextRevision,10);assert.deepEqual(f.events,[]);}
   if(data.projekt?.nr==='26.0999'){assert.equal(f.alerts.length,1);assert.match(f.alerts[0],/blockiert/);assert.match(f.alerts[0],/26\.0999/);assert.match(f.alerts[0],/26\.0101/);}
   checks++;
@@ -43,6 +43,12 @@ async function run(route,data,approval,accepted,promptCount){
   const data=nr=>({version:'4.30.10',projekt:{nr},proben:[{id:1,_nr:1,z2:'FREMDES PROJEKT',matrix:'Wischprobe'}]});
   await run(route,data('26.0101'),false,true,0);
   await run(route,data(' 26.0101 '),false,true,0);
+  // Adresse im Feld „Projektnummer“ (ältere Projekte): gleiche Nummer wird geöffnet, andere Nummer bleibt blockiert.
+  await run(route,data('26.0101 Stegerwaldstraße Leverkusen'),false,true,0);
+  await run(route,data('26.0101_Stegerwaldstraße_Leverkusen'),false,true,0);
+  await run(route,data('26.0999 Stegerwaldstraße Leverkusen'),true,false,0);
+  await run(route,data('26.01010'),true,false,0);
+  await run(route,data('PAK'),true,false,0);
   // Selbst ein pauschales OK darf eine bekannte fremde Nummer nicht freigeben.
   await run(route,data('26.0999'),true,false,0);
   for(const legacy of [data(''),data('   '),{proben:data('').proben}]){
