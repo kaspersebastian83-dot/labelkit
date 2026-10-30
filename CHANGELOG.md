@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.48.1 – 30. Oktober 2026
+
+- **Projektnummer mit Adresse:** Steht im Feld „Projektnummer“ zusätzlich die Adresse (ältere Projekte, z. B. „26.0512 Stegerwaldstraße Leverkusen“), wurde die Projektdatei beim Öffnen aus dem Projektordner, beim JSON-Import und aus dem Archiv als „fremdes Projekt“ blockiert, und „Speichern“ in den Projektordner meldete „Nicht gespeichert“. Verglichen wird jetzt nur die Projektnummer; eine andere Nummer blockiert weiter, Freitext ohne Nummer wie bisher. Gleiche Regel in ResultKit 1.12.1 und BerichtKit 1.4.1.
+
 ## 4.48.0 – 30. Oktober 2026
 
 - **Probenehmer aus der Mitarbeiterliste:** In den Feldprotokollen (Probenehmer bzw. Messtechniker laut Bogen) und im PN-98-Probenprotokoll schlägt das Feld jetzt die Namen der aktiven Personen aus der Projektzentrale vor (`_Spektron-Mitarbeiter.json`). Freitext bleibt möglich (Fremdpersonen, mehrere Namen). Mit dem genauen Namen aus der Liste ordnet BerichtKit die Person sicher zu, statt zu raten.
