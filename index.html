@@ -3455,6 +3455,7 @@ function festHinweisText(neu){return neu?' · 🔒 '+neu+(neu===1?' Probennummer
 // Ein neuer Eintrag mit demselben Schlüssel (bkId, pn98Quelle, Proben-Nr.) übernimmt Platz und id des alten
 // (bei fester Nummer auch Nummer und Status), alte ohne Gegenstück entfallen – mit fester Nummer werden sie
 // storniert statt entfernt. Wirklich neue kommen ans Ende. `neueId()` vergibt ids nur für diese.
+const STORNO_WEGGEFALLEN='beim Aktualisieren weggefallen';
 function anPlatzErsetzen(liste,alt,neu,schluessel,neueId){
   const frei=new Map();
   neu.forEach(x=>{const k=schluessel(x);if(!frei.has(k))frei.set(k,[]);frei.get(k).push(x);});
@@ -3464,10 +3465,11 @@ function anPlatzErsetzen(liste,alt,neu,schluessel,neueId){
     const q=frei.get(schluessel(p));
     if(q&&q.length){
       const x=q.shift();x.id=p.id;
-      if(nrIstFest(p)){x._nr=p._nr;if(p.nrFest)x.nrFest=p.nrFest;if(p.storniert)x.storniert=p.storniert;}
+      // Automatisch storniert (früher weggefallen) und jetzt wieder da → Storno aufgehoben; von Hand storniert bleibt
+      if(nrIstFest(p)){x._nr=p._nr;if(p.nrFest)x.nrFest=p.nrFest;if(p.storniert&&p.storniert.grund!==STORNO_WEGGEFALLEN)x.storniert=p.storniert;}
       verwendet.add(x);out.push(x);
     }else if(nrIstFest(p)){
-      if(!p.storniert)p.storniert={am,kuerzel:aktuellesKuerzel(),grund:'beim Aktualisieren weggefallen'};
+      if(!p.storniert)p.storniert={am,kuerzel:aktuellesKuerzel(),grund:STORNO_WEGGEFALLEN};
       out.push(p);
     }
   }
@@ -3555,8 +3557,13 @@ function laborUebergabeFuer(data){
 // Ruft weiter(befund) synchron auf, wenn nichts zu prüfen ist – sonst nach dem Blick in den Ordner.
 function mitLaborUebergabe(data,weiter){
   const b=laborUebergabeFuer(data);
-  if(b&&typeof b.then==='function')return b.then(weiter);
-  return weiter(b);
+  if(!(b&&typeof b.then==='function'))return weiter(b);
+  // Während des Blicks in den Ordner ein anderes Projekt geöffnet oder geladen → dieses Laden verwerfen
+  const rev=typeof speicherKontextRevision!=='undefined'?speicherKontextRevision:null,proj=PROJEKTORDNER.state.proj;
+  return b.then(befund=>{
+    if((rev!==null&&speicherKontextRevision!==rev)||PROJEKTORDNER.state.proj!==proj){if(typeof flash==='function')flash('Laden abgebrochen – inzwischen wurde ein anderes Projekt geöffnet');return;}
+    return weiter(befund);
+  });
 }
 
 function editProbeNr(span, rowIdx){
@@ -3924,9 +3931,10 @@ function getVal(id,key,val){const p=proben.find(p=>p.id===id);if(p){p[key]=val;m
 function renderTable(){
   const startNrEl=document.getElementById('probe-startnr');
   if(startNrEl){const fest=festeNummernVorhanden();startNrEl.disabled=fest;startNrEl.title=fest?'Startnummer fest – es gibt schon feste Probennummern':'Startnummer für PAK-Proben';}
-  document.getElementById('btn-pak-reset').disabled=!proben.length;
-  document.getElementById('btn-pak-leere').disabled=!proben.length;
-  document.getElementById('btn-pak-aendern').disabled=!proben.length;
+  const pakAktivN=aktiv(proben).length;
+  document.getElementById('btn-pak-reset').disabled=!pakAktivN;
+  document.getElementById('btn-pak-leere').disabled=!pakAktivN;
+  document.getElementById('btn-pak-aendern').disabled=!pakAktivN;
   renummerieren();
   // Karten-Ansicht
   if(kartenAnsichtAktiv){
@@ -4422,8 +4430,8 @@ function applyProjektData(data,fallbackNr,optionen){
   return migriert;
 }
 function clearAll(){
-  if(!proben.length)return;
-  document.getElementById('pak-reset-text').textContent='Alle '+proben.length+' PAK-Proben im Projekt „'+aktuellerProjektName()+'“ werden entfernt.'+festeHinweis(proben);
+  if(!aktiv(proben).length)return;
+  document.getElementById('pak-reset-text').textContent='Alle '+aktiv(proben).length+' PAK-Proben im Projekt „'+aktuellerProjektName()+'“ werden entfernt.'+festeHinweis(proben);
   document.getElementById('modal-pak-reset').showModal();
   document.getElementById('pak-reset-abbrechen').focus();
 }
@@ -4446,7 +4454,7 @@ function toggleAllChecks(cb, mode){
 function transferToChlorid(){
   const selected=proben.filter(p=>p.checked&&!istStorniert(p));
   if(!selected.length){flash('Keine Proben ausgewählt');return}
-  const neu=selected.filter(p=>!chloridProben.some(c=>c.sourcePakId===p.id||c.id===p.id));
+  const neu=selected.filter(p=>!aktiv(chloridProben).some(c=>c.sourcePakId===p.id||c.id===p.id));
   const skipped=selected.length-neu.length;
   if(!neu.length){
     proben.forEach(p=>p.checked=false);
@@ -4675,7 +4683,7 @@ function exportChloridPDF(){
     +etikettHtml+'</body></html>';
   const blob=new Blob([fullHtml],{type:'text/html;charset=utf-8'});
   const url=URL.createObjectURL(blob);
-  window.open(url,'_blank');
+  if(!window.open(url,'_blank')){alert('Popup wurde blockiert – bitte Popups für diese Seite erlauben.');return}
   flash('Chlorid PDF-Fenster geöffnet ✓');
   const festNeu=nummernFestlegen([chloridProben],'Etiketten-PDF');if(festNeu)flash('Etiketten-Seite geöffnet'+festHinweisText(festNeu));
 }
@@ -5056,7 +5064,7 @@ function exportSonstigePDF(){
     +'<div class="hint">Bypass-Druck: <strong>Strg+P</strong> → Drucker-Eigenschaften → Papierfach: <strong>Bypass / Manuell</strong> → Ränder: <strong>Keine</strong></div>'
     +etikettHtml+'</body></html>';
   const blob=new Blob([fullHtml],{type:'text/html;charset=utf-8'});
-  window.open(URL.createObjectURL(blob),'_blank');
+  if(!window.open(URL.createObjectURL(blob),'_blank')){alert('Popup wurde blockiert – bitte Popups für diese Seite erlauben.');return}
   flash('Sonstige PDF-Fenster geöffnet ✓');
   const festNeu=nummernFestlegen([sonstigeProben],'Etiketten-PDF');if(festNeu)flash('Etiketten-Seite geöffnet'+festHinweisText(festNeu));
 }
@@ -5121,13 +5129,13 @@ function printSonstigeUebergabe(){renderSonstigeUebergabe();nummernFestlegen([so
 function bohrkernAnlegenOeffnen(){
   // Bestehende Bohrkerne in Dropdown laden (für „Bearbeiten"-Modus)
   const bestehende=new Set();
-  sonstigeProben.forEach(p=>{if(p.matrix==='Bohrkern' && p.bkBez) bestehende.add(p.bkBez);});
+  aktiv(sonstigeProben).forEach(p=>{if(p.matrix==='Bohrkern' && p.bkBez) bestehende.add(p.bkBez);});
   const sel=document.getElementById('bk-edit-target');
   const editWrap=document.getElementById('bk-edit-wrap');
   if(bestehende.size){
     const sortedBez=[...bestehende].sort((a,b)=>a.localeCompare(b,'de',{numeric:true}));
     sel.innerHTML='<option value="">– Neuen Bohrkern anlegen –</option>'
-      +sortedBez.map(b=>`<option value="${escAll(b)}">${escAll(b)} bearbeiten (${sonstigeProben.filter(p=>p.matrix==='Bohrkern'&&p.bkBez===b).length} Segmente)</option>`).join('');
+      +sortedBez.map(b=>`<option value="${escAll(b)}">${escAll(b)} bearbeiten (${aktiv(sonstigeProben).filter(p=>p.matrix==='Bohrkern'&&p.bkBez===b).length} Segmente)</option>`).join('');
     editWrap.style.display='block';
   } else {
     editWrap.style.display='none';
@@ -5175,7 +5183,7 @@ function bohrkernEditTargetChanged(){
     bohrkernSchnitteVorschau();
     return;
   }
-  const segs=sonstigeProben.filter(p=>p.matrix==='Bohrkern'&&p.bkBez===bez)
+  const segs=aktiv(sonstigeProben).filter(p=>p.matrix==='Bohrkern'&&p.bkBez===bez)
                            .sort((a,b)=>(Number(a.bkVon)||0)-(Number(b.bkVon)||0));
   if(!segs.length)return;
   const erstes=segs[0];
@@ -5255,7 +5263,7 @@ function bohrkernAnlegenBestaetigen(){
   const editBez=document.getElementById('bk-edit-target').value;
   const isEdit=!!editBez;
   if(isEdit){
-    const altSegs=sonstigeProben.filter(p=>p.matrix==='Bohrkern'&&p.bkBez===editBez);
+    const altSegs=aktiv(sonstigeProben).filter(p=>p.matrix==='Bohrkern'&&p.bkBez===editBez);
     const bestaetigung=confirm(
       `Bohrkern „${editBez}" hat aktuell ${altSegs.length} Segment${altSegs.length===1?'':'e'}.\n\n`+
       `Diese werden gelöscht und durch ${segs.length} neue Segment${segs.length===1?'':'e'} ersetzt.\n\nFortfahren?`
@@ -6133,7 +6141,6 @@ async function alleUebergabenSpeichern(){
   if(clAktiv.length&&!validierungsCheck(clAktiv,'Chlorid-Proben')) return;
   if(asAktiv.length&&!validierungsCheck(asAktiv,'Asbestproben')) return;
   if(soAktiv.length&&!validierungsCheck(soAktiv,'Sonstige Proben')) return;
-  nummernFestlegen([pakAktiv,clAktiv,asAktiv,soAktiv],'Laborübergabe',{archiv:false});
 
   function buildXls(probenListe, beschrFn, istSonstige){
     const hatUntersuchungsparameter=istSonstige||probenListe===clAktiv;
@@ -6171,6 +6178,8 @@ async function alleUebergabenSpeichern(){
   if(window.showDirectoryPicker){
     try{
       const dir=await window.showDirectoryPicker({mode:'readwrite'});
+      nummernFestlegen([pakAktiv,clAktiv,asAktiv,soAktiv],'Laborübergabe',{archiv:false});
+      const pd=buildProjektSaveData();files[files.length-1]={name:pd.filename,content:pd.content}; // Projektdatei mit festen Nummern
       // Projektdatei zuerst: bricht der Nutzer bei einem fremden Stand ab, wird auch keine Übergabe aus der veralteten Erfassung geschrieben
       const ziele=[];for(const f of [...files].sort((x,y)=>(/_Daten\.json$/i.test(y.name)?1:0)-(/_Daten\.json$/i.test(x.name)?1:0)))ziele.push({dir:await zielOrdner(dir,f.name),name:f.name,f});
       let ersetzen=null;const daneben=[],fragen=async()=>{if(ersetzen===null)ersetzen=await uebergabenFragen(ziele.filter(z=>!/_Daten\.json$/i.test(z.name)));return ersetzen;};
@@ -6505,7 +6514,7 @@ function exportAsbestPDF(){
     +'.etikett-absender{font-size:6pt;color:#888;border-top:.3mm solid #ddd;padding-top:1mm;margin-top:1mm}'
     +'@media print{@page{size:A4 portrait;margin:0}body{margin:0}}</style></head><body>'+etikettHtml+'</body></html>'],
     {type:'text/html;charset=utf-8'});
-  window.open(URL.createObjectURL(blob),'_blank');
+  if(!window.open(URL.createObjectURL(blob),'_blank')){alert('Popup wurde blockiert – bitte Popups für diese Seite erlauben.');return}
   flash('Asbest PDF-Fenster geöffnet ✓');
   const festNeu=nummernFestlegen([asbestProben],'Etiketten-PDF');if(festNeu)flash('Etiketten-Seite geöffnet'+festHinweisText(festNeu));
 }
@@ -6643,22 +6652,26 @@ document.addEventListener('change',e=>{if(istRaumFeld(e.target)&&raumGetippt.get
 // ── VON OBEN ÜBERNEHMEN ───────────────────────────────
 function uebernehmeFeldVonOben(rowIdx, feld){
   if(rowIdx<1)return;
-  const q=proben[rowIdx-1];const z=proben[rowIdx];if(!q||!z)return;
+  let o=rowIdx-1;while(o>0&&istStorniert(proben[o]))o--; // stornierte Zeilen überspringen
+  const q=proben[o];const z=proben[rowIdx];if(!q||!z||istStorniert(q)||istStorniert(z))return;
   undoSnapshot();z[feld]=q[feld];renderTable();markUnsaved();flash('Feld übernommen ✓');
 }
 function uebernehmeFeldVonObenChlorid(rowIdx, feld){
   if(rowIdx<1)return;
-  const q=chloridProben[rowIdx-1];const z=chloridProben[rowIdx];if(!q||!z)return;
+  let o=rowIdx-1;while(o>0&&istStorniert(chloridProben[o]))o--; // stornierte Zeilen überspringen
+  const q=chloridProben[o];const z=chloridProben[rowIdx];if(!q||!z||istStorniert(q)||istStorniert(z))return;
   undoSnapshot();z[feld]=q[feld];renderChloridTable();markUnsaved();flash('Feld übernommen ✓');
 }
 function uebernehmeFeldVonObenAsbest(rowIdx, feld){
   if(rowIdx<1)return;
-  const q=asbestProben[rowIdx-1];const z=asbestProben[rowIdx];if(!q||!z)return;
+  let o=rowIdx-1;while(o>0&&istStorniert(asbestProben[o]))o--; // stornierte Zeilen überspringen
+  const q=asbestProben[o];const z=asbestProben[rowIdx];if(!q||!z||istStorniert(q)||istStorniert(z))return;
   undoSnapshot();z[feld]=q[feld];renderAsbestTable();markUnsaved();flash('Feld übernommen ✓');
 }
 function uebernehmeFeldVonObenSonstige(rowIdx, feld){
   if(rowIdx<1)return;
-  const q=sonstigeProben[rowIdx-1];const z=sonstigeProben[rowIdx];if(!q||!z)return;
+  let o=rowIdx-1;while(o>0&&istStorniert(sonstigeProben[o]))o--; // stornierte Zeilen überspringen
+  const q=sonstigeProben[o];const z=sonstigeProben[rowIdx];if(!q||!z||istStorniert(q)||istStorniert(z))return;
   undoSnapshot();z[feld]=q[feld];renderSonstigeTable();markUnsaved();flash('Feld übernommen ✓');
 }
 
@@ -6867,12 +6880,15 @@ function fokusSpeichern(){fokusAktualisieren();const p=fokusListe()[fokusIdx];if
 function fokusNext(){
   fokusSpeichern();
   const liste=fokusListe();
-  if(fokusIdx<liste.length-1){fokusIdx++;ladeInFokusPanell();document.getElementById('fp-z2').focus();}
+  let i=fokusIdx+1;while(i<liste.length&&istStorniert(liste[i]))i++; // stornierte Proben überspringen
+  if(i<liste.length){fokusIdx=i;ladeInFokusPanell();document.getElementById('fp-z2').focus();}
   else{schließeFokusPanell();}
 }
 function fokusPrev(){
   fokusSpeichern();
-  if(fokusIdx>0){fokusIdx--;ladeInFokusPanell();document.getElementById('fp-z2').focus();}
+  const liste=fokusListe();
+  let i=fokusIdx-1;while(i>=0&&istStorniert(liste[i]))i--;
+  if(i>=0){fokusIdx=i;ladeInFokusPanell();document.getElementById('fp-z2').focus();}
 }
 
 // ── VERBESSERTE SCHNELLEINGABE ────────────────────────
@@ -6926,18 +6942,20 @@ function schnellVonOben(){
 function schnellNext(){
   schnellSave();
   schnellIdx++;
+  while(schnellIdx<proben.length&&istStorniert(proben[schnellIdx]))schnellIdx++; // stornierte überspringen
   if(schnellIdx>=proben.length){closeSchnell();flash('Geführte Eingabe abgeschlossen ✓');}
   else{loadSchnell();setTimeout(()=>document.getElementById('s-datum').focus(),60);}
 }
 
 function schnellPrev(){
   schnellSave();
-  if(schnellIdx>0){schnellIdx--;loadSchnell();setTimeout(()=>document.getElementById('s-datum').focus(),60);}
+  let i=schnellIdx-1;while(i>=0&&istStorniert(proben[i]))i--;
+  if(i>=0){schnellIdx=i;loadSchnell();setTimeout(()=>document.getElementById('s-datum').focus(),60);}
 }
 
 function openSchnell(){
-  if(!proben.length)addProbe();
-  schnellIdx=0;loadSchnell();
+  if(!aktiv(proben).length)addProbe();
+  schnellIdx=proben.findIndex(p=>!istStorniert(p));loadSchnell();
   document.getElementById('modal-schnell').classList.add('open');
   setTimeout(()=>document.getElementById('s-datum').focus(),120);
 }
@@ -7497,7 +7515,7 @@ function projektArchivAutoSave(){
     const projDaten=buildProjektSaveData();
     arch=arch.filter(a=>a.nr!==nr);
     arch.unshift({nr,datum:new Date().toISOString(),
-      probenAnz:proben.length,chloridAnz:chloridProben.length,asbestAnz:asbestProben.length,sonstigeAnz:sonstigeProben.length,brandgeruchAnz:brandgeruchProben.length,pn98Anz:pn98Proben.length,
+      probenAnz:aktiv(proben).length,chloridAnz:aktiv(chloridProben).length,asbestAnz:aktiv(asbestProben).length,sonstigeAnz:aktiv(sonstigeProben).length,brandgeruchAnz:brandgeruchProben.length,pn98Anz:pn98Proben.length,
       data:projDaten.content});
     if(arch.length>10)arch=arch.slice(0,10);
     const vorher=arch.length;
@@ -8024,7 +8042,7 @@ function pn98ToIsoDate(de){
 /* PN 98 → Laborproben (v4.37.0): je Protokoll eine Probe unter „Sonstige Proben“ (Etikett, Laborauftrag).
    Matrix und Untersuchung werden einmal gewählt – aus dem Protokoll lassen sie sich nicht sicher ableiten.
    Verweis pn98Quelle (= Protokoll-ID) macht erneutes Anlegen zu einem Ersetzen statt Verdoppeln. */
-function pn98LaborVorhandene(){return sonstigeProben.filter(p=>p.pn98Quelle!==undefined&&p.pn98Quelle!==null&&p.pn98Quelle!=='');}
+function pn98LaborVorhandene(alle){return (alle?sonstigeProben:aktiv(sonstigeProben)).filter(p=>p.pn98Quelle!==undefined&&p.pn98Quelle!==null&&p.pn98Quelle!=='');}
 function pn98LaborDialog(){
   if(!pn98Proben.length){flash('Noch keine PN 98-Protokolle angelegt.');return;}
   const da=pn98LaborVorhandene(),m=document.getElementById('pn98-labor-matrix'),pa=document.getElementById('pn98-labor-param');
@@ -8045,8 +8063,8 @@ function pn98LaborAnlegen(){
   const matrix=document.getElementById('pn98-labor-matrix').value,param=document.getElementById('pn98-labor-param').value.trim(),fehler=document.getElementById('pn98-labor-fehler');
   if(!matrix){fehler.textContent='Bitte die Matrix wählen.';return;}
   if(!param){fehler.textContent='Bitte die Untersuchungsparameter eintragen.';return;}
-  const alt=pn98LaborVorhandene();
-  if(alt.length&&!confirm(alt.length+' bereits aus PN 98 angelegte Laborproben werden durch '+pn98Proben.length+' neu angelegte ersetzt (Änderungen daran gehen verloren).'+(alt.some(nrIstFest)?'\n\nProben mit fester Nummer behalten sie. Fällt eine weg, wird sie storniert statt gelöscht.':'')+'\n\nFortfahren?'))return;
+  const alt=pn98LaborVorhandene(true),altAktiv=aktiv(alt);
+  if(altAktiv.length&&!confirm(altAktiv.length+' bereits aus PN 98 angelegte Laborproben werden durch '+pn98Proben.length+' neu angelegte ersetzt (Änderungen daran gehen verloren).'+(alt.some(nrIstFest)?'\n\nProben mit fester Nummer behalten sie. Fällt eine weg, wird sie storniert statt gelöscht.':'')+'\n\nFortfahren?'))return;
   undoSnapshot();
   // Ersetzen an derselben Stelle: bereits etikettierte Proben behalten ihre Nummer (auch hinter später angelegten)
   sonstigeProben=anPlatzErsetzen(sonstigeProben,alt,pn98LaborProben(matrix,param).map(x=>({id:undefined,...x})),p=>String(p.pn98Quelle),()=>sonstigeNextId++);
@@ -8054,7 +8072,7 @@ function pn98LaborAnlegen(){
   const sf=document.getElementById('sonstige-proj-nr');if(sf&&!sf.value.trim()&&pn98Projekt.schaden)sf.value=pn98Projekt.schaden;
   document.getElementById('modal-pn98-labor').classList.remove('open');
   renummerieren();renderSonstigeTable();markUnsaved();
-  flash(pn98Proben.length+' Laborprobe'+(pn98Proben.length===1?'':'n')+' unter „Sonstige Proben“ '+(alt.length?'aktualisiert':'angelegt')+' ✓');
+  flash(pn98Proben.length+' Laborprobe'+(pn98Proben.length===1?'':'n')+' unter „Sonstige Proben“ '+(altAktiv.length?'aktualisiert':'angelegt')+' ✓');
 }
 
 // Aktualisiert den versteckten Date-Picker passend zum aktuellen Textwert
@@ -11162,7 +11180,9 @@ function fbePn98Uebernehmen(){
   renderPn98Cards();renderPn98Export();fbeGeaendert();fbeRender();
   flash(proben.length+' PN 98-Protokoll'+(proben.length===1?'':'e')+' aus '+rec.formularId+(alt.length?' aktualisiert':' übernommen')+' ✓ – Reiter „Probenprotokoll PN 98“');
 }
-function fbeBohrkernVorhandene(rec){return sonstigeProben.filter(p=>p.bkQuelle===rec.formularId);}
+function fbeBohrkernVorhandene(rec){return aktiv(sonstigeProben).filter(p=>p.bkQuelle===rec.formularId);}
+// Zum Ersetzen auch stornierte (Platz und Nummer bleiben, weggefallene können zurückkommen)
+function fbeBohrkernAlle(rec){return sonstigeProben.filter(p=>p.bkQuelle===rec.formularId);}
 function fbeBohrkernPanel(rec){
   const {segmente,fehler}=fbeBohrkernSegmente(rec),da=fbeBohrkernVorhandene(rec).length,K=fbeBkKonv();
   const a=segmente.filter(x=>x.status==='A').length,r=segmente.length-a;
@@ -11179,8 +11199,8 @@ function fbeBohrkernAnlegen(){
   const rec=fbeAktiv();if(!rec||rec.typ!=='bohrkern')return;
   const {segmente,fehler}=fbeBohrkernSegmente(rec);
   if(fehler.length||!segmente.length){fbeRender();return;}
-  const alt=fbeBohrkernVorhandene(rec);
-  if(alt.length&&!confirm(alt.length+' Proben aus '+rec.formularId+' werden durch '+segmente.length+' neu berechnete ersetzt.'+(alt.some(nrIstFest)?'\n\nProben mit fester Nummer behalten sie. Fällt eine weg, wird sie storniert statt gelöscht.':'')+'\n\nFortfahren?'))return;
+  const alt=fbeBohrkernAlle(rec),altAktiv=aktiv(alt);
+  if(altAktiv.length&&!confirm(altAktiv.length+' Proben aus '+rec.formularId+' werden durch '+segmente.length+' neu berechnete ersetzt.'+(alt.some(nrIstFest)?'\n\nProben mit fester Nummer behalten sie. Fällt eine weg, wird sie storniert statt gelöscht.':'')+'\n\nFortfahren?'))return;
   undoSnapshot();
   const d=fbeDatumLesen(rec.kopf.datum),datum=d instanceof Date&&!Number.isNaN(d.getTime())?d.toISOString().slice(0,10):today();
   const unters=String(rec.kopf.untersuchung||'').trim()||FB_BK_STANDARD.untersuchung,K=fbeBkKonv();
@@ -11237,7 +11257,7 @@ function bkSonstigeUnterreiter(name,i){
 /** Bohrkernproben nach Wand gruppieren: aus Wandblättern über die Wandkennung, übrige (Assistent) je Kern. */
 function bkWaende(){
   const waende=new Map();
-  for(const p of sonstigeProben){
+  for(const p of aktiv(sonstigeProben)){
     if(p.matrix!=='Bohrkern')continue;
     const kern=String(p.bkBez||'(ohne Bezeichnung)'),wand=p.bkQuelle&&p.bkId?kern.replace(/-[^-]+$/,''):'';
     const key=wand?'w:'+wand:'x';
@@ -11251,7 +11271,7 @@ function bkRender(){
   const box=document.getElementById('bk-inhalt');if(!box)return;
   if(!document.getElementById('bk-style')){const st=document.createElement('style');st.id='bk-style';st.textContent=BK_CSS;document.head.append(st);}
   const boegen=feldprotokolle.filter(r=>r.typ==='bohrkern'),waende=bkWaende();
-  const alle=sonstigeProben.filter(p=>p.matrix==='Bohrkern'),kerne=new Set(alle.map(p=>p.bkBez));
+  const alle=aktiv(sonstigeProben).filter(p=>p.matrix==='Bohrkern'),kerne=new Set(alle.map(p=>p.bkBez));
   const rueck=alle.filter(p=>p.bkStatus==='R').length;
   const status=boegen.map(r=>({r,...bkStatusVon(r)}));
   const warn=[];

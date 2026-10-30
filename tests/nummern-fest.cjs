@@ -115,6 +115,13 @@ const ok = (msg) => { n++; if (process.env.VERBOSE) console.log('  ✓ ' + msg);
   assert.deepEqual(plain(c.sonstigeProben.map(p => [p.z2, p._nr, !!p.nrFest, !!p.storniert])),
     [['neu A', 1, true, false], ['alt B', 2, true, true], ['neu C', 3, true, false], ['später angelegt', 4, true, false], ['neu D', 5, false, false]]);
   assert.equal(c.sonstigeProben[1].storniert.grund, 'beim Aktualisieren weggefallen');
+  // Kommt die weggefallene Probe zurück, wird das automatische Storno aufgehoben (gleiche Nummer); von Hand storniert bleibt storniert
+  c.probeStornieren(c.sonstigeProben[2], {grund: 'Kern gebrochen'});
+  const altBk = c.sonstigeProben.filter(p => p.bkId);
+  c.sonstigeProben = c.anPlatzErsetzen(c.sonstigeProben, altBk, [{bkId: 'A', z2: 'A'}, {bkId: 'B', z2: 'B zurück'}, {bkId: 'C', z2: 'C'}, {bkId: 'D', z2: 'D'}], p => p.bkId, () => next++);
+  c.renummerieren();
+  assert.deepEqual(plain(c.sonstigeProben.map(p => [p.z2, p._nr, p.storniert ? p.storniert.grund : ''])),
+    [['A', 1, ''], ['B zurück', 2, ''], ['C', 3, 'Kern gebrochen'], ['später angelegt', 4, ''], ['D', 5, '']]);
   // Ohne feste Proben wie 4.43.0: weggefallene entfallen
   const d = welt(1);
   const alt2 = [{id: 1, k: 'x'}, {id: 2, k: 'y'}];
