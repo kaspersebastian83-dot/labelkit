@@ -89,7 +89,7 @@ const JSON_NAME = '99.9001_2026-10-29_Daten.json';
     const c = { console, state: { proj: null, pj: null }, permission: async () => true, maPersonenAus: async () => [], archiv: async () => null,
       parse: n => ({ nr: n.slice(0, 7), ort: 'Synthetisch' }), subdir: async d => lab(d.name), LAB_DIR: 'Laboraufträge',
       proben: [], chloridProben: [], asbestProben: [], sonstigeProben: [], brandgeruchProben: [], pn98Proben: [], feldprotokolle: [], projektStatus: { dirty: false },
-      window: {}, document: { getElementById: el }, projektZuordnungPruefen: () => true, ladePj: async () => {}, updateProjekt: () => {}, kuerzelAuswahl: () => {},
+      window: {}, document: { getElementById: el }, projektZuordnungPruefen: () => true, ladePj: async () => {}, updateProjekt: () => {}, kuerzelAuswahl: () => {}, namenAuswahl: () => {},
       fbeKuerzel: () => 'AA', markSaved: () => {}, zeigen: () => {}, PROJEKT_URL: { setzen: () => {} }, flash: () => {}, alert: m => { throw Error(m); }, confirm: () => true, jsonStandMerken: () => {} };
     c.applyProjektData = (data, nr) => { c.proben = JSON.parse(JSON.stringify(data.proben)); el('proj-nr').value = nr; };
     vm.createContext(c); vm.runInContext(stueck('  async function neuesteDaten(lab){', '  async function ausZentrale(name){') + '\nthis.oeffnen = oeffnen;', c);

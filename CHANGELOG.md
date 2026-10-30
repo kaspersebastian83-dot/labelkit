@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.48.0 – 30. Oktober 2026
+
+- **Probenehmer aus der Mitarbeiterliste:** In den Feldprotokollen (Probenehmer bzw. Messtechniker laut Bogen) und im PN-98-Probenprotokoll schlägt das Feld jetzt die Namen der aktiven Personen aus der Projektzentrale vor (`_Spektron-Mitarbeiter.json`). Freitext bleibt möglich (Fremdpersonen, mehrere Namen). Mit dem genauen Namen aus der Liste ordnet BerichtKit die Person sicher zu, statt zu raten.
+
 ## 4.47.0 – 30. Oktober 2026
 
 - Spektron-Leiste: neuer Schritt „BerichtKit“ (Asbest-Untersuchungsbericht) zwischen PlanKit und BelegKit – Haken, sobald ein Bericht in „Mitteilungen“ liegt. Gemeinsames Modul spektron-ordner.js: neuer Bereich „BerichtKit“ (Angaben zum Bericht in „_Spektron/BerichtKit“).
