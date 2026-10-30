@@ -119,7 +119,10 @@ const name = process.argv[2] || 'chromium';
     });
     assert.ok(files.some(file => file.name.endsWith('_Daten.json')));
     const exportedJson = JSON.parse(files.find(file => file.name.endsWith('_Daten.json')).content);
-    delete exportedJson.gespeichertAm; assert.deepEqual(exportedJson, expectedReset);
+    delete exportedJson.gespeichertAm;
+    // Feste Probennummern (4.49.0): Die Laborübergabe beim Abschluss macht die übergebenen Nummern fest – sonst unverändert.
+    for (const key of ['chloridProben', 'asbestProben', 'sonstigeProben']) for (const p of exportedJson[key]) {assert.equal(p.nrFest.anlass, 'Abschluss'); delete p.nrFest;}
+    assert.deepEqual(exportedJson, expectedReset);
     const sheets = files.filter(file => file.name.endsWith('.xls'));
     assert.equal(sheets.length, 3); assert.ok(!files.some(file => /_PAK_/.test(file.name)));
     for (const [i, type] of ['Chlorid', 'Asbest', 'Sonstige'].entries()) {
@@ -128,20 +131,23 @@ const name = process.argv[2] || 'chromium';
       assert.equal(rows.length, 2); assert.equal(rows[1][0], `Probe ${7 + i}`);
       assert.ok(!file.content.includes('Synthetischer Raum') && !file.content.includes('Zweiter Testraum'));
     }
-    assert.equal((await state()).undo.length, after.undo.length, 'Export verändert Undo-Historie nicht');
-    // Rückgängig und reguläre Eingabe arbeiten weiter, auch im Kartenmodus.
+    // Mit festen Nummern endet die Rückgängig-Historie: ein älterer Stand könnte die Nummern sonst wieder lösen.
+    assert.equal((await state()).undo.length, 0, 'Laborübergabe leert die Rückgängig-Historie');
     await page.evaluate(() => undoLetzteAktion());
-    const restored = await state(); assert.deepEqual(restored.saved.proben, before.saved.proben);
+    assert.deepEqual((await state()).saved.proben, []);
+    // Reguläre Eingabe arbeitet weiter, auch im Kartenmodus: neue Probe bekommt die nächste freie Nummer hinter den festen.
     await page.locator('button[onclick="addProbe()"]').first().click();
-    assert.equal((await state()).saved.proben.length, 3);
+    assert.equal((await state()).saved.proben.length, 1);
+    assert.equal((await state()).saved.proben[0]._nr, 10);
+    await page.evaluate(() => {proben[0].z2 = 'Synthetischer Raum'; renderTable();});
     await page.locator('#btn-karten-ansicht').click(); assert.equal(await reset.isEnabled(), true);
     // Tatsächliche JSON- und Laborübergabe-Downloads aus dem unveränderten Exportweg.
     for (const action of ['exportJSON', 'exportExcel']) {
       const [download] = await Promise.all([page.waitForEvent('download'), page.evaluate(fn => window[fn](), action)]);
       const bytes = fs.readFileSync(await download.path(), 'utf8');
       if (action === 'exportJSON') {
-        const json = JSON.parse(bytes); assert.equal(json.proben.length, 3); assert.equal(json.chloridProben.length, 1); assert.equal(json.projekt.nr, '26.0999');
-        await page.evaluate(data => applyProjektData(data), json); assert.equal((await state()).saved.proben.length, 3);
+        const json = JSON.parse(bytes); assert.equal(json.proben.length, 1); assert.equal(json.chloridProben.length, 1); assert.equal(json.projekt.nr, '26.0999');
+        await page.evaluate(data => applyProjektData(data), json); assert.equal((await state()).saved.proben.length, 1);
       } else {assert.match(download.suggestedFilename(), /\.xls$/); assert.ok(bytes.includes('Synthetischer Raum'));}
     }
     await page.setViewportSize({width: 390, height: 844});

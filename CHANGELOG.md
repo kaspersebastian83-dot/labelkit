@@ -1,5 +1,19 @@
 # Änderungen
 
+## 4.49.0 – 30. Oktober 2026
+
+- **Feste Probennummern:** Eine Probennummer wird fest, sobald die Probe auf Etiketten (Drucken, „Alle Etiketten drucken“), im Etiketten-PDF oder in einer Laborübergabe erscheint (Excel, „Kopieren“, Übergabe drucken, „Alle EOL + Projektdatei speichern“) – je Probe, je nachdem, was zuerst passiert. Feste Nummern ändern sich nie mehr; bisher rückten nach Ergänzen, Löschen oder Verschieben alle späteren Nummern auf, auch nach dem Etikettendruck (FotoKit, PlanKit, ResultKit und BerichtKit hängen an dieser Nummer). Proben ohne feste Nummer werden wie bisher fortlaufend nummeriert; hinter festen Nummern geht es mit der nächsten freien weiter (neue Probe = höchste Nummer + 1). Feste Nummern zeigen ein 🔒.
+- **Storno statt Löschen:** ✕ an einer Probe mit fester Nummer öffnet „Probe stornieren?“ (Grund optional, Kürzel aus „Ihr Kürzel“). Die Probe bleibt mit ihrer Nummer durchgestrichen und gesperrt in der Liste und fehlt auf Etiketten, in Excel-Übergabe, Kopie, gedruckter Übergabe, Auftragsübersicht, Abschluss-Prüfungen, Zählungen und Reiter-Zählern. „Storno aufheben“ holt sie zurück. Proben ohne feste Nummer werden weiter direkt gelöscht.
+- „Neue Proben“ (Chlorid, Asbest, Sonstige), „PAK-Proben zurücksetzen …“ und „Projekt zurücksetzen“: feste Proben werden storniert statt gelöscht (die Rückfrage sagt es); „Vorlage laden“ ersetzt keine PAK-Proben mit fester Nummer. Vorbelegung und Sammeländerungen lassen stornierte Proben aus.
+- **Brücken:** Aktualisieren aus Bohrkern-Bogen, PN-98-Laborproben und Bohrkern bearbeiten – eine neu berechnete Probe übernimmt Platz, Nummer und Status der alten; fällt eine feste Probe weg, wird sie storniert („beim Aktualisieren weggefallen“).
+- Feste Proben lassen sich nicht mehr ziehen, Startnummer und Nummernklick sind gesperrt, sobald es feste Nummern gibt. Duplizieren, „→ Chlorid“ und Vorlagen übernehmen Nummer und Status nie. Beim Festlegen wird die Rückgängig-Historie geleert (ein älterer Stand würde die Nummern sonst wieder lösen).
+- **Ältere Projektdateien** (ohne `nrSchutz`): Beim Öffnen aus dem Projektordner gelten die vorhandenen Proben als fest, wenn in „Laboraufträge“ schon eine `…Laborübergabe….xls` liegt oder der Ordner nicht lesbar ist. Beim JSON-Import und aus dem Archiv ohne geöffneten Projektordner: im Zweifel fest. Die Meldung sagt es; danach ist die Erfassung „nicht gespeichert“.
+
+**Neue Datenfelder für die anderen Apps** (`…_Daten.json`, Listen `proben`, `chloridProben`, `asbestProben`, `sonstigeProben`):
+- `nrFest: {am, anlass}` an jeder Probe mit fester Nummer – `am` ISO-Zeit, `anlass` = `Etiketten` · `Etiketten-PDF` · `Laborübergabe` · `Laborübergabe (Drucken)` · `Kopieren` · `Abschluss` · `Bestand` (ältere Datei) · `Storno aufgehoben`. `_nr` dieser Probe ändert sich nie mehr.
+- `storniert: {am, kuerzel, grund}` – Probe ist storniert, behält `_nr` (die Nummer bleibt vergeben) und hat immer auch `nrFest`. **Stornierte Proben sind keine Proben mehr:** FotoKit, PlanKit, ResultKit und BerichtKit sollten sie wie gelöscht behandeln (nicht anbieten, nicht zählen), die Nummer aber nicht neu vergeben.
+- Oben in der Datei `nrSchutz: 1` – Dateien ab 4.49.0; fehlt es, ist es eine ältere Datei (Nummern evtl. noch nicht fest).
+
 ## 4.48.1 – 30. Oktober 2026
 
 - **Projektnummer mit Adresse:** Steht im Feld „Projektnummer“ zusätzlich die Adresse (ältere Projekte, z. B. „26.0512 Stegerwaldstraße Leverkusen“), wurde die Projektdatei beim Öffnen aus dem Projektordner, beim JSON-Import und aus dem Archiv als „fremdes Projekt“ blockiert, und „Speichern“ in den Projektordner meldete „Nicht gespeichert“. Verglichen wird jetzt nur die Projektnummer; eine andere Nummer blockiert weiter, Freitext ohne Nummer wie bisher. Gleiche Regel in ResultKit 1.12.1 und BerichtKit 1.4.1.

@@ -6,6 +6,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const exportCode = html.slice(html.indexOf('async function alleUebergabenSpeichernMitWord(options){'), html.indexOf('\nrenderTable();\nupdateMainTabBadges();\ninitApp();'));
 const saveGuardCode = html.slice(html.indexOf('function projektSpeichernStarten(){'), html.indexOf('\nfunction formatZeit('));
+// Feste Probennummern (4.49.0): Hilfsfunktionen (Nummerierung, Storno, Migration) liegen in einem Block
+const nrHelfer = html.slice(html.indexOf('function renummerieren(){'), html.indexOf('function editProbeNr('));
 
 async function scenario({picker = 'ok', writeFailure = false, downloadApproval = false} = {}) {
   const events = [], written = [], alerts = [];
@@ -18,7 +20,7 @@ async function scenario({picker = 'ok', writeFailure = false, downloadApproval =
   }};
   const context = {
     proben: [sample], chloridProben: [sample], asbestProben: [sample], sonstigeProben: [sample],
-    brandgeruchProben: [], pn98Proben: [], bgBlind: false,
+    brandgeruchProben: [], pn98Proben: [], bgBlind: false, probenStartNr: 1,
     letzterSpeicherOrdner: null,
     speichernAktiv: false, speicherHinweis: '', speicherKontextRevision: 0,
     window: {}, document: {
@@ -49,6 +51,7 @@ async function scenario({picker = 'ok', writeFailure = false, downloadApproval =
   context.uebergabenFragen = async () => false;
   context.sicherSpeichern = async (dir, name, content) => { const w = await (await dir.getFileHandle(name, {create: true})).createWritable(); await w.write(content); await w.close(); return name; };
   vm.createContext(context);
+  vm.runInContext(nrHelfer, context);
   vm.runInContext(saveGuardCode, context);
   vm.runInContext(exportCode, context);
   await context.alleUebergabenSpeichernMitWord({skipValidation: true});
