@@ -63,6 +63,11 @@ const LISTE = {format: 'spektron-mitarbeiter', version: 1, personen: [
     assert.equal(await page.getAttribute('#fbe-kuerzel', 'list'), 'ma-kuerzel');
     assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#ma-kuerzel option')].map(o => o.value)), ['AB', 'TE']);
     assert.match(await page.locator('#flash').textContent(), /Ihr Kürzel „AB“ aus der Projektzentrale/);
+    // Probenehmer-Felder: Namen der aktiven Personen als Vorschlag (PN 98 und Feldprotokolle)
+    assert.equal(await page.getAttribute('#pn98-probenehmer', 'list'), 'ma-namen');
+    const namen = await page.evaluate(() => [...document.querySelectorAll('#ma-namen option')].map(o => o.value));
+    assert.equal(namen.length, LISTE.personen.filter(p => p.aktiv !== false && p.name).length, 'nur aktive Personen mit Namen');
+    assert.equal(await page.evaluate(() => { const rec = {typ: 'asbestmat', unl: {}}; return /list="ma-namen"/.test(fbeFeldHtml(rec, {k: 'probenehmer', l: 'Probenehmer'}, 'kopf.probenehmer', '')) && !/list=/.test(fbeFeldHtml(rec, {k: 'labor', l: 'Labor'}, 'kopf.labor', '')); }), true, 'nur das Personenfeld bekommt die Namensliste');
 
     // 2) vorhandenes Kürzel wird nie überschrieben
     await seed(LISTE, {'spektron-ich': 'Abc', 'mosaik-kuerzel': 'ZZ'});
