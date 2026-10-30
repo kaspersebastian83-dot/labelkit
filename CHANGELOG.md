@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.47.0 – 30. Oktober 2026
+
+- Spektron-Leiste: neuer Schritt „BerichtKit“ (Asbest-Untersuchungsbericht) zwischen PlanKit und BelegKit – Haken, sobald ein Bericht in „Mitteilungen“ liegt. Gemeinsames Modul spektron-ordner.js: neuer Bereich „BerichtKit“ (Angaben zum Bericht in „_Spektron/BerichtKit“).
+
 ## 4.46.0 – 29. Oktober 2026
 
 - **Projektdatei:** Hat ein anderes LabelKit-Fenster oder ein anderer Rechner die …_Daten.json inzwischen geändert (oder wurde sie in dieser Sitzung nie von dort geladen), fragt LabelKit vor dem Speichern, statt still zu überschreiben. Abbrechen lässt die Datei unverändert, die Erfassung bleibt offen.
