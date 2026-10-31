@@ -85,7 +85,21 @@ const name = process.argv[2] || 'chromium';
     assert.match(await status.textContent(), /Änderungen noch nicht gespeichert/);
     importExpected = true;
     await page.locator('#import-file').setInputFiles({name: savedFile.name, mimeType: 'application/json', buffer: Buffer.from(savedFile.content)});
-    await page.waitForFunction(() => !projektStatus.dirty);
+    // Befund 21 (4.50.0): Geladen heißt nicht gespeichert – Status sagt es, beforeunload warnt.
+    await page.waitForFunction(() => projektStatus.geladen === 'Datei');
+    assert.deepEqual((await snapshot()).data, before.data);
+    assert.match(await status.textContent(), /^Geladen \(Datei\) – noch nicht im Projektordner/);
+    const warnt = () => page.evaluate(() => {const e = new Event('beforeunload', {cancelable: true});window.dispatchEvent(e);return e.defaultPrevented;});
+    assert.equal(await warnt(), true, 'nach dem Laden einer JSON warnt das Schließen');
+    // Auch nach dem Laden aus dem Archiv
+    await page.evaluate(() => {projektArchivAutoSave();markSaved('x_Daten.json', 'Laboraufträge');});
+    assert.equal(await warnt(), false, 'gespeichert: keine Warnung');
+    await page.evaluate(() => {window.confirm = () => true;projektArchivOeffnen(0);});
+    await page.waitForFunction(() => projektStatus.geladen === 'Archiv');
+    assert.match(await status.textContent(), /^Geladen \(Archiv\) – noch nicht im Projektordner/);
+    assert.equal(await warnt(), true, 'nach dem Laden aus dem Archiv warnt das Schließen');
+    await page.evaluate(() => markUnsaved());   // was jede Eingabe auslöst
+    assert.match(await status.textContent(), /^Geladen \(Archiv\) – noch nicht im Projektordner/, 'bleibt bis zum echten Speichern');
     assert.deepEqual((await snapshot()).data, before.data);
     // Abbruch und Fehler dürfen nie als erfolgreiche Speicherung erscheinen.
     for (const mode of ['cancel', 'denied', 'handle-error', 'create-error', 'write-error', 'close-error']) {

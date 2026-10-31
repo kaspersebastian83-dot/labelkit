@@ -2,7 +2,7 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.49.0** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.50.0** (Änderungen in `CHANGELOG.md`)
 
 ## Neu in 4.37.0 · 24.10.2026
 
@@ -51,7 +51,7 @@ Alternativ läuft die App auch als einzelne Datei: Repository herunterladen und 
 In der **Projektzentrale** ein Projekt wählen und **„Proben erfassen → LabelKit“** klicken – oder in LabelKit oben **„📁 Projekt“** und den Projektordner (z. B. `26.0123 Köln`) wählen. Danach:
 
 - Jeder Ordnerdialog entfällt: Speichern (auch Strg+S), Laborübergaben und Protokolle landen direkt im Unterordner **„Laboraufträge“** des Projekts.
-- Die neueste `…_Daten.json` aus „Laboraufträge“ wird beim Öffnen automatisch geladen.
+- Die Projektdatei `<Nr>_Daten.json` (ab 4.50.0 ohne Datum, siehe unten) wird beim Öffnen automatisch geladen – liegt keine feste Datei da, wie bisher die neueste `…_Daten.json`.
 - Projektnummer (z. B. `26.0123`) und Schadenort kommen aus dem Ordnernamen; die Kennung steht oben in der Kopfzeile.
 - Der Archivordner wird aus dem gemeinsamen Browser-Speicher der Projektzentrale übernommen (IndexedDB `mosaik-suite`, Schlüssel `archiv`). Nach einem Browserneustart genügt „Zugriff erlauben und öffnen“.
 - „← Projektzentrale“ führt zurück zur Projektübersicht.
@@ -71,6 +71,13 @@ Leere Vorbelegungsfelder lassen bestehende Angaben unverändert. Eine ausgefüll
 In der **Kartenansicht** öffnet **Bearbeiten** das vorhandene Seitenpanel für genau diese Probe. Die Schaltfläche ist per Tab erreichbar und mit Enter oder Leertaste bedienbar. Doppelklick auf Karte bzw. Tabellenzeile bleibt möglich. Der Panelkopf zeigt die bestehende fortlaufende Probennummer sowie Raum/Ort und Matrix, sofern vorhanden. Die Nummer entspricht auch nach Hinzufügen, Entfernen, Startnummeränderung und Ansichtswechsel der Karte und Tabelle.
 
 Das Panel übernimmt Feldeingaben weiterhin direkt; **Speichern & Schließen** bestätigt sie und schließt das Panel. Die Projektdatei wird anschließend über **Zwischenstand speichern** gesichert. Das bloße Öffnen legt keine Probe an und verändert weder Daten noch Speicherstatus oder Rückgängig-Historie. Das bestehende Schließverhalten bleibt erhalten: Beim Schließen werden Felder übernommen und der Stand als ungespeichert markiert, auch ohne bewusste Änderung. Einzelne Feldänderungen in Eingabe und Panel erzeugen wie bisher keinen eigenen Rückgängig-Schritt; bestehende Rückgängig-Aktionen wie Hinzufügen, Entfernen oder Startnummeränderung bleiben erhalten.
+
+## Projektdatei und Sicherungen (ab 4.50.0)
+
+- Eine feste Datei `<Nr>_Daten.json` am Ort aus `spektron-ordner.js` (`_Spektron/LabelKit` oder `Laboraufträge`). Beim Öffnen merkt sich LabelKit ihren Inhalt und den der noch liegenden datierten Dateien; beim Speichern wird dagegen geprüft, auch an einem späteren Tag – geändert → Rückfrage.
+- Sicherungen in `_LabelKit_Sicherungen` daneben: `<Nr>_<JJJJ-MM-TT>_Sicherung.json` (letzter Stand je Arbeitstag) und `<Nr>_<JJJJ-MM-TT_HHMM>_Sicherung.json` (ersetzter fremder Stand). Neueste 30 bleiben. Endet nicht auf `_Daten.json` – keine andere App sieht sie.
+- Übergang: Datierte `<Nr>_<TT.MM.JJJJ>_Daten.json` desselben Projekts werden beim ersten Speichern geprüft in die Sicherungen verschoben (kopieren, zurücklesen, Original nur löschen, wenn unverändert).
+- Nach „Archiv“ oder „JSON laden“: „Geladen – noch nicht im Projektordner“, Warnung beim Schließen bis zum Speichern.
 
 ## Feste Probennummern und Storno (ab 4.49.0)
 
@@ -117,7 +124,7 @@ Keine echten Projektdaten, Laboraufträge oder Exporte in das öffentliche Repos
 
 ## Entwicklung und Prüfungen
 
-Die App steht in `index.html` (`APP_VERSION`, derzeit 4.49.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
+Die App steht in `index.html` (`APP_VERSION`, derzeit 4.50.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
 
 Mit Node.js aus dem Repository-Ordner ausführen:
 

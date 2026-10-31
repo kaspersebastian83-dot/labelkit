@@ -37,7 +37,7 @@ async function scenario({picker = 'ok', writeFailure = false, downloadApproval =
     markSaved: (...args) => events.push(['saved', ...args]),
     markUnsaved() {context.projektStatus.dirty = true;},
     flash: message => events.push(message), alert: message => alerts.push(message),
-    projektArchivAutoSave: () => events.push('archive'), projektStatus: {}, updateProjektStatus() {},
+    projektArchivAutoSave: () => events.push('archive'), projektStatus: {}, updateProjektStatus() {}, meldungAnhang: () => '',
     confirm: () => downloadApproval, setTimeout: fn => fn(),
     Blob, URL: {createObjectURL: () => 'blob:test'}
   };
