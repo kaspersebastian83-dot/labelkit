@@ -2,7 +2,7 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.50.0** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.51.0** (Änderungen in `CHANGELOG.md`)
 
 ## Neu in 4.37.0 · 24.10.2026
 
@@ -82,7 +82,7 @@ Das Panel übernimmt Feldeingaben weiterhin direkt; **Speichern & Schließen** b
 
 ## Feste Probennummern und Storno (ab 4.49.0)
 
-- Eine Probennummer wird fest (🔒), sobald die Probe auf Etiketten, im Etiketten-PDF oder in einer Laborübergabe erscheint (Excel, Kopieren, Übergabe drucken, Abschluss). Feste Nummern ändern sich nie mehr; neue Proben bekommen die nächste freie Nummer.
+- Eine Probennummer wird fest (🔒), sobald die Probe auf Etiketten, im Etiketten-PDF, in einer Laborübergabe (Excel, Kopieren, Übergabe drucken, Abschluss), in der Auftragsübersicht oder im Schnittplan erscheint (Auftragsübersicht und Schnittplan ab 4.51.0). Feste Nummern ändern sich nie mehr; neue Proben bekommen die nächste freie Nummer.
 - ✕ an einer festen Probe storniert sie: Nummer bleibt vergeben, Probe bleibt durchgestrichen sichtbar, fehlt aber auf Etiketten, in Übergaben und Zählungen. „Storno aufheben“ holt sie zurück.
 - In der Projektdatei: `nrFest: {am, anlass}` und `storniert: {am, kuerzel, grund}` je Probe, oben `nrSchutz: 1`. Ältere Dateien gelten beim Öffnen als fest, wenn in „Laboraufträge“ schon eine Laborübergabe liegt (im Zweifel fest).
 
@@ -125,7 +125,7 @@ Keine echten Projektdaten, Laboraufträge oder Exporte in das öffentliche Repos
 
 ## Entwicklung und Prüfungen
 
-Die App steht in `index.html` (`APP_VERSION`, derzeit 4.50.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
+Die App steht in `index.html` (`APP_VERSION`, derzeit 4.51.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
 
 Mit Node.js aus dem Repository-Ordner ausführen:
 

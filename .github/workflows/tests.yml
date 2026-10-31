@@ -90,6 +90,8 @@ jobs:
 
       - name: Fixed sample numbers – freeze on print/handover, storno, migration
         run: node tests/nummern-fest-browser.cjs ${{ matrix.browser }}
+      - name: Fixed sample numbers from order overview and cutting plan in the real browser
+        run: node tests/nummern-fest-druck-browser.cjs ${{ matrix.browser }}
 
       - name: PAK defaults with separate add, fill and confirmed update actions
         run: node tests/pak-vorbelegung-browser.cjs ${{ matrix.browser }}

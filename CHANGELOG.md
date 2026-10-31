@@ -1,5 +1,11 @@
 # Änderungen
 
+## 4.51.0 – 31. Oktober 2026
+
+- **Auftragsübersicht und Schnittplan machen Nummern fest** (Entscheidung zum Workflow-Review, Befund 1): Beim Erzeugen der Auftragsübersicht (PDF/HTML) wird die Nummer aller darin stehenden Proben fest (🔒), beim Schnittplan („→ P{Nr}“) die der Proben, die im Schnittplan vorkommen. Die Nummern werden vor dem Zeichnen festgelegt, gedruckt wird also die endgültige Nummer. Anlass in der Projektdatei (`nrFest.anlass`): „Auftragsübersicht“ bzw. „Schnittplan“. Sonst unverändert: neue Proben bekommen max + 1, ✕ an einer festen Probe storniert, stornierte Proben stehen weder in der Übersicht noch im Schnittplan.
+- Die Hinweise zu festen Nummern nennen jetzt auch Auftragsübersicht und Schnittplan als Grund.
+- Projektdatei: unverändert (`nrSchutz: 1`), keine Migration nötig.
+
 ## 4.50.0 – 31. Oktober 2026
 
 - **Eine feste Projektdatei:** Im Projektordner heißt die Projektdatei jetzt immer `<Nr>_Daten.json` (z. B. `26.0560_Daten.json`; nur die Projektnummer, auch wenn im Feld die Adresse mitsteht – ohne Nummer der ganze Text wie bisher), am selben Ort wie bisher (`_Spektron/LabelKit` oder `Laboraufträge`). Bisher hieß sie `<Nr>_<Datum>_Daten.json`: Die Konfliktprüfung verglich nur mit der Datei gleichen Namens, also nur innerhalb eines Tages – speicherte Rechner A am 30. aus einem älteren Stand, entstand eine neue Datei und die Arbeit von Rechner B vom 29. blieb still liegen (Workflow-Review Befund 7).
