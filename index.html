@@ -2126,7 +2126,7 @@ body:not(.lg) .btn-secondary:hover{border-color:var(--accent);color:var(--accent
         <div style="font-family:var(--mono);font-size:11px;color:#2f6fbf;margin-bottom:4px">v4.51.0 · 31.10.2026 · Probennummern</div>
         <div style="font-weight:600;font-size:13px;margin-bottom:6px">Auftragsübersicht und Schnittplan machen Nummern fest 🔒</div>
         <ul style="font-size:12px;color:var(--text-muted);line-height:1.8;padding-left:16px">
-          <li>Wenn du die Auftragsübersicht erzeugst, wird die Nummer aller Proben darin fest. Beim Schnittplan („→ P…“) werden die Nummern der Proben fest, die im Schnittplan stehen. Die Nummern auf dem Papier bleiben so auch dann gültig, wenn du danach Proben ergänzt oder löschst.</li>
+          <li>Wenn du die Auftragsübersicht erzeugst, wird die Nummer aller Proben darin fest. Beim Schnittplan („→ P…“) werden die Nummern der Proben fest, die im Schnittplan stehen. Die Nummern auf dem Papier bleiben so auch dann gültig, wenn du danach Proben ergänzt oder löschst. Brichst du ab (Abbrechen, Ordnerauswahl geschlossen, Fenster blockiert), bleibt alles wie vorher.</li>
           <li>Wie bei Etiketten und Laborübergabe gilt: Neue Proben bekommen die nächste freie Nummer, ein ✕ an einer festen Probe storniert sie.</li>
         </ul>
       </div>
@@ -5534,8 +5534,11 @@ function schnittplaeneDrucken(nurQuelle){
     if(!confirm(msg))return;
   }
 
-  // Der Schnittplan nennt „→ P{Nr}“: Die Nummern der Segment-Proben sind ab jetzt fest (vor dem Zeichnen, damit die gedruckten Nummern die endgültigen sind)
-  const festNeu=nummernFestlegen([[...verwertbar.values()].flatMap(d=>d.segs)],'Schnittplan');
+  // Der Schnittplan nennt „→ P{Nr}“: Gezeichnet wird mit den aktuellen Nummern (renummerieren() vorab, dieselben, die beim Festlegen
+  // bleiben). Fest werden sie erst, wenn der Schnittplan wirklich gespeichert, heruntergeladen oder geöffnet wird – Abbrechen,
+  // ein abgebrochener Ordnerdialog oder ein blockiertes Fenster ändern nichts.
+  renummerieren();
+  const festlegen=()=>nummernFestlegen([[...verwertbar.values()].flatMap(d=>d.segs)],'Schnittplan');
   const seiten=[];
   for(const [bez, daten] of verwertbar.entries()){
     seiten.push(schnittplanSvg(bez, daten.segs, projnr, daten.gesamt, daten.rueck));
@@ -5544,10 +5547,11 @@ function schnittplaeneDrucken(nurQuelle){
   const dateiname=safeFilename(projnr||'Bohrkern')+'_Schnittpläne_'+heute+'.html';
 
   const fullHtml=schnittplanHtml(seiten, projnr, dateiname);
-  dokSchnittplanAktionFragen(fullHtml, dateiname, seiten.length, festNeu);
+  dokSchnittplanAktionFragen(fullHtml, dateiname, seiten.length, festlegen);
 }
 
-async function dokSchnittplanAktionFragen(fullHtml, dateiname, anzahl, festNeu){
+async function dokSchnittplanAktionFragen(fullHtml, dateiname, anzahl, festlegen){
+  const fest=()=>typeof festlegen==='function'?festlegen():0;
   // Modal-freie Auswahl: klein und inline
   const aktionModal=document.getElementById('modal-schnittplan-aktion');
   if(aktionModal){aktionModal.remove();}
@@ -5577,7 +5581,7 @@ async function dokSchnittplanAktionFragen(fullHtml, dateiname, anzahl, festNeu){
     const win=window.open('','_blank','width=900,height=950');if(!win){alert('Popup wurde blockiert \u2013 bitte Popups f\u00fcr diese Seite erlauben.');return}
     win.document.write(fullHtml);
     win.document.close();
-    flash(`${anzahl} Schnittplan${anzahl===1?'':'pläne'} geöffnet ✓`+festHinweisText(festNeu));
+    flash(`${anzahl} Schnittplan${anzahl===1?'':'pläne'} geöffnet ✓`+festHinweisText(fest()));
   };
 
   document.getElementById('bk-save-ordner').onclick=async()=>{
@@ -5586,7 +5590,7 @@ async function dokSchnittplanAktionFragen(fullHtml, dateiname, anzahl, festNeu){
         const dir=await window.showDirectoryPicker({mode:'readwrite'});
         const als=await sicherSpeichern(dir,dateiname,fullHtml,{ersetzen:await uebergabenFragen([{dir,name:dateiname}])});
         m.remove();
-        flash(`${anzahl} Schnittplan${anzahl===1?'':'pläne'} gespeichert in „${dir.name}"${als!==dateiname?` als „${als}“`:''} ✓`+festHinweisText(festNeu));
+        flash(`${anzahl} Schnittplan${anzahl===1?'':'pläne'} gespeichert in „${dir.name}"${als!==dateiname?` als „${als}“`:''} ✓`+festHinweisText(fest()));
       } catch(e){
         if(e.name!=='AbortError') flash('Speichern fehlgeschlagen – bitte Ordner erneut wählen.');
       }
@@ -5597,7 +5601,7 @@ async function dokSchnittplanAktionFragen(fullHtml, dateiname, anzahl, festNeu){
       a.download=dateiname;
       a.click();
       m.remove();
-      flash(`${anzahl} Schnittplan${anzahl===1?'':'pläne'} heruntergeladen ✓`+festHinweisText(festNeu));
+      flash(`${anzahl} Schnittplan${anzahl===1?'':'pläne'} heruntergeladen ✓`+festHinweisText(fest()));
     }
   };
 }
@@ -6114,8 +6118,11 @@ function renderAuftragsschein(){
 
 async function exportAuftragsscheinPDF(){
   if(!await PROJEKTORDNER.vorExport())return;
-  // Die Übersicht nennt die Probennummern: ab jetzt fest (vor dem Zeichnen, damit die gedruckten Nummern die endgültigen sind)
-  const festNeu=nummernFestlegen([proben,chloridProben,asbestProben,sonstigeProben],'Auftragsübersicht');
+  // Die Übersicht nennt die Probennummern: Gezeichnet wird mit den aktuellen Nummern (renummerieren() vorab, dieselben, die beim
+  // Festlegen bleiben). Fest werden sie erst, wenn die Übersicht wirklich gespeichert oder geöffnet wird – Abbrechen ändert nichts.
+  renummerieren();
+  const festlegen=()=>nummernFestlegen([proben,chloridProben,asbestProben,sonstigeProben],'Auftragsübersicht');
+  const fensterAuf=()=>{if(!window.open(URL.createObjectURL(new Blob([fullHtml],{type:'text/html;charset=utf-8'})),'_blank')){alert('Popup wurde blockiert \u2013 bitte Popups f\u00fcr diese Seite erlauben.');return false;}return true;};
   renderAuftragsschein();
   const content=document.getElementById('auftragsschein-output').innerHTML;
   if(!content||content.includes('empty-state')){flash('Keine Proben vorhanden');return;}
@@ -6137,17 +6144,15 @@ async function exportAuftragsscheinPDF(){
     try{
       const dir=await window.showDirectoryPicker({mode:'readwrite'});
       const als=await sicherSpeichern(dir,filename,fullHtml,{ersetzen:await uebergabenFragen([{dir,name:filename}])});
-      flash('Auftragsübersicht gespeichert in „'+dir.name+'"'+(als!==filename?' als „'+als+'“':'')+' ✓'+festHinweisText(festNeu));
+      flash('Auftragsübersicht gespeichert in „'+dir.name+'"'+(als!==filename?' als „'+als+'“':'')+' ✓'+festHinweisText(festlegen()));
     } catch(err){
       if(err.name!=='AbortError'){
         // Fallback: Blob URL öffnen
-        window.open(URL.createObjectURL(new Blob([fullHtml],{type:'text/html;charset=utf-8'})),'_blank');
-        flash('Auftragsübersicht PDF-Fenster geöffnet ✓'+festHinweisText(festNeu));
+        if(fensterAuf())flash('Auftragsübersicht PDF-Fenster geöffnet ✓'+festHinweisText(festlegen()));
       }
     }
   } else {
-    window.open(URL.createObjectURL(new Blob([fullHtml],{type:'text/html;charset=utf-8'})),'_blank');
-    flash('Auftragsübersicht PDF-Fenster geöffnet ✓'+festHinweisText(festNeu));
+    if(fensterAuf())flash('Auftragsübersicht PDF-Fenster geöffnet ✓'+festHinweisText(festlegen()));
   }
 }
 

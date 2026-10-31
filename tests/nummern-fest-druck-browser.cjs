@@ -54,6 +54,31 @@ const name = process.argv[2] || 'chromium';
     assert.deepEqual((await status()).so.map(x => x[1]), [null, null, null, null], 'Abbruch macht nichts fest');
     await page.evaluate(() => { sonstigeProben.pop(); renummerieren(); renderSonstigeTable(); });
 
+    // Auswahlfenster „Abbrechen“, abgebrochener Ordnerdialog, blockiertes Druckfenster → nichts wird fest (kein Rückgängig-Verlust, nicht ungespeichert)
+    const abort = () => { window.showDirectoryPicker = () => Promise.reject(Object.assign(new Error('abgebrochen'), {name: 'AbortError'})); };
+    await page.evaluate(() => { projektStatus.dirty = false; undoStack = [{probe: 'vorher'}]; });
+    await page.evaluate(() => schnittplaeneDrucken());
+    await page.locator('#modal-schnittplan-aktion .modal-actions button', {hasText: 'Abbrechen'}).click();
+    await page.evaluate(abort);
+    await page.evaluate(() => schnittplaeneDrucken());
+    await page.locator('#bk-save-ordner').click();
+    await page.waitForTimeout(200);
+    await page.evaluate(() => { document.getElementById('modal-schnittplan-aktion')?.remove(); window.offen = window.open; window.open = () => null; });
+    await page.evaluate(() => schnittplaeneDrucken());
+    await page.locator('#bk-open-print').click();
+    await page.evaluate(() => { window.open = window.offen; });
+    assert.deepEqual((await status()).so.map(x => x[1]), [null, null, null], 'Abbrechen/Ordnerdialog/Popup blockiert: nichts fest');
+    assert.equal(await page.evaluate(() => window.gedruckt.length), 0, 'nichts gedruckt');
+    assert.deepEqual(await page.evaluate(() => [projektStatus.dirty, undoStack.length]), [false, 1], 'Rückgängig bleibt, nichts ungespeichert');
+    // dasselbe für die Auftragsübersicht
+    await page.evaluate(abort);
+    await page.evaluate(() => exportAuftragsscheinPDF());
+    await page.evaluate(() => { window.showDirectoryPicker = undefined; window.open = () => null; return exportAuftragsscheinPDF(); });
+    await page.evaluate(() => { window.open = window.offen; });
+    const vorher = await status();
+    assert.deepEqual([...vorher.pak, ...vorher.cl, ...vorher.so].map(x => x[1]).filter(Boolean), [], 'Übersicht abgebrochen/blockiert: nichts fest');
+    assert.deepEqual(await page.evaluate(() => [projektStatus.dirty, undoStack.length]), [false, 1]);
+
     // Schnittplan: nur die Segment-Proben werden fest; gedruckt wird die feste Nummer
     await page.evaluate(() => schnittplaeneDrucken());
     await page.locator('#bk-open-print').click();
@@ -97,6 +122,6 @@ const name = process.argv[2] || 'chromium';
     assert.equal(await page.evaluate(n => sonstigeProben[1]._nr === n && !!sonstigeProben[1].storniert, nrStorno), true, 'Storno bleibt, Nummer bleibt');
 
     assert.deepEqual(errors, []);
-    console.log(`Feste Probennummern durch Auftragsübersicht und Schnittplan (${name}): Abbruch, Schnittplan, Ergänzen danach, Übersicht, Wiederholung und Storno bestanden.`);
+    console.log(`Feste Probennummern durch Auftragsübersicht und Schnittplan (${name}): Abbruch, Abbrechen/Ordnerdialog/Popup blockiert, Schnittplan, Ergänzen danach, Übersicht, Wiederholung und Storno bestanden.`);
   } finally { if (browser) await browser.close(); server.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });
