@@ -41,6 +41,7 @@ jobs:
       - run: node tests/feldprotokolle.cjs
       - run: node tests/kuerzel.cjs
       - run: node tests/pak-reset.cjs
+      - run: node tests/nummern-fest.cjs
       - run: node tests/pak-vorbelegung.cjs
       - run: node tests/projektzuordnung.cjs
       - run: node tests/project-data.cjs
@@ -85,6 +86,9 @@ jobs:
 
       - name: PAK reset with cancellation, entry and export regression checks
         run: node tests/pak-reset-browser.cjs ${{ matrix.browser }}
+
+      - name: Fixed sample numbers – freeze on print/handover, storno, migration
+        run: node tests/nummern-fest-browser.cjs ${{ matrix.browser }}
 
       - name: PAK defaults with separate add, fill and confirmed update actions
         run: node tests/pak-vorbelegung-browser.cjs ${{ matrix.browser }}

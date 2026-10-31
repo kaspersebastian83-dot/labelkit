@@ -6,6 +6,8 @@ const assert = require('node:assert/strict');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const code = html.slice(html.indexOf('function pakVorbelegungLesen(){'), html.indexOf('function applyVorbelegung(){'));
 const dates = html.slice(html.indexOf('function fmtDatum('), html.indexOf('function normDatum('));
+// Feste Probennummern (4.49.0): Hilfsfunktionen (Nummerierung, Storno, Migration) liegen in einem Block
+const nrHelfer = html.slice(html.indexOf('function renummerieren(){'), html.indexOf('function editProbeNr('));
 function scenario() {
   const elements = new Map();
   const element = id => {
@@ -18,7 +20,7 @@ function scenario() {
     document: {getElementById: element}, aktuellerProjektName: () => '26.0999', probeNr: p => p._nr,
     undoSnapshot() {events.push('undo');}, renderTable() {events.push('render');}, markUnsaved() {events.push('dirty');}, flash() {}
   };
-  vm.createContext(ctx); vm.runInContext(dates + code, ctx);
+  vm.createContext(ctx); vm.runInContext(dates + nrHelfer + code, ctx);
   const data = () => JSON.parse(JSON.stringify({proben: ctx.proben, nextId: ctx.nextId}));
   return {ctx, element, events, data};
 }

@@ -2,7 +2,7 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.43.0** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.49.0** (Änderungen in `CHANGELOG.md`)
 
 ## Neu in 4.37.0 · 24.10.2026
 
@@ -72,6 +72,12 @@ In der **Kartenansicht** öffnet **Bearbeiten** das vorhandene Seitenpanel für 
 
 Das Panel übernimmt Feldeingaben weiterhin direkt; **Speichern & Schließen** bestätigt sie und schließt das Panel. Die Projektdatei wird anschließend über **Zwischenstand speichern** gesichert. Das bloße Öffnen legt keine Probe an und verändert weder Daten noch Speicherstatus oder Rückgängig-Historie. Das bestehende Schließverhalten bleibt erhalten: Beim Schließen werden Felder übernommen und der Stand als ungespeichert markiert, auch ohne bewusste Änderung. Einzelne Feldänderungen in Eingabe und Panel erzeugen wie bisher keinen eigenen Rückgängig-Schritt; bestehende Rückgängig-Aktionen wie Hinzufügen, Entfernen oder Startnummeränderung bleiben erhalten.
 
+## Feste Probennummern und Storno (ab 4.49.0)
+
+- Eine Probennummer wird fest (🔒), sobald die Probe auf Etiketten, im Etiketten-PDF oder in einer Laborübergabe erscheint (Excel, Kopieren, Übergabe drucken, Abschluss). Feste Nummern ändern sich nie mehr; neue Proben bekommen die nächste freie Nummer.
+- ✕ an einer festen Probe storniert sie: Nummer bleibt vergeben, Probe bleibt durchgestrichen sichtbar, fehlt aber auf Etiketten, in Übergaben und Zählungen. „Storno aufheben“ holt sie zurück.
+- In der Projektdatei: `nrFest: {am, anlass}` und `storniert: {am, kuerzel, grund}` je Probe, oben `nrSchutz: 1`. Ältere Dateien gelten beim Öffnen als fest, wenn in „Laboraufträge“ schon eine Laborübergabe liegt (im Zweifel fest).
+
 ## Zwischenstand speichern (ab 4.30.8)
 
 Oben steht in jedem Reiter **Zwischenstand speichern**. Die Schaltfläche und **Strg/⌘+S** verwenden denselben Speicherweg und speichern ausschließlich die JSON-Projektdatei – auch wenn Pflichtangaben fehlen. Es entstehen keine Laboraufträge, Druckdokumente oder Textbausteine.
@@ -111,7 +117,7 @@ Keine echten Projektdaten, Laboraufträge oder Exporte in das öffentliche Repos
 
 ## Entwicklung und Prüfungen
 
-Die App steht in `index.html` (`APP_VERSION`, derzeit 4.43.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
+Die App steht in `index.html` (`APP_VERSION`, derzeit 4.49.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
 
 Mit Node.js aus dem Repository-Ordner ausführen:
 

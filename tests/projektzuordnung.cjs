@@ -8,6 +8,7 @@ function between(a,b){const i=html.indexOf(a),j=html.indexOf(b,i+a.length);asser
 const code=between('function importProjektJSON(e){','function clearAll(){')+
   between('function projektUiStateAnwenden(data){','// ── ZENTRALE PROJEKTDATEN')+
   between('function projektArchivOeffnen(idx){','function projektArchivLoeschen(nr){')+
+  between('function renummerieren(){','function editProbeNr(')+ // feste Probennummern: Migration älterer Dateien
   between('let oeffnenLauf=0;','async function ausZentrale(name){');
 let checks=0;
 function fixture(data,approval=false){
@@ -20,7 +21,7 @@ function fixture(data,approval=false){
     proben:[{id:9,z2:'BISHERIGE PROBE'}],chloridProben:[],asbestProben:[],sonstigeProben:[],brandgeruchProben:[],pn98Proben:[],feldprotokolle:[],pn98Projekt:{},projektStatus:{dirty:false},
     document:{getElementById:k=>elements.get(k)||null},confirm:m=>{prompts.push(m);return m.includes('keine Projektnummer')?approval:true;},alert:m=>alerts.push(m),
     permission:async()=>true,parse:()=>({nr:'26.0101',ort:'Muster'}),archiv:async()=>null,maPersonenAus:async()=>null,kuerzelAuswahl:()=>{},namenAuswahl:()=>{},kuerzelVorschlag:()=>'',fbeKuerzel:()=>'XY',fbeKuerzelSetzen:()=>{},subdir:async()=>({name:'Laboraufträge'}),neuesteDaten:async()=>file,
-    jsonStandMerken:()=>{},undoSnapshot:()=>events.push('undo'),markSaved:()=>events.push('saved'),flash:()=>{},zeigen:()=>{},ladePj:()=>{},
+    jsonStandMerken:()=>{},undoSnapshot:()=>events.push('undo'),markSaved:()=>events.push('saved'),markUnsaved:()=>events.push('unsaved'),flash:()=>{},zeigen:()=>{},ladePj:()=>{},
     localStorage:{getItem:()=>JSON.stringify([{nr:'26.0101',data:JSON.stringify(data)}])},buildProjektSaveData:()=>({filename:'Muster_Daten.json'}),
     FileReader:class{readAsText(){this.onload({target:{result:JSON.stringify(data)}});}}};
   for(const n of ['setPn98ProjektFelderUi','updateProjekt','renummerieren','renderTable','renderChloridTable','renderAsbestTable','renderSonstigeTable','renderBrandgeruchTable','renderBrandgeruchExport','renderPn98Cards','renderPn98Export','fbeRender'])c[n]=()=>{};

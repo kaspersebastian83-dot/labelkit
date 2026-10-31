@@ -92,7 +92,8 @@ const JSON_NAME = '99.9001_2026-10-29_Daten.json';
       window: {}, document: { getElementById: el }, projektZuordnungPruefen: () => true, ladePj: async () => {}, updateProjekt: () => {}, kuerzelAuswahl: () => {}, namenAuswahl: () => {},
       fbeKuerzel: () => 'AA', markSaved: () => {}, zeigen: () => {}, PROJEKT_URL: { setzen: () => {} }, flash: () => {}, alert: m => { throw Error(m); }, confirm: () => true, jsonStandMerken: () => {} };
     c.applyProjektData = (data, nr) => { c.proben = JSON.parse(JSON.stringify(data.proben)); el('proj-nr').value = nr; };
-    vm.createContext(c); vm.runInContext(stueck('  async function neuesteDaten(lab){', '  async function ausZentrale(name){') + '\nthis.oeffnen = oeffnen;', c);
+    vm.createContext(c); vm.runInContext(stueck('function renummerieren(){', 'function editProbeNr('), c); // Migrationsprüfung (4.49.0)
+    vm.runInContext(stueck('  async function neuesteDaten(lab){', '  async function ausZentrale(name){') + '\nthis.oeffnen = oeffnen;', c);
     c.neuesteDaten = async l => datei(l.projekt.slice(0, 7), 'Synthetisch ' + l.projekt.slice(8), l.projekt.startsWith('99.9001'));
     const a = c.oeffnen({ name: '99.9001 A' }); await erreicht;
     await c.oeffnen({ name: '99.9002 B' }); c.proben[0].z2 = 'B – noch nicht gespeichert'; c.projektStatus.dirty = true;
