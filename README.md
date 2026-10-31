@@ -75,8 +75,9 @@ Das Panel übernimmt Feldeingaben weiterhin direkt; **Speichern & Schließen** b
 ## Projektdatei und Sicherungen (ab 4.50.0)
 
 - Eine feste Datei `<Nr>_Daten.json` am Ort aus `spektron-ordner.js` (`_Spektron/LabelKit` oder `Laboraufträge`). Beim Öffnen merkt sich LabelKit ihren Inhalt und den der noch liegenden datierten Dateien; beim Speichern wird dagegen geprüft, auch an einem späteren Tag – geändert → Rückfrage.
-- Sicherungen in `_LabelKit_Sicherungen` daneben: `<Nr>_<JJJJ-MM-TT>_Sicherung.json` (letzter Stand je Arbeitstag) und `<Nr>_<JJJJ-MM-TT_HHMM>_Sicherung.json` (ersetzter fremder Stand). Neueste 30 bleiben. Endet nicht auf `_Daten.json` – keine andere App sieht sie.
-- Übergang: Datierte `<Nr>_<TT.MM.JJJJ>_Daten.json` desselben Projekts werden beim ersten Speichern geprüft in die Sicherungen verschoben (kopieren, zurücklesen, Original nur löschen, wenn unverändert).
+- Öffnen lädt die feste Datei; eine andere `…_Daten.json` nur, wenn sie laut `gespeichertAm` später gespeichert wurde (dann Hinweis). Das Änderungsdatum zählt neben der festen Datei nicht (Kopieren, Umzug und Sync setzen es neu). Ohne feste Datei wie bisher die neueste nach Änderungsdatum.
+- Sicherungen in `_LabelKit_Sicherungen` daneben: `<Nr>_<JJJJ-MM-TT>_Sicherung.json` (letzter Stand je Arbeitstag) und `<Nr>_<JJJJ-MM-TT_HHMM>_Sicherung.json` (ersetzter fremder Stand, auch nach „Archiv“/„JSON laden“). Von beiden Arten bleiben getrennt je die neuesten 30 (ohne Projektnummer wird nichts aufgeräumt). Endet nicht auf `_Daten.json` – keine andere App sieht sie.
+- Übergang: Datierte `<Nr>_<TT.MM.JJJJ>_Daten.json` desselben Projekts werden beim ersten Speichern geprüft als `<Nr>_<JJJJ-MM-TT>_Altdatei.json` in die Sicherungen verschoben (kopieren, zurücklesen, Original nur löschen, wenn unverändert; leere Dateien vor dem Löschen noch einmal gelesen). Altdateien werden nie aufgeräumt. Ohne Projektnummer bleiben datierte Dateien liegen.
 - Nach „Archiv“ oder „JSON laden“: „Geladen – noch nicht im Projektordner“, Warnung beim Schließen bis zum Speichern.
 
 ## Feste Probennummern und Storno (ab 4.49.0)

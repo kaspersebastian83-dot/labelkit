@@ -2128,9 +2128,9 @@ body:not(.lg) .btn-secondary:hover{border-color:var(--accent);color:var(--accent
         <ul style="font-size:12px;color:var(--text-muted);line-height:1.8;padding-left:16px">
           <li>Die Projektdatei heißt jetzt immer gleich, z. B. „26.0560_Daten.json“ – ohne Datum. Bisher entstand an jedem Tag eine neue Datei; hatte am Vortag jemand anderes gespeichert, blieb dessen Arbeit still daneben liegen.</li>
           <li>Hat jemand die Projektdatei geändert, seit du das Projekt geöffnet hast (anderes Fenster, anderer Rechner, älteres LabelKit), fragt LabelKit vor dem Speichern – auch an einem späteren Tag. Überschreibst du trotzdem, kommt der andere Stand vorher in die Sicherungen.</li>
-          <li>Sicherungen liegen im Unterordner „_LabelKit_Sicherungen“ neben der Projektdatei: der letzte Stand jedes Tages, an dem gespeichert wurde. Die neuesten 30 bleiben.</li>
-          <li>Ältere Projekte: Beim ersten Speichern wird aus der neuesten datierten Datei die feste; die datierten Dateien kommen geprüft in die Sicherungen (kopieren, zurücklesen, erst dann löschen).</li>
-          <li>Nach „Archiv“ oder dem Laden einer JSON-Datei steht oben „Geladen – noch nicht im Projektordner“, und beim Schließen warnt LabelKit, bis du gespeichert hast. Bisher stand dort „Gespeichert“.</li>
+          <li>Sicherungen liegen im Unterordner „_LabelKit_Sicherungen“ neben der Projektdatei: der letzte Stand jedes Tages, an dem gespeichert wurde, dazu jeder überschriebene fremde Stand (mit Uhrzeit). Von beiden bleiben je die neuesten 30.</li>
+          <li>Ältere Projekte: Beim ersten Speichern wird aus der neuesten datierten Datei die feste; die datierten Dateien kommen geprüft als „…_Altdatei.json“ in die Sicherungen (kopieren, zurücklesen, erst dann löschen) und werden nie aufgeräumt.</li>
+          <li>Nach „Archiv“ oder dem Laden einer JSON-Datei steht oben „Geladen – noch nicht im Projektordner“, und beim Schließen warnt LabelKit, bis du gespeichert hast. Bisher stand dort „Gespeichert“. Speicherst du danach in den Projektordner, kommt der dortige Stand vorher in die Sicherungen.</li>
         </ul>
       </div>
       <div style="border-left:3px solid #2f6fbf;padding-left:14px">
@@ -7268,8 +7268,9 @@ let letzterSpeicherOrdner=null;
    dem Schreiben wird noch einmal verglichen.
    Sicherungen in „_LabelKit_Sicherungen“ neben der festen Datei („<Nr>_<JJJJ-MM-TT>[_HHMM]_Sicherung.json“ – passt nie auf
    „_Daten.json“, die anderen Apps sehen sie nicht): der letzte Stand jedes Arbeitstags, dazu immer ein Stand, den dieses Fenster
-   nicht gelesen hat, bevor er ersetzt wird. Die neuesten 30 bleiben. Datierte Dateien desselben Projekts werden beim ersten
-   Speichern dorthin verschoben: kopieren, zurücklesen, Original nur löschen, wenn es noch genau so ist (wie spektron-umzug.js).
+   nicht gelesen hat (oder nach „Archiv“/„JSON laden“), bevor er ersetzt wird. Je 30 Tagessicherungen und 30 mit Uhrzeit bleiben.
+   Datierte Dateien desselben Projekts werden beim ersten Speichern als „<Nr>_<JJJJ-MM-TT>_Altdatei.json“ dorthin verschoben (nie
+   aufgeräumt): kopieren, zurücklesen, Original nur löschen, wenn es noch genau so ist (wie spektron-umzug.js).
    Übergaben (XLS, HTML, RTF): können außerhalb von LabelKit nachbearbeitet sein – vorhandene Dateien werden nur nach Rückfrage
    (uebergabenFragen) ersetzt, sonst kommt die neue Fassung daneben („… (2).xls“). */
 const SICHERUNGEN='_LabelKit_Sicherungen', SICHERUNGEN_BEHALTEN=30;
@@ -7284,7 +7285,7 @@ const festStamm=name=>String(name).replace(/_Daten\.json$/i,'');
 function datierteProjektdatei(name,stamm){
   const m=String(name).normalize('NFC').match(/^(.+)_(\d{1,2})\.(\d{1,2})\.(\d{4})_Daten\.json$/i);if(!m)return null;
   const a=nrAusName(m[1]),b=nrAusName(stamm);
-  if(a&&b?a!==b:dateiSchluessel(m[1])!==dateiSchluessel(stamm))return null;
+  if(!b||a!==b)return null;   // ohne Projektnummer nie: „PAK_<Datum>_Daten.json“ unbenannter Projekte gehören nicht zusammen
   return m[4]+'-'+m[3].padStart(2,'0')+'-'+m[2].padStart(2,'0');
 }
 /** Stand merken: fest = Inhalt der festen Datei (null = lag nicht dort), datiert = Map Schlüssel → Inhalt, gelesen = was dieses Fenster geladen oder geschrieben hat. */
@@ -7315,17 +7316,26 @@ async function textSchreiben(h,content){
   const w=await h.createWritable();
   try{await w.write(content);await w.close();}catch(e){await w.abort().catch(()=>{});throw e;}
 }
-/** Projektdateien im Ordner in einem Durchgang lesen: neueste „…_Daten.json“ (wie bisher nach Änderungsdatum), die feste Datei
-    und die datierten Dateien desselben Projekts – damit Geladenes und Gemerktes derselbe Stand sind. */
+/** Speicherzeit aus „gespeichertAm“ (ms) – null, wenn die Datei keine hat. */
+function speicherZeit(text){try{const t=Date.parse(JSON.parse(text).gespeichertAm);return isNaN(t)?null:t;}catch(e){return null;}}
+/** Projektdateien im Ordner in einem Durchgang lesen: zu ladende „…_Daten.json“, die feste Datei und die datierten Dateien
+    desselben Projekts – damit Geladenes und Gemerktes derselbe Stand sind. Geladen wird die feste Datei; eine andere nur, wenn sie
+    laut „gespeichertAm“ später gespeichert wurde (Kopieren setzt das Änderungsdatum neu – darauf ist neben der festen Datei kein
+    Verlass). Ohne feste Datei wie bisher die neueste nach Änderungsdatum. */
 async function projektdateienLesen(dir,festName){
-  const stamm=festStamm(festName),k=dateiSchluessel(festName),r={neueste:null,fest:null,festName:null,datiert:new Map(),datiertNamen:[]};
+  const stamm=festStamm(festName),k=dateiSchluessel(festName),r={neueste:null,fest:null,festName:null,datiert:new Map(),datiertNamen:[]},alle=[];
   for await(const h of dir.values()){
     if(h.kind!=='file'||!/_Daten\.json$/i.test(h.name))continue;
     const f=await h.getFile(),text=await f.text(),e={name:h.name,text,lastModified:f.lastModified,fest:dateiSchluessel(h.name)===k,datiert:!!datierteProjektdatei(h.name,stamm)};
     if(e.fest){r.fest=text;r.festName=h.name;}
     else if(e.datiert){r.datiert.set(dateiSchluessel(h.name),text);r.datiertNamen.push(h.name);}
-    if(!r.neueste||e.lastModified>r.neueste.lastModified)r.neueste=e;
+    alle.push(e);
   }
+  const fest=alle.find(e=>e.fest);
+  if(fest){
+    const grenze=speicherZeit(fest.text)??fest.lastModified;let beste=grenze;r.neueste=fest;
+    for(const e of alle){const t=e.fest?null:speicherZeit(e.text);if(t!==null&&t>beste){beste=t;r.neueste=e;}}
+  }else for(const e of alle)if(!r.neueste||e.lastModified>r.neueste.lastModified)r.neueste=e;
   return r;
 }
 /** Text als Sicherung ablegen. Gleicher Name mit gleichem Inhalt → schon da; anderer Inhalt → „ (2)“. Zurückgelesen und verglichen. */
@@ -7351,21 +7361,27 @@ async function standTag(text,h){
   try{const t=JSON.parse(text).gespeichertAm;if(t&&!isNaN(new Date(t)))return tagText(new Date(t));}catch(e){}
   try{return tagText(new Date((await h.getFile()).lastModified));}catch(e){return tagText(projektdateiJetzt());}
 }
-/** Nur die neuesten SICHERUNGEN_BEHALTEN Sicherungen dieses Projekts behalten; fremde Dateien bleiben unberührt. */
+/** Je die neuesten SICHERUNGEN_BEHALTEN Tagessicherungen und Sicherungen mit Uhrzeit dieses Projekts behalten (getrennt gezählt –
+    viele Rückfragen an einem Tag verdrängen keine Arbeitstage). „…_Altdatei.json“ und fremde Dateien bleiben unberührt. */
 async function sicherungenAufraeumen(sdir,stamm){
-  const re=/^(.+)_(\d{4}-\d{2}-\d{2}(?:_\d{4})?)_Sicherung(?: \((\d+)\))?\.json$/i,liste=[];
+  const re=/^(.+)_(\d{4}-\d{2}-\d{2})(_\d{4})?_Sicherung(?: \((\d+)\))?\.json$/i,tage=[],zeiten=[];
   for await(const h of sdir.values()){
     if(h.kind!=='file')continue;
     const m=String(h.name).normalize('NFC').match(re);if(!m||dateiSchluessel(m[1])!==dateiSchluessel(stamm))continue;
-    liste.push({name:h.name,sort:m[2]+'#'+String(m[3]||1).padStart(4,'0')});
+    (m[3]?zeiten:tage).push({name:h.name,sort:m[2]+(m[3]||'')+'#'+String(m[4]||1).padStart(4,'0')});
   }
-  liste.sort((a,b)=>a.sort<b.sort?1:a.sort>b.sort?-1:0);
-  for(const e of liste.slice(SICHERUNGEN_BEHALTEN))await sdir.removeEntry(e.name).catch(()=>{});
+  for(const liste of[tage,zeiten]){
+    liste.sort((a,b)=>a.sort<b.sort?1:a.sort>b.sort?-1:0);
+    for(const e of liste.slice(SICHERUNGEN_BEHALTEN))await sdir.removeEntry(e.name).catch(()=>{});
+  }
 }
 let projektdateiMeldungText='';
 /** Meldung des letzten Speicherns (verschobene/liegen gebliebene alte Dateien) – einmal abholen. */
 function projektdateiMeldung(){const m=projektdateiMeldungText;projektdateiMeldungText='';return m;}
 async function projektdateiSpeichern(dir,name,content){
+  projektdateiMeldungText='';
+  // Nach „Archiv“ oder „JSON laden“ gilt der Stand im Ordner als nicht gelesen: er kommt vor dem Ersetzen mit Uhrzeit in die Sicherungen
+  const geladen=typeof projektStatus!=='undefined'&&!!projektStatus.geladen;
   const stamm=festStamm(name),vorhanden=await dateiSuchen(dir,name),ziel=vorhanden?vorhanden.name:name,platte=await dateiText(vorhanden);
   const stand=await projektStandFinden(dir,name),datiert=[];
   for await(const h of dir.values()){
@@ -7389,7 +7405,7 @@ async function projektdateiSpeichern(dir,name,content){
   const sicherungsOrdner=async()=>sdir||(sdir=await dir.getDirectoryHandle(SICHERUNGEN,{create:true}));
   // Bisherigen Stand sichern, bevor er ersetzt wird: nicht von diesem Fenster gelesen → mit Uhrzeit; letzter Stand eines früheren Tags → Tagessicherung
   if(platte&&platte!==content){
-    const fremd=!stand||platte!==stand.gelesen,tag=fremd?null:await standTag(platte,vorhanden);
+    const fremd=geladen||!stand||platte!==stand.gelesen,tag=fremd?null:await standTag(platte,vorhanden);
     try{
       if(fremd)await sicherungSchreiben(await sicherungsOrdner(),stamm+'_'+zeitText(jetzt)+'_Sicherung.json',platte);
       else if(tag<heute)await sicherungSchreiben(await sicherungsOrdner(),stamm+'_'+tag+'_Sicherung.json',platte);
@@ -7401,20 +7417,25 @@ async function projektdateiSpeichern(dir,name,content){
     await w.write(content);await w.close();
   }catch(e){await w.abort().catch(()=>{});throw e;}
   if(await dateiText(h)!==content)throw Error('„'+ziel+'“ konnte nach dem Speichern nicht bestätigt werden – bitte erneut speichern.');
+  if(geladen)projektStatus.geladen='';   // steht jetzt im Projektordner, auch wenn der Aufrufer markSaved auslässt
   // Datierte Dateien (bis 4.49.x) in die Sicherungen: kopieren, zurücklesen, Original nur löschen, wenn es noch genau so ist
   const bleiben=new Map(),fehler=[];let verschoben=0;
   for(const d of datiert){
     try{
-      if(!d.text){await dir.removeEntry(d.name);continue;}   // leere Datei (gescheitertes Anlegen) trägt nichts
-      await sicherungSchreiben(await sicherungsOrdner(),stamm+'_'+d.tag+'_Sicherung.json',d.text);
+      if(!d.text){   // leer = gescheitertes Anlegen – oder ein älteres LabelKit schreibt gerade: unmittelbar vorher noch einmal lesen
+        if(await dateiText(await dir.getFileHandle(d.name))!=='')throw Error('wurde inzwischen beschrieben – beim nächsten Speichern kommt die Rückfrage');
+        await dir.removeEntry(d.name);continue;
+      }
+      await sicherungSchreiben(await sicherungsOrdner(),stamm+'_'+d.tag+'_Altdatei.json',d.text);
       if(await dateiText(await dir.getFileHandle(d.name))!==d.text)throw Error('wurde während des Verschiebens geändert');
       await dir.removeEntry(d.name);verschoben++;
     }catch(e){bleiben.set(dateiSchluessel(d.name),d.text);fehler.push('„'+d.name+'“ ('+(e.message||e.name)+')');}
   }
-  if(sdir)await sicherungenAufraeumen(sdir,stamm).catch(()=>{});
+  if(sdir&&nrAusName(stamm))await sicherungenAufraeumen(sdir,stamm).catch(()=>{});   // ohne Projektnummer nichts löschen
   projektStandMerken(dir,ziel,{fest:content,gelesen:content,datiert:bleiben});
   projektdateiMeldungText=(verschoben?verschoben+(verschoben===1?' ältere Projektdatei':' ältere Projektdateien')+' nach „'+SICHERUNGEN+'“ verschoben':'')
     +(fehler.length?(verschoben?' · ':'')+'liegen geblieben: '+fehler.join(', '):'');
+  if(fehler.length&&typeof PROJEKTORDNER!=='undefined')PROJEKTORDNER.hinweis(('Nicht nach „'+SICHERUNGEN+'“ verschoben – bleibt liegen, das nächste Speichern versucht es wieder: '+fehler.join(', ')).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])));
   return ziel;
 }
 /** Gibt es Übergaben schon? Einmal fragen: true = ersetzen, false = neue Fassung daneben (auch wenn keine vorhanden ist). */
@@ -10171,7 +10192,7 @@ const PROJEKTORDNER=(function(){
     const SO=typeof window!=='undefined'?window.SpektronOrdner:null;let daten=lab;
     if(SO){const lk=await SO.ort(dir,'labelkit');if(lk.wo==='neu')daten=lk.dir||(await SO.ort(dir,'labelkit',{anlegen:true})).dir;}
     const datenPfad=SO?(await SO.ort(dir,'labelkit')).pfad:LAB_DIR;
-    // Feste Projektdatei „<Nr>_Daten.json“ (ab 4.50.0); geladen wird wie bisher die neueste …_Daten.json. Gemerkt werden feste
+    // Feste Projektdatei „<Nr>_Daten.json“ (ab 4.50.0); geladen wird sie (oder eine später gespeicherte …_Daten.json). Gemerkt werden feste
     // und datierte Dateien in einem Durchgang – dagegen prüft das Speichern, auch an einem späteren Tag.
     const festName=projektdateiName(p.nr),bestand=await projektdateienLesen(daten,festName),datei=bestand.neueste;
     if(lauf!==oeffnenLauf)return;
@@ -10209,8 +10230,8 @@ const PROJEKTORDNER=(function(){
     try{window.MosaikLeiste&&MosaikLeiste.aktualisieren();}catch(e){}
     const umstellung=datei&&bestand.fest===null&&bestand.datiertNamen.length?' · beim nächsten Speichern heißt die Projektdatei „'+festName+'“, die datierten kommen nach „'+SICHERUNGEN+'“':'';
     flash((datei?'Projekt '+dir.name+': „'+datei.name+'“ geladen – gespeichert wird in „'+datenPfad+'“':'Projekt '+dir.name+': gespeichert wird in „'+datenPfad+'“')+kzHinweis+migrationsText(migriert)+umstellung);
-    // Älteres LabelKit hat nach der Umstellung noch eine datierte Datei geschrieben, die neuer ist als die feste
-    if(datei&&datei.datiert&&bestand.fest!==null)hinweis('In „'+esc(datenPfad)+'“ liegt neben „'+esc(bestand.festName)+'“ eine neuere „'+esc(datei.name)+'“ – vermutlich von einem älteren LabelKit. Geladen ist die neuere. Beim nächsten Speichern kommt die bisherige Projektdatei als Sicherung nach „'+SICHERUNGEN+'“. Prüf kurz, ob dir dort etwas fehlt.');
+    // Neben der festen Datei liegt eine später gespeicherte (laut „gespeichertAm“) – z. B. von einem älteren LabelKit
+    if(datei&&!datei.fest&&bestand.fest!==null)hinweis('In „'+esc(datenPfad)+'“ liegt neben „'+esc(bestand.festName)+'“ eine später gespeicherte „'+esc(datei.name)+'“ – vermutlich von einem älteren LabelKit. Geladen ist die spätere. Beim nächsten Speichern kommt die bisherige Projektdatei als Sicherung nach „'+SICHERUNGEN+'“. Prüf kurz, ob dir dort etwas fehlt.');
   }
   async function ausZentrale(name){
     const root=await archiv();
@@ -10230,7 +10251,7 @@ const PROJEKTORDNER=(function(){
   if(knopf&&originalPicker){knopf.hidden=false;knopf.onclick=waehlen;}
   const start=PROJEKT_URL.projekt;
   if(start)ausZentrale(start);
-  return {state,oeffnen,ausZentrale,parse,projektdaten,aktualisieren:ladePj,vorExport};
+  return {state,oeffnen,ausZentrale,parse,projektdaten,aktualisieren:ladePj,vorExport,hinweis};
 })();
 </script>
 <script>

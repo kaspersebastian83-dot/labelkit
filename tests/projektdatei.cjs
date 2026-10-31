@@ -63,6 +63,7 @@ async function oeffnen(ctx, d){
     assert.equal(ctx.datierteProjektdatei('26.0513_01.10.2026_Daten.json', '26.0512'), null, 'andere Nummer nie');
     assert.equal(ctx.datierteProjektdatei('26.0512_Daten.json', '26.0512'), null, 'die feste Datei ist nicht datiert');
     assert.equal(ctx.datierteProjektdatei('26.0512_PAK_x_Daten.json', '26.0512'), null, 'ältere Formate bleiben liegen');
+    assert.equal(ctx.datierteProjektdatei('PAK_28.10.2026_Daten.json', 'PAK'), null, 'ohne Projektnummer gehören datierte Dateien nie zusammen');
   }
   console.log('OK Dateiname: „<Nr>_Daten.json“, datierte Dateien nur desselben Projekts');
 
@@ -125,7 +126,7 @@ async function oeffnen(ctx, d){
     assert.equal(fragen.length, 0, 'bekannte datierte Dateien: keine Rückfrage');
     assert.deepEqual(datenDateien(d).sort(), [FEST, '99.9001_PAK_2025_Daten.json', '99.9002_29.10.2026_Daten.json'], 'fremde Nummer und altes Format bleiben liegen');
     assert.equal(d.dateien['99.9001_PAK_29.10.2026_Laborübergabe.xls'], 'XLS');
-    assert.deepEqual(d.ordner[S].dateien, { '99.9001_2026-10-28_Sicherung.json': alt28, '99.9001_2026-10-29_Sicherung.json': alt29 }, 'byte-gleich verschoben');
+    assert.deepEqual(d.ordner[S].dateien, { '99.9001_2026-10-28_Altdatei.json': alt28, '99.9001_2026-10-29_Altdatei.json': alt29 }, 'byte-gleich verschoben');
     assert.match(ctx.projektdateiMeldung(), /^2 ältere Projektdateien nach „_LabelKit_Sicherungen“ verschoben$/);
     assert.equal(ctx.projektdateiMeldung(), '', 'Meldung nur einmal');
   }
@@ -134,19 +135,19 @@ async function oeffnen(ctx, d){
     const alt = stand('29. alt', '2026-10-29T17:00:00'), kaputt = stand('28.', '2026-10-28T17:00:00');
     const d = ordner('Laboraufträge', { '99.9001_29.10.2026_Daten.json': alt, '99.9001_28.10.2026_Daten.json': kaputt },
       { unter: { fehler: n => n.includes('2026-10-28') && laden.einmal && !(laden.einmal = false) } });
-    d.ordner[S] = ordner(S, { '99.9001_2026-10-29_Sicherung.json': 'anderer Inhalt' }, d.haken.unter);
+    d.ordner[S] = ordner(S, { '99.9001_2026-10-29_Altdatei.json': 'anderer Inhalt' }, d.haken.unter);
     laden.einmal = true;
     const { ctx, fragen } = laden(); ctx.tag('2026-10-30T09:00:00');
     await oeffnen(ctx, d);
     await ctx.sicherSpeichern(d, FEST, stand('30.', '2026-10-30T09:00:00'));
-    assert.equal(d.ordner[S].dateien['99.9001_2026-10-29_Sicherung.json'], 'anderer Inhalt', 'vorhandene Sicherung bleibt');
-    assert.equal(d.ordner[S].dateien['99.9001_2026-10-29_Sicherung (2).json'], alt);
+    assert.equal(d.ordner[S].dateien['99.9001_2026-10-29_Altdatei.json'], 'anderer Inhalt', 'vorhandene Sicherung bleibt');
+    assert.equal(d.ordner[S].dateien['99.9001_2026-10-29_Altdatei (2).json'], alt);
     assert.equal(d.dateien['99.9001_28.10.2026_Daten.json'], kaputt, 'Kopierfehler: Original bleibt');
-    assert.equal('99.9001_2026-10-28_Sicherung.json' in d.ordner[S].dateien, false, 'keine leere Sicherung liegen gelassen');
+    assert.equal('99.9001_2026-10-28_Altdatei.json' in d.ordner[S].dateien, false, 'keine leere Sicherung liegen gelassen');
     assert.match(ctx.projektdateiMeldung(), /1 ältere Projektdatei .*verschoben · liegen geblieben: „99\.9001_28\.10\.2026_Daten\.json“/);
     await ctx.sicherSpeichern(d, FEST, stand('30. später', '2026-10-30T10:00:00'));   // zweiter Versuch klappt, ohne Rückfrage
     assert.equal(d.dateien['99.9001_28.10.2026_Daten.json'], undefined);
-    assert.equal(d.ordner[S].dateien['99.9001_2026-10-28_Sicherung.json'], kaputt);
+    assert.equal(d.ordner[S].dateien['99.9001_2026-10-28_Altdatei.json'], kaputt);
     assert.equal(fragen.length, 0);
   }
   // 3c. Datierte Datei kommt nach dem Laden dazu (älteres LabelKit auf einem anderen Rechner) → Rückfrage; nie geladen → Rückfrage
@@ -160,7 +161,7 @@ async function oeffnen(ctx, d){
     assert.deepEqual(datenDateien(d).sort(), ['99.9001_29.10.2026_Daten.json', '99.9001_30.10.2026_Daten.json'], 'Abbrechen: nichts geschrieben, nichts verschoben');
     await ctx.sicherSpeichern(d, FEST, stand('30.', '2026-10-30T09:00:00'));
     assert.deepEqual(datenDateien(d), [FEST]);
-    assert.equal(JSON.parse(d.ordner[S].dateien['99.9001_2026-10-30_Sicherung.json']).inhalt, 'altes LabelKit am 30.', 'nichts verloren');
+    assert.equal(JSON.parse(d.ordner[S].dateien['99.9001_2026-10-30_Altdatei.json']).inhalt, 'altes LabelKit am 30.', 'nichts verloren');
     const nie = ordner('Laboraufträge', { '99.9001_29.10.2026_Daten.json': 'x' }), n = laden([false]);
     await assert.rejects(n.ctx.sicherSpeichern(nie, FEST, '{}'), e => e.name === 'AbortError');
     assert.match(n.fragen[0], /nichts von dort geladen/);
@@ -178,7 +179,47 @@ async function oeffnen(ctx, d){
     assert.deepEqual(datenDateien(d), [FEST]);
     const s = d.ordner[S].dateien;
     assert.equal(JSON.parse(s['99.9001_2026-10-30_1200_Sicherung.json']).inhalt, 'fest vom Vormittag', 'nicht geladener Stand mit Uhrzeit gesichert');
-    assert.equal(JSON.parse(s['99.9001_2026-10-30_Sicherung.json']).inhalt, 'altes LabelKit 11 Uhr');
+    assert.equal(JSON.parse(s['99.9001_2026-10-30_Altdatei.json']).inhalt, 'altes LabelKit 11 Uhr');
+  }
+  // 3e. Leere datierte Datei (älteres LabelKit legt gerade an) wird während der Rückfrage beschrieben → bleibt liegen, nichts verloren
+  {
+    const d = ordner('LabelKit', { [FEST]: stand('fest', '2026-10-30T08:00:00'), '99.9001_30.10.2026_Daten.json': '' });
+    const { ctx, fragen } = laden(); ctx.tag('2026-10-30T12:00:00');
+    await oeffnen(ctx, d);
+    d.dateien[FEST] = stand('anderer Rechner', '2026-10-30T10:00:00');   // löst die Rückfrage aus
+    ctx.confirm = m => { fragen.push(m); d.dateien['99.9001_30.10.2026_Daten.json'] = stand('altes LabelKit fertig', '2026-10-30T11:00:00'); return true; };
+    await ctx.sicherSpeichern(d, FEST, stand('meins', '2026-10-30T12:00:00'));
+    assert.equal(JSON.parse(d.dateien['99.9001_30.10.2026_Daten.json']).inhalt, 'altes LabelKit fertig', 'nicht gelöscht');
+    assert.match(ctx.projektdateiMeldung(), /liegen geblieben: „99\.9001_30\.10\.2026_Daten\.json“ \(wurde inzwischen beschrieben/);
+    ctx.confirm = m => { fragen.push(m); return true; };
+    await ctx.sicherSpeichern(d, FEST, stand('meins 2', '2026-10-30T12:05:00'));
+    assert.match(fragen[1], /99\.9001_30\.10\.2026_Daten\.json“ in „LabelKit“ ist nach dem Laden dazugekommen/, 'nächstes Speichern fragt');
+    assert.equal(JSON.parse(d.ordner[S].dateien['99.9001_2026-10-30_Altdatei.json']).inhalt, 'altes LabelKit fertig');
+    const leer = ordner('LabelKit', { '99.9001_29.10.2026_Daten.json': '' }), l = laden(); l.ctx.tag('2026-10-30T09:00:00');
+    await oeffnen(l.ctx, leer); await l.ctx.sicherSpeichern(leer, FEST, '{"a":1}');
+    assert.deepEqual(Object.keys(leer.dateien), [FEST], 'leer geblieben → entfernt');
+  }
+  // 3f. 35 datierte Dateien (35 Arbeitstage) → alle 35 verschoben und behalten, nichts aufgeräumt
+  {
+    const dat = {}; for (let i = 0; i < 35; i++){ const t = new Date(2026, 8, 1 + i); dat['99.9001_' + t.getDate() + '.' + (t.getMonth() + 1) + '.2026_Daten.json'] = stand('T' + i, t); }
+    const d = ordner('Laboraufträge', dat), { ctx } = laden(); ctx.tag('2026-10-30T09:00:00');
+    await oeffnen(ctx, d); await ctx.sicherSpeichern(d, FEST, stand('neu', '2026-10-30T09:00:00'));
+    assert.deepEqual(datenDateien(d), [FEST]);
+    assert.equal(Object.keys(d.ordner[S].dateien).filter(n => n.endsWith('_Altdatei.json')).length, 35, 'nichts verloren');
+    assert.match(ctx.projektdateiMeldung(), /^35 ältere Projektdateien/);
+    for (let t = 1; t <= 3; t++){ ctx.tag('2026-11-0' + t + 'T09:00:00'); await ctx.sicherSpeichern(d, FEST, stand('Nov ' + t, '2026-11-0' + t + 'T09:00:00')); }
+    assert.equal(Object.keys(d.ordner[S].dateien).filter(n => n.endsWith('_Altdatei.json')).length, 35, 'auch später nicht aufgeräumt');
+  }
+  // 3g. Ohne Projektnummer: datierte Dateien unbenannter Projekte bleiben liegen, keine Rückfrage, nichts aufgeräumt
+  {
+    const s0 = {}; for (let i = 0; i < 32; i++) s0['PAK_2026-09-' + String(i % 28 + 1).padStart(2, '0') + (i >= 28 ? '_0900' : '') + '_Sicherung.json'] = 'S' + i;
+    const d = ordner('Ablage', { 'PAK_28.10.2026_Daten.json': 'anderes unbenanntes Projekt' }); d.ordner[S] = ordner(S, s0);
+    const { ctx, fragen } = laden(); ctx.tag('2026-10-30T09:00:00');
+    await ctx.sicherSpeichern(d, 'PAK_Daten.json', '{"x":1}');
+    ctx.tag('2026-10-31T09:00:00'); await ctx.sicherSpeichern(d, 'PAK_Daten.json', '{"x":2}');
+    assert.equal(fragen.length, 0);
+    assert.equal(d.dateien['PAK_28.10.2026_Daten.json'], 'anderes unbenanntes Projekt');
+    assert.equal(Object.keys(d.ordner[S].dateien).length, 33, 'nichts gelöscht, Tagessicherung dazu');
   }
   console.log('OK Übergang: neueste datierte geladen, feste Datei angelegt, datierte geprüft verschoben (Namensgleichheit, Kopierfehler, nachträglich dazugekommen, älteres LabelKit)');
 
@@ -190,7 +231,7 @@ async function oeffnen(ctx, d){
     assert.deepEqual(baum(d).filter(n => /_Daten\.json$/i.test(n)), [FEST]);
     assert.equal((await ctx.projektdateienLesen(d.ordner[S], FEST)).neueste, null);
     const SO = require('../spektron-ordner.js'), passt = SO.BEREICHE.labelkit.passt;
-    for (const n of Object.keys(d.ordner[S].dateien).concat('99.9001_2026-10-30_1200_Sicherung (2).json')) assert.equal(passt(n, 'file'), false, n);
+    for (const n of Object.keys(d.ordner[S].dateien).concat('99.9001_2026-10-30_1200_Sicherung (2).json', '99.9001_2026-10-28_Altdatei.json', '99.9001_2026-10-28_Altdatei (2).json')) assert.equal(passt(n, 'file'), false, n);
     assert.equal(passt(S, 'directory'), false, 'Sicherungsordner zählt nicht für die Ortswahl');
     assert.equal(passt(FEST, 'file'), true, 'die feste Datei findet spektron-ordner.js');
     // Die feste Datei hat am neuen Ort Vorrang: ort() wählt den Ort mit Projektdatei, die Sicherungen ändern daran nichts
@@ -200,20 +241,25 @@ async function oeffnen(ctx, d){
   }
   console.log('OK Sicherungen: unsichtbar für jede „_Daten.json“-Suche und für spektron-ordner.js');
 
-  // 5. Aufräumen: nur die neuesten 30 Sicherungen dieses Projekts bleiben, fremde Dateien bleiben unberührt
+  // 5. Aufräumen: je die neuesten 30 Tagessicherungen und 30 mit Uhrzeit (getrennt), Altdateien und fremde Dateien bleiben
   {
     const s = {}; for (let i = 0; i < 33; i++){ const t = new Date(2026, 8, 1 + i); s['99.9001_' + t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0') + '_Sicherung.json'] = 'S' + i; }
+    for (let i = 0; i < 35; i++) s['99.9001_2026-10-03_' + String(1000 + i) + '_Sicherung.json'] = 'Z' + i;   // Rückfragen-Pingpong an einem Tag
+    s['99.9001_2026-01-01_Altdatei.json'] = 'Altdatei';
     s['99.9002_2026-01-01_Sicherung.json'] = 'anderes Projekt'; s['Notiz.txt'] = 'von Hand';
     const d = ordner('LabelKit', { [FEST]: stand('alt', '2026-10-03T10:00:00') }); d.ordner[S] = ordner(S, s);
     const { ctx } = laden(); ctx.tag('2026-10-31T09:00:00');
     await oeffnen(ctx, d);
     await ctx.sicherSpeichern(d, FEST, stand('neu', '2026-10-31T09:00:00'));
-    const namen = Object.keys(d.ordner[S].dateien).filter(n => n.startsWith('99.9001_')).sort();
+    const alle = Object.keys(d.ordner[S].dateien), namen = alle.filter(n => /^99\.9001_\d{4}-\d{2}-\d{2}_Sicherung( \(\d+\))?\.json$/.test(n)).sort();   // dazu „10-03 (2)“ vom Speichern
     assert.equal(namen.length, 30); assert.equal(namen[29], '99.9001_2026-10-03_Sicherung.json', 'neueste dabei');
     assert.equal(namen[0], '99.9001_2026-09-05_Sicherung.json', 'die ältesten vier sind weg');
+    const zeiten = alle.filter(n => /_\d{4}_Sicherung\.json$/.test(n)).sort();
+    assert.equal(zeiten.length, 30, 'Sicherungen mit Uhrzeit eigens gezählt'); assert.equal(zeiten[0], '99.9001_2026-10-03_1005_Sicherung.json');
+    assert.equal(d.ordner[S].dateien['99.9001_2026-01-01_Altdatei.json'], 'Altdatei', 'Altdateien werden nie aufgeräumt');
     assert.equal(d.ordner[S].dateien['99.9002_2026-01-01_Sicherung.json'], 'anderes Projekt'); assert.equal(d.ordner[S].dateien['Notiz.txt'], 'von Hand');
   }
-  console.log('OK Aufräumen: neueste 30 Sicherungen, fremde Dateien bleiben');
+  console.log('OK Aufräumen: je 30 Tagessicherungen und Sicherungen mit Uhrzeit, Altdateien und fremde Dateien bleiben');
 
   // 6. Sicherung schlägt fehl → nicht gespeichert, bisheriger Stand bleibt
   {
@@ -224,4 +270,41 @@ async function oeffnen(ctx, d){
     assert.equal(JSON.parse(d.dateien[FEST]).inhalt, 'Vortag');
   }
   console.log('OK Sicherung fehlgeschlagen: nichts überschrieben');
+
+  // 7. Nach „Archiv“/„JSON laden“: der Stand im Ordner gilt als ungelesen → mit Uhrzeit gesichert, auch am selben Tag; danach „geladen“ weg
+  {
+    const d = ordner('LabelKit', { [FEST]: stand('heutige Arbeit im Ordner', '2026-10-30T08:00:00') });
+    const { ctx, fragen } = laden(); ctx.tag('2026-10-30T11:00:00');
+    await oeffnen(ctx, d);
+    ctx.projektStatus = { geladen: 'Archiv' };
+    await ctx.sicherSpeichern(d, FEST, stand('älterer Archivstand', '2026-10-30T11:00:00'));
+    assert.equal(fragen.length, 0);
+    assert.equal(JSON.parse(d.ordner[S].dateien['99.9001_2026-10-30_1100_Sicherung.json']).inhalt, 'heutige Arbeit im Ordner', 'nichts verloren');
+    assert.equal(ctx.projektStatus.geladen, '', 'steht jetzt im Projektordner');
+    ctx.tag('2026-10-30T11:30:00'); await ctx.sicherSpeichern(d, FEST, stand('weiter', '2026-10-30T11:30:00'));
+    assert.equal(Object.keys(d.ordner[S].dateien).length, 1, 'danach wieder normal: am selben Tag keine Sicherung');
+  }
+  console.log('OK Nach Archiv/JSON laden: Ordnerstand vor dem Überschreiben gesichert');
+
+  // 8. Öffnen: die feste Datei hat Vorrang vor einer Datei mit jüngerem Änderungsdatum (Kopie, Umzug, Sync)
+  {
+    const d = ordner('LabelKit', { [FEST]: stand('fest, zuletzt gespeichert', '2026-10-30T15:00:00') });
+    d.dateien['99.9001_29.10.2026_Daten.json'] = stand('alter Nachzügler', '2026-10-29T17:00:00'); d.zeit['99.9001_29.10.2026_Daten.json'] = uhr++;
+    d.dateien['99.9001_PAK_2025_Daten.json'] = '{"projekt":{"nr":"99.9001"}}'; d.zeit['99.9001_PAK_2025_Daten.json'] = uhr++;   // ohne gespeichertAm
+    const { ctx } = laden();
+    assert.equal((await ctx.projektdateienLesen(d, FEST)).neueste.name, FEST, 'Änderungsdatum allein schlägt die feste Datei nie');
+    d.dateien['99.9001_PAK_2026_Daten.json'] = stand('später gespeichert', '2026-10-30T16:00:00');
+    assert.equal((await ctx.projektdateienLesen(d, FEST)).neueste.name, '99.9001_PAK_2026_Daten.json', 'laut gespeichertAm später → geladen (Hinweis beim Öffnen)');
+  }
+  console.log('OK Öffnen: feste Datei vor jüngerem Änderungsdatum, später gespeicherte wird erkannt');
+
+  // 9. Meldung gehört nur zum jeweiligen Speichern
+  {
+    const d = ordner('Laboraufträge', { '99.9001_29.10.2026_Daten.json': stand('29.', '2026-10-29T17:00:00') });
+    const { ctx } = laden(); ctx.tag('2026-10-30T09:00:00');
+    await oeffnen(ctx, d); await ctx.sicherSpeichern(d, FEST, stand('30.', '2026-10-30T09:00:00'));   // Meldung nicht abgeholt
+    await ctx.sicherSpeichern(d, FEST, stand('30. später', '2026-10-30T10:00:00'));
+    assert.equal(ctx.projektdateiMeldung(), '', 'keine alte Meldung beim nächsten Speichern');
+  }
+  console.log('OK Meldung: nur vom jeweiligen Speichern');
 })().catch(e => { console.error(e); process.exitCode = 1; });

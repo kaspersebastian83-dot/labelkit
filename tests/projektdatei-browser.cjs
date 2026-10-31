@@ -57,7 +57,7 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
 
     // Erstes Speichern: feste Datei, datierte in die Sicherungen, Übergabe unberührt
     await page.evaluate(async () => { proben[0].z2 = 'Stand 31.'; markUnsaved(); await schnellSpeichern(); });
-    assert.deepEqual(await liste(), {dateien: ['26.0101_Daten.json', '26.0101_PAK_29.10.2026_Laboruebergabe.xls'], sicherungen: ['26.0101_2026-10-28_Sicherung.json', '26.0101_2026-10-29_Sicherung.json']});
+    assert.deepEqual(await liste(), {dateien: ['26.0101_Daten.json', '26.0101_PAK_29.10.2026_Laboruebergabe.xls'], sicherungen: ['26.0101_2026-10-28_Altdatei.json', '26.0101_2026-10-29_Altdatei.json']});
     assert.match(await flash(), /2 ältere Projektdateien nach „_LabelKit_Sicherungen“ verschoben/);
     assert.match(await status(), /^Gespeichert:.*26\.0101_Daten\.json$/);
     assert.equal(dialoge.length, 0, 'keine Rückfrage beim Übergang');
