@@ -254,7 +254,7 @@ const name = process.argv[2] || 'chromium';
     assert.match(await status.textContent(), /Änderungen noch nicht gespeichert/);
     importExpected = true;
     await page.locator('#import-file').setInputFiles({name: file.name, mimeType: 'application/json', buffer: Buffer.from(file.content)});
-    await page.waitForFunction(() => !projektStatus.dirty);
+    await page.waitForFunction(() => projektStatus.geladen === 'Datei');   // geladen = noch nicht im Projektordner (4.50.0)
     assert.equal(importExpected, false);
     assert.deepEqual((await state()).data, written);
     if (!(await edits.count())) await page.locator('#btn-karten-ansicht').click();

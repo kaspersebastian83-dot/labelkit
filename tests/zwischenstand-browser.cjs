@@ -34,7 +34,11 @@ const name = process.argv[2] || 'chromium';
       renderTable();
       // Keine tatsächlichen Dateien oder gespeicherten Ordnerhandles verwenden.
       window.testDisk={};window.testFiles = []; window.testClosed = []; window.testMode = 'ok'; window.testPickers = 0;
-      window.testDir = {name: 'Laboraufträge', async isSameEntry(o) {return !!o && o.getFileHandle === this.getFileHandle;}, async *values(){for(const name of Object.keys(testDisk))yield {name,kind:'file',getFile:async()=>new File([testDisk[name]],name)};}, async getFileHandle(name,o={}) {
+      // Sicherungsordner „_LabelKit_Sicherungen“ im Speicher (ab 4.50.0: nach „Archiv“ wird der Ordnerstand vor dem Überschreiben gesichert)
+      window.testSicherungen = (() => {const disk = {};return {name: '_LabelKit_Sicherungen', disk, async *values(){for(const name of Object.keys(disk))yield {name,kind:'file',getFile:async()=>new File([disk[name]],name)};},
+        async getFileHandle(name,o={}){if(!(name in disk)){if(!o.create)throw new DOMException('Missing','NotFoundError');disk[name]='';}return {name,getFile:async()=>new File([disk[name]],name),async createWritable(){let p;return {async write(c){p=c;},async close(){disk[name]=p;},async abort(){}};}};},
+        async removeEntry(n){delete disk[n];}};})();
+      window.testDir = {name: 'Laboraufträge', async getDirectoryHandle() {return testSicherungen;}, async isSameEntry(o) {return !!o && o.getFileHandle === this.getFileHandle;}, async *values(){for(const name of Object.keys(testDisk))yield {name,kind:'file',getFile:async()=>new File([testDisk[name]],name)};}, async getFileHandle(name,o={}) {
         if (testMode === 'handle-error') throw new DOMException('Zugriff verweigert', 'NotAllowedError');
         if(!(name in testDisk)){if(!o.create)throw new DOMException('Missing','NotFoundError');testDisk[name]='';}
         return {getFile:async()=>new File([testDisk[name]],name),async createWritable() {
@@ -85,7 +89,21 @@ const name = process.argv[2] || 'chromium';
     assert.match(await status.textContent(), /Änderungen noch nicht gespeichert/);
     importExpected = true;
     await page.locator('#import-file').setInputFiles({name: savedFile.name, mimeType: 'application/json', buffer: Buffer.from(savedFile.content)});
-    await page.waitForFunction(() => !projektStatus.dirty);
+    // Befund 21 (4.50.0): Geladen heißt nicht gespeichert – Status sagt es, beforeunload warnt.
+    await page.waitForFunction(() => projektStatus.geladen === 'Datei');
+    assert.deepEqual((await snapshot()).data, before.data);
+    assert.match(await status.textContent(), /^Geladen \(Datei\) – noch nicht im Projektordner/);
+    const warnt = () => page.evaluate(() => {const e = new Event('beforeunload', {cancelable: true});window.dispatchEvent(e);return e.defaultPrevented;});
+    assert.equal(await warnt(), true, 'nach dem Laden einer JSON warnt das Schließen');
+    // Auch nach dem Laden aus dem Archiv
+    await page.evaluate(() => {projektArchivAutoSave();markSaved('x_Daten.json', 'Laboraufträge');});
+    assert.equal(await warnt(), false, 'gespeichert: keine Warnung');
+    await page.evaluate(() => {window.confirm = () => true;projektArchivOeffnen(0);});
+    await page.waitForFunction(() => projektStatus.geladen === 'Archiv');
+    assert.match(await status.textContent(), /^Geladen \(Archiv\) – noch nicht im Projektordner/);
+    assert.equal(await warnt(), true, 'nach dem Laden aus dem Archiv warnt das Schließen');
+    await page.evaluate(() => markUnsaved());   // was jede Eingabe auslöst
+    assert.match(await status.textContent(), /^Geladen \(Archiv\) – noch nicht im Projektordner/, 'bleibt bis zum echten Speichern');
     assert.deepEqual((await snapshot()).data, before.data);
     // Abbruch und Fehler dürfen nie als erfolgreiche Speicherung erscheinen.
     for (const mode of ['cancel', 'denied', 'handle-error', 'create-error', 'write-error', 'close-error']) {
@@ -108,6 +126,9 @@ const name = process.argv[2] || 'chromium';
     await page.waitForFunction(() => !speichernAktiv);
     assert.match(await status.textContent(), /aktuelle Änderungen noch nicht gespeichert/);
     assert.equal(await page.evaluate(() => projektStatus.dirty), true);
+    // Erstes Speichern nach „Archiv“: der bisherige Ordnerstand liegt mit Uhrzeit in den Sicherungen, „Geladen“ ist weg
+    assert.equal(await page.evaluate(() => Object.keys(testSicherungen.disk).filter(n => /_\d{4}-\d{2}-\d{2}_\d{4}_Sicherung\.json$/.test(n) && testSicherungen.disk[n]).length > 0), true, 'Ordnerstand gesichert');
+    assert.equal(await page.evaluate(() => projektStatus.geladen), '');
     // Auch ein inzwischen gewechselter Zielordner darf keine aktuelle Speicherbestätigung erhalten.
     await page.evaluate(() => {testMode = 'delayed';window.finishTestWrite = null;});
     await button.click();await page.waitForFunction(() => !!window.finishTestWrite);

@@ -20,8 +20,9 @@ function fixture(data,approval=false){
   const c={console,state,PROJEKTORDNER:{state},LAB_DIR:'Laboraufträge',speicherKontextRevision:10,
     proben:[{id:9,z2:'BISHERIGE PROBE'}],chloridProben:[],asbestProben:[],sonstigeProben:[],brandgeruchProben:[],pn98Proben:[],feldprotokolle:[],pn98Projekt:{},projektStatus:{dirty:false},
     document:{getElementById:k=>elements.get(k)||null},confirm:m=>{prompts.push(m);return m.includes('keine Projektnummer')?approval:true;},alert:m=>alerts.push(m),
-    permission:async()=>true,parse:()=>({nr:'26.0101',ort:'Muster'}),archiv:async()=>null,maPersonenAus:async()=>null,kuerzelAuswahl:()=>{},namenAuswahl:()=>{},kuerzelVorschlag:()=>'',fbeKuerzel:()=>'XY',fbeKuerzelSetzen:()=>{},subdir:async()=>({name:'Laboraufträge'}),neuesteDaten:async()=>file,
-    jsonStandMerken:()=>{},undoSnapshot:()=>events.push('undo'),markSaved:()=>events.push('saved'),markUnsaved:()=>events.push('unsaved'),flash:()=>{},zeigen:()=>{},ladePj:()=>{},
+    permission:async()=>true,parse:()=>({nr:'26.0101',ort:'Muster'}),archiv:async()=>null,maPersonenAus:async()=>null,kuerzelAuswahl:()=>{},namenAuswahl:()=>{},kuerzelVorschlag:()=>'',fbeKuerzel:()=>'XY',fbeKuerzelSetzen:()=>{},subdir:async()=>({name:'Laboraufträge'}),
+    projektdateiName:n=>n+'_Daten.json',projektdateienLesen:async()=>({neueste:{name:file.name,text:await file.text(),lastModified:1,fest:false,datiert:false},fest:null,festName:null,datiert:new Map(),datiertNamen:[]}),SICHERUNGEN:'_LabelKit_Sicherungen',hinweis:()=>{},esc:t=>t,
+    projektStandMerken:()=>{},markGeladen:q=>events.push('geladen:'+q),undoSnapshot:()=>events.push('undo'),markSaved:()=>events.push('saved'),markUnsaved:()=>events.push('unsaved'),flash:()=>{},zeigen:()=>{},ladePj:()=>{},
     localStorage:{getItem:()=>JSON.stringify([{nr:'26.0101',data:JSON.stringify(data)}])},buildProjektSaveData:()=>({filename:'Muster_Daten.json'}),
     FileReader:class{readAsText(){this.onload({target:{result:JSON.stringify(data)}});}}};
   for(const n of ['setPn98ProjektFelderUi','updateProjekt','renummerieren','renderTable','renderChloridTable','renderAsbestTable','renderSonstigeTable','renderBrandgeruchTable','renderBrandgeruchExport','renderPn98Cards','renderPn98Export','fbeRender'])c[n]=()=>{};
@@ -34,7 +35,7 @@ async function run(route,data,approval,accepted,promptCount){
   if(route==='manual')f.c.importProjektJSON({target:{files:[{}],value:'selected'}});
   if(route==='archive')f.c.projektArchivOeffnen(0);
   assert.equal(f.prompts.filter(m=>m.includes('keine Projektnummer')).length,promptCount,route);
-  if(accepted){assert.equal(f.c.proben[0].z2,'FREMDES PROJEKT');assert.equal(f.elements.get('proj-nr').value.trim(),String(data.projekt?.nr??'').trim()||'26.0101');assert.ok(f.events.includes('saved'));assert.equal(f.c.speicherKontextRevision,11);assert.deepEqual(f.alerts,[]);}
+  if(accepted){assert.equal(f.c.proben[0].z2,'FREMDES PROJEKT');assert.equal(f.elements.get('proj-nr').value.trim(),String(data.projekt?.nr??'').trim()||'26.0101');assert.ok(f.events.includes(route==='folder'?'saved':route==='manual'?'geladen:Datei':'geladen:Archiv'),route+': '+f.events);assert.equal(f.c.speicherKontextRevision,11);assert.deepEqual(f.alerts,[]);}
   else{assert.equal(f.c.proben,old);assert.equal(f.c.state.proj,f.previous);assert.equal(f.c.state.pj,oldPj);assert.equal(f.elements.get('proj-nr').value,'26.0101');assert.equal(f.c.speicherKontextRevision,10);assert.deepEqual(f.events,[]);}
   if(data.projekt?.nr==='26.0999'){assert.equal(f.alerts.length,1);assert.match(f.alerts[0],/blockiert/);assert.match(f.alerts[0],/26\.0999/);assert.match(f.alerts[0],/26\.0101/);}
   checks++;
@@ -65,12 +66,12 @@ async function run(route,data,approval,accepted,promptCount){
  standalone.c.importProjektJSON({target:{files:[{}],value:''}});assert.equal(standalone.elements.get('proj-nr').value,'26.0999');assert.equal(standalone.prompts.length,1);checks++;
  // Ein bislang ordnerloser Altstand darf auch beim Verbinden mit einem leeren Ordner nicht still zugeordnet werden.
  for(const approval of [false,true]){
-  const f=fixture({},approval),old=f.c.proben;f.c.neuesteDaten=async()=>null;f.elements.get('proj-nr').value='';
+  const f=fixture({},approval),old=f.c.proben;f.c.projektdateienLesen=async()=>({neueste:null,fest:null,festName:null,datiert:new Map(),datiertNamen:[]});f.elements.get('proj-nr').value='';
   await f.c.oeffnen({name:'26.0101 Muster'});assert.equal(f.prompts.length,1);assert.match(f.prompts[0],/keine Projektnummer/);assert.equal(f.c.proben,old);
   assert.equal(f.elements.get('proj-nr').value,approval?'26.0101':'');assert.equal(f.c.state.proj===f.previous,!approval);checks++;
  }
  // Beim ausdrücklich gewählten Neustart im leeren Zielordner bleibt keine fremde Nummer stehen.
- const empty=fixture({},true);empty.c.neuesteDaten=async()=>null;empty.elements.get('proj-nr').value='26.0999';
+ const empty=fixture({},true);empty.c.projektdateienLesen=async()=>({neueste:null,fest:null,festName:null,datiert:new Map(),datiertNamen:[]});empty.elements.get('proj-nr').value='26.0999';
  await empty.c.oeffnen({name:'26.0101 Muster'});assert.equal(empty.c.proben.length,0);assert.equal(empty.elements.get('proj-nr').value,'26.0101');checks++;
  console.log(`OK F1: ${checks} Projektzuordnungs-Prüfungen (Ordner, JSON, Archiv)`);
 })().catch(e=>{console.error(e);process.exitCode=1;});

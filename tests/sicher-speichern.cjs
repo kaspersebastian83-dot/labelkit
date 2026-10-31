@@ -5,11 +5,13 @@ const assert = require('node:assert/strict'), fs = require('node:fs'), path = re
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const stueck = (von, bis) => { const a = html.indexOf(von), b = html.indexOf(bis, a + von.length); assert.ok(a >= 0 && b > a, 'Abschnitt ' + von); return html.slice(a, b); };
 
-/** Ordner im Speicher; vorOeffnen(name): läuft in createWritable – dort „schreibt ein anderer Rechner“. */
+/** Ordner im Speicher; vorOeffnen(name): läuft in createWritable – dort „schreibt ein anderer Rechner“. Unterordner in d.ordner. */
 function ordner(name, dateien = {}, haken = {}){
   const d = {
-    name, kind: 'directory', dateien,
-    async *values(){ for (const n of Object.keys(dateien)) yield d.handle(n); },
+    name, kind: 'directory', dateien, ordner: {},
+    async *values(){ for (const n of Object.keys(dateien)) yield d.handle(n); for (const n of Object.keys(d.ordner)) yield d.ordner[n]; },
+    async getDirectoryHandle(n, o){ if (!d.ordner[n]){ if (!(o && o.create)) throw Object.assign(Error('fehlt'), { name: 'NotFoundError' }); d.ordner[n] = ordner(n); } return d.ordner[n]; },
+    async removeEntry(n){ if (!(n in dateien)) throw Object.assign(Error('fehlt'), { name: 'NotFoundError' }); delete dateien[n]; },
     handle(n){
       return { name: n, kind: 'file',
         getFile: async () => ({ name: n, text: async () => dateien[n], lastModified: 1 }),
@@ -30,7 +32,7 @@ function laden(antworten = []){
   vm.createContext(ctx); vm.runInContext(stueck('/* Sicher speichern', 'async function schnellSpeichern(){'), ctx);
   return { ctx, fragen };
 }
-const JSON_NAME = '99.9001_2026-10-29_Daten.json';
+const JSON_NAME = '99.9001_Daten.json';   // feste Projektdatei ab 4.50.0 (Tage, Sicherungen, Übergang: tests/projektdatei.cjs)
 
 (async () => {
   // 1. Geladener Stand, inzwischen von einem anderen Fenster geändert → Rückfrage; Abbrechen lässt die Datei unverändert
@@ -46,6 +48,7 @@ const JSON_NAME = '99.9001_2026-10-29_Daten.json';
     const d = ordner('Laboraufträge', { [JSON_NAME]: '{"synthetisch":"B"}' }), { ctx } = laden([true]);
     ctx.jsonStandMerken(d, JSON_NAME, '{"synthetisch":"A"}');
     await ctx.sicherSpeichern(d, JSON_NAME, '{"synthetisch":"C"}'); assert.equal(d.dateien[JSON_NAME], '{"synthetisch":"C"}');
+    assert.deepEqual(Object.values(d.ordner._LabelKit_Sicherungen.dateien), ['{"synthetisch":"B"}'], 'überschriebener fremder Stand liegt in den Sicherungen');
   }
   // 3. Eigene Folge-Speicherungen fragen nicht; nie geladene vorhandene Datei fragt; leere Datei (gescheitertes Anlegen) nicht
   {
@@ -53,7 +56,7 @@ const JSON_NAME = '99.9001_2026-10-29_Daten.json';
     await ctx.sicherSpeichern(d, JSON_NAME, '{"n":1}'); await ctx.sicherSpeichern(d, JSON_NAME, '{"n":2}');
     assert.equal(d.dateien[JSON_NAME], '{"n":2}'); assert.equal(fragen.length, 0);
     const fremd = ordner('Laboraufträge', { [JSON_NAME]: '{"vorher":true}' });
-    await ctx.sicherSpeichern(fremd, JSON_NAME, '{"n":3}'); assert.match(fragen[0], /nicht von dort geladen/);
+    await ctx.sicherSpeichern(fremd, JSON_NAME, '{"n":3}'); assert.match(fragen[0], /nichts von dort geladen/);
     const h = { schreibFehler: true }, leer = ordner('Laboraufträge', {}, h);
     await assert.rejects(ctx.sicherSpeichern(leer, JSON_NAME, '{"n":4}'), /Schreibfehler/);
     assert.equal(leer.dateien[JSON_NAME], '', 'leere Datei bleibt nach dem Fehler');
@@ -90,11 +93,12 @@ const JSON_NAME = '99.9001_2026-10-29_Daten.json';
       parse: n => ({ nr: n.slice(0, 7), ort: 'Synthetisch' }), subdir: async d => lab(d.name), LAB_DIR: 'Laboraufträge',
       proben: [], chloridProben: [], asbestProben: [], sonstigeProben: [], brandgeruchProben: [], pn98Proben: [], feldprotokolle: [], projektStatus: { dirty: false },
       window: {}, document: { getElementById: el }, projektZuordnungPruefen: () => true, ladePj: async () => {}, updateProjekt: () => {}, kuerzelAuswahl: () => {}, namenAuswahl: () => {},
-      fbeKuerzel: () => 'AA', markSaved: () => {}, zeigen: () => {}, PROJEKT_URL: { setzen: () => {} }, flash: () => {}, alert: m => { throw Error(m); }, confirm: () => true, jsonStandMerken: () => {} };
+      fbeKuerzel: () => 'AA', markSaved: () => {}, zeigen: () => {}, PROJEKT_URL: { setzen: () => {} }, flash: () => {}, alert: m => { throw Error(m); }, confirm: () => true, projektStandMerken: () => {}, projektdateiName: n => n + '_Daten.json', SICHERUNGEN: '_LabelKit_Sicherungen', hinweis: () => {}, esc: t => t };
     c.applyProjektData = (data, nr) => { c.proben = JSON.parse(JSON.stringify(data.proben)); el('proj-nr').value = nr; };
     vm.createContext(c); vm.runInContext(stueck('function renummerieren(){', 'function editProbeNr('), c); // Migrationsprüfung (4.49.0)
-    vm.runInContext(stueck('  async function neuesteDaten(lab){', '  async function ausZentrale(name){') + '\nthis.oeffnen = oeffnen;', c);
-    c.neuesteDaten = async l => datei(l.projekt.slice(0, 7), 'Synthetisch ' + l.projekt.slice(8), l.projekt.startsWith('99.9001'));
+    vm.runInContext(stueck('  let oeffnenLauf=0;', '  async function ausZentrale(name){') + '\nthis.oeffnen = oeffnen;', c);
+    c.projektdateienLesen = async l => { const f = datei(l.projekt.slice(0, 7), 'Synthetisch ' + l.projekt.slice(8), l.projekt.startsWith('99.9001'));
+      const text = await f.text(); return { neueste: { name: f.name, text, lastModified: 1, fest: true, datiert: false }, fest: text, festName: f.name, datiert: new Map(), datiertNamen: [] }; };
     const a = c.oeffnen({ name: '99.9001 A' }); await erreicht;
     await c.oeffnen({ name: '99.9002 B' }); c.proben[0].z2 = 'B – noch nicht gespeichert'; c.projektStatus.dirty = true;
     weiter(); await a;
