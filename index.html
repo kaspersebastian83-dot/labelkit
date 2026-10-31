@@ -6892,18 +6892,22 @@ function fokusPrev(){
 }
 
 // ── VERBESSERTE SCHNELLEINGABE ────────────────────────
+// Geführte Eingabe läuft nur über nicht stornierte Proben: Nachbar, Fortschritt und „von oben“ beziehen sich darauf.
+function schnellVorher(i){let j=i-1;while(j>=0&&istStorniert(proben[j]))j--;return j;}
+function schnellNachher(i){let j=i+1;while(j<proben.length&&istStorniert(proben[j]))j++;return j<proben.length?j:-1;}
 function loadSchnell(){
-  const p=proben[schnellIdx];if(!p){closeSchnell();return}
-  const total=proben.length;
-  const pct=Math.round((schnellIdx/total)*100);
+  const p=proben[schnellIdx];if(!p||istStorniert(p)){closeSchnell();return}
+  const aktivIdx=proben.map((x,i)=>istStorniert(x)?-1:i).filter(i=>i>=0);
+  const pos=aktivIdx.indexOf(schnellIdx),total=aktivIdx.length,vorher=schnellVorher(schnellIdx);
+  const pct=Math.round((pos/total)*100);
   document.getElementById('schnell-nr').textContent='Probe '+getProbeNr(schnellIdx);
-  document.getElementById('schnell-progress').textContent=(schnellIdx+1)+' / '+total;
+  document.getElementById('schnell-progress').textContent=(pos+1)+' / '+total;
   document.getElementById('schnell-progress-bar').style.width=pct+'%';
   // Ampel-Status
   const kl=ampelKlasse(p);
   const labels={'ampel-gruen':'Vollständig','ampel-gelb':'Fast fertig','ampel-rot':'Felder fehlen'};
   document.getElementById('schnell-ampel-info').innerHTML='<span style="font-size:12px">'+labels[kl]+'</span>'
-    +(schnellIdx>0&&proben[schnellIdx-1].z2?'<button class="btn-datum-oben" onclick="schnellVonOben()" style="margin-left:8px">↑ Felder von oben</button>':'');
+    +(vorher>=0&&proben[vorher].z2?'<button class="btn-datum-oben" onclick="schnellVonOben()" style="margin-left:8px">↑ Felder von oben</button>':'');
   document.getElementById('s-datum').value=p.datum?fmtDatum(p.datum):'';
   document.getElementById('s-z2').value=p.z2||'';
   document.getElementById('s-z3').value=p.z3||'';
@@ -6911,12 +6915,12 @@ function loadSchnell(){
   document.getElementById('s-matrix').value=p.matrix||'Wischprobe';
   document.getElementById('s-cm2').value=p.cm2||'';
   document.getElementById('s-notiz').value=p.notiz||'';
-  document.getElementById('schnell-next-btn').textContent=schnellIdx<proben.length-1?'Weiter →':'✓ Fertig';
-  document.getElementById('schnell-prev-btn').disabled=schnellIdx===0;
+  document.getElementById('schnell-next-btn').textContent=schnellNachher(schnellIdx)>=0?'Weiter →':'✓ Fertig';
+  document.getElementById('schnell-prev-btn').disabled=vorher<0;
 }
 
 function schnellSave(){
-  const p=proben[schnellIdx];if(!p)return;
+  const p=proben[schnellIdx];if(!p||istStorniert(p))return;
   setDatumValue(p,document.getElementById('s-datum').value);
   p.z2=document.getElementById('s-z2').value;
   p.z3=document.getElementById('s-z3').value;
@@ -6929,8 +6933,8 @@ function schnellSave(){
 }
 
 function schnellVonOben(){
-  if(schnellIdx<1)return;
-  const q=proben[schnellIdx-1];
+  const vorher=schnellVorher(schnellIdx);if(vorher<0)return;
+  const q=proben[vorher];
   document.getElementById('s-datum').value=q.datum?fmtDatum(q.datum):'';
   document.getElementById('s-z2').value=q.z2||'';
   document.getElementById('s-z3').value=q.z3||'';
@@ -6941,15 +6945,14 @@ function schnellVonOben(){
 
 function schnellNext(){
   schnellSave();
-  schnellIdx++;
-  while(schnellIdx<proben.length&&istStorniert(proben[schnellIdx]))schnellIdx++; // stornierte überspringen
-  if(schnellIdx>=proben.length){closeSchnell();flash('Geführte Eingabe abgeschlossen ✓');}
-  else{loadSchnell();setTimeout(()=>document.getElementById('s-datum').focus(),60);}
+  const naechste=schnellNachher(schnellIdx); // stornierte überspringen
+  if(naechste<0){schnellIdx=proben.length;closeSchnell();flash('Geführte Eingabe abgeschlossen ✓');}
+  else{schnellIdx=naechste;loadSchnell();setTimeout(()=>document.getElementById('s-datum').focus(),60);}
 }
 
 function schnellPrev(){
   schnellSave();
-  let i=schnellIdx-1;while(i>=0&&istStorniert(proben[i]))i--;
+  const i=schnellVorher(schnellIdx);
   if(i>=0){schnellIdx=i;loadSchnell();setTimeout(()=>document.getElementById('s-datum').focus(),60);}
 }
 

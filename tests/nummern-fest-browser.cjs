@@ -123,6 +123,17 @@ const name = process.argv[2] || 'chromium';
     await page.evaluate(d => { applyProjektData(d); }, gespeichert);
     assert.deepEqual(await nr(), {pak: [1, 2, 3, 5], cl: [4, 6]});
 
+    // Geführte Eingabe: stornierte Proben zählen nicht, „↑ Felder von oben“ nimmt die letzte nicht stornierte
+    await page.evaluate(() => { probeStornieren(proben[1], {grund: 'Test'}); proben[2].z2 = ''; renderTable(); schnellIdx = 2; document.getElementById('modal-schnell').classList.add('open'); loadSchnell(); });
+    assert.equal(await page.locator('#schnell-progress').textContent(), '2 / 3', 'Fortschritt ohne stornierte Probe');
+    assert.equal(await page.locator('#schnell-prev-btn').isDisabled(), false);
+    await page.getByRole('button', {name: '↑ Felder von oben'}).click();
+    assert.equal(await page.locator('#s-z2').inputValue(), 'Raum A', 'von oben: Raum A, nicht die stornierte Raum B');
+    await page.locator('#schnell-prev-btn').click();
+    assert.equal(await page.evaluate(() => schnellIdx), 0, 'Zurück überspringt die stornierte Probe');
+    assert.equal(await page.evaluate(() => proben[1].z2), 'Raum B', 'stornierte Probe unverändert');
+    await page.evaluate(() => { closeSchnell(); stornoAufheben(proben[1]); proben[2].z2 = 'Raum C'; renderTable(); });
+
     // Migration: ältere Datei ohne nrSchutz, kein Projektordner offen → im Zweifel fest
     const alt = {version: '4.48.1', projekt: {nr: '26.0999'}, probenStartNr: 3, proben: [{id: 1, z2: 'Alt 1'}, {id: 2, z2: 'Alt 2'}], chloridProben: [], asbestProben: [], sonstigeProben: [{id: 1, z2: 'Alt S'}]};
     await page.locator('#import-file').setInputFiles({name: '26.0999_01.10.2026_Daten.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(alt))});
