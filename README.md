@@ -2,7 +2,7 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.51.0** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.52.0** (Änderungen in `CHANGELOG.md`)
 
 ## Neu in 4.37.0 · 24.10.2026
 
@@ -54,7 +54,7 @@ In der **Projektzentrale** ein Projekt wählen und **„Proben erfassen → Labe
 - Die Projektdatei `<Nr>_Daten.json` (ab 4.50.0 ohne Datum, siehe unten) wird beim Öffnen automatisch geladen – liegt keine feste Datei da, wie bisher die neueste `…_Daten.json`.
 - Projektnummer (z. B. `26.0123`) und Schadenort kommen aus dem Ordnernamen; die Kennung steht oben in der Kopfzeile.
 - Der Archivordner wird aus dem gemeinsamen Browser-Speicher der Projektzentrale übernommen (IndexedDB `mosaik-suite`, Schlüssel `archiv`). Nach einem Browserneustart genügt „Zugriff erlauben und öffnen“.
-- „← Projektzentrale“ führt zurück zur Projektübersicht.
+- Zur Projektübersicht: „⌂ Projektzentrale“ in der Spektron-Leiste (eigenes Fenster).
 
 ## PAK-Proben vorbelegen (ab 4.30.7)
 
@@ -125,7 +125,7 @@ Keine echten Projektdaten, Laboraufträge oder Exporte in das öffentliche Repos
 
 ## Entwicklung und Prüfungen
 
-Die App steht in `index.html` (`APP_VERSION`, derzeit 4.51.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
+Die App steht in `index.html` (`APP_VERSION`, derzeit 4.52.0). Ausgangsversion dieses Repositorys war 4.23.5; alle Änderungen seitdem stehen in `CHANGELOG.md`.
 
 Mit Node.js aus dem Repository-Ordner ausführen:
 

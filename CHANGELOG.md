@@ -1,5 +1,11 @@
 # Änderungen
 
+## 4.52.0 – 1. November 2026
+
+- Spektron-Leiste v2: Schritt „BerichtKit · Brandbericht“ bzw. „· Asbestbericht“, wenn BerichtKit sich die Berichtsart des Projekts gemerkt hat (der Link öffnet genau diese); Haken bei BerichtKit nur für einen gespeicherten Bericht dieser Art, dessen Datei noch in „Mitteilungen“ liegt (Projekte ohne BerichtKit-Angaben wie bisher nach dem Dateinamen). Nach dem gespeicherten Bericht heißt der Knopf „Weiter: Ans Büro übergeben →“ (Projektzentrale, eigenes Fenster). „Weiter“ nennt im Tooltip Ziel und Grund. Keine Nummern mehr an den Schritten (✓ reicht), die eigene App ist deutlicher markiert, „Aktuelles Projekt“ im Projektmenü lädt nicht mehr neu.
+- Oben links „← Projektzentrale“ entfernt (es öffnete die Projektzentrale im LabelKit-Fenster) – „⌂ Projektzentrale“ in der Leiste öffnet sie im eigenen Fenster.
+- Projektdatei unverändert.
+
 ## 4.51.0 – 31. Oktober 2026
 
 - **Auftragsübersicht und Schnittplan machen Nummern fest** (Entscheidung zum Workflow-Review, Befund 1): Beim Erzeugen der Auftragsübersicht (PDF/HTML) wird die Nummer aller darin stehenden Proben fest (🔒), beim Schnittplan („→ P{Nr}“) die der Proben, die im Schnittplan vorkommen. Gezeichnet wird mit den aktuellen Nummern – genau denen, die beim Festlegen bleiben; fest werden sie erst, wenn die Übersicht bzw. der Schnittplan wirklich gespeichert, heruntergeladen oder geöffnet wird. Abbrechen im Auswahlfenster, eine geschlossene Ordnerauswahl oder ein blockiertes Fenster ändern nichts (kein „ungespeichert“, Rückgängig bleibt). Ist das Fenster der Auftragsübersicht blockiert, sagt LabelKit das jetzt, statt still nichts zu öffnen. Anlass in der Projektdatei (`nrFest.anlass`): „Auftragsübersicht“ bzw. „Schnittplan“. Sonst unverändert: neue Proben bekommen max + 1, ✕ an einer festen Probe storniert, stornierte Proben stehen weder in der Übersicht noch im Schnittplan.
