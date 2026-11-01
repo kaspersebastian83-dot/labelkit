@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
 const playwright = require('playwright');
+const ui = require('./lk-ui.cjs');   // einfache Oberfläche (5.0): Kachel, Schritt, „Mehr …“
 const name = process.argv[2] || 'chromium';
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
 (async () => {
@@ -22,8 +23,8 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
   await page.waitForSelector('#modal-browser-hinweis[open]', {timeout: 3000}).catch(() => {});
   await page.evaluate(() => { document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open')); document.querySelectorAll('dialog[open]').forEach(d => d.close()); });
   assert.equal(await page.evaluate(() => typeof window.showDirectoryPicker), 'undefined');
-  await page.locator('#main-feldboegen').click();
-  await page.locator('#sub-fbe').click();
+  await ui.art(page, 'feldboegen');
+  await ui.fbErfassen(page);
   await page.locator('#fbe-kuerzel').fill('SK');
   await page.locator('#fbe-neu-nr').fill('26.0123');
   // laufende Nummer folgt dem Formular: AS-01 vergeben, dann Schimmelpilze wählen → 01, nicht 02
@@ -38,7 +39,7 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
   await page.locator('#tab-feldboegen-erfassen .fbe-neu button', {hasText: 'Abbrechen'}).click();
   // Speichern: nur Feldprotokolle vorhanden → Projektdatei wird heruntergeladen und enthält die Erfassung
   const dl = page.waitForEvent('download', {timeout: 8000});
-  await page.locator('#tab-feldboegen-erfassen button', {hasText: 'Speichern'}).click();
+  await page.locator('#btn-zwischenstand-speichern').click();   // 5.0: „Speichern“ unten rechts (früher auch im Feldprotokoll)
   const d = await dl;
   const json = JSON.parse(fs.readFileSync(await d.path(), 'utf8'));
   assert.equal(json.feldprotokolle.length, 1);

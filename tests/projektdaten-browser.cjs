@@ -49,11 +49,11 @@ const PROJ = '26.0142 Köln & Süd + 50% #Hof';
       q.onsuccess = () => { const t = q.result.transaction('kv', 'readwrite'); t.objectStore('kv').put(archiv, 'archiv'); t.oncomplete = () => res(); t.onerror = () => rej(t.error); }; q.onerror = () => rej(q.error); });
   }, PROJ);
   await page.goto(url + '?projekt=' + encodeURIComponent(PROJ));
-  await page.waitForSelector('#pj-info:not([hidden])', {timeout: 8000});
+  await page.waitForSelector('#pj-info:not([hidden])', {state: 'attached', timeout: 8000});   // 5.0: im Dialog „Projektnummer und Startnummer“
   assert.equal(new URL(page.url()).searchParams.has('projekt'), false, 'alter Query-Link bereinigt');
   assert.equal(new URLSearchParams(new URL(page.url()).hash.slice(1)).get('projekt'), PROJ);
   await page.goto(url + '?projekt=falsch&ansicht=liste#fotos&projekt=' + encodeURIComponent(PROJ));
-  await page.waitForSelector('#pj-info:not([hidden])', {timeout: 8000});
+  await page.waitForSelector('#pj-info:not([hidden])', {state: 'attached', timeout: 8000});   // 5.0: im Dialog „Projektnummer und Startnummer“
   assert.equal(new URL(page.url()).searchParams.has('projekt'), false, 'Fragment gewinnt vor altem Query-Projekt');
   assert.equal(new URL(page.url()).searchParams.get('ansicht'), 'liste');
   assert.ok(new URL(page.url()).hash.startsWith('#fotos&'), 'fremdes Fragment erhalten');

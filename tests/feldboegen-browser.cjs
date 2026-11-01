@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const {pathToFileURL} = require('node:url');
 const playwright = require('playwright');
+const ui = require('./lk-ui.cjs');   // einfache Oberfläche (5.0): Kachel, Schritt, „Mehr …“
 
 const name = process.argv[2] || 'chromium';
 const url = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
@@ -24,8 +25,8 @@ const url = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
     document.querySelectorAll('dialog[open]').forEach(d => d.close());
   });
 
-  await page.locator('#proj-nr').fill('26.0142');
-  await page.locator('#main-feldboegen').click();
+  await ui.projNr(page, '26.0142');
+  await ui.art(page, 'feldboegen');
   await page.locator('#fb-preview .fb-page').first().waitFor();
   const state = () => page.evaluate(() => ({
     pages: document.querySelectorAll('#fb-preview .fb-page').length,

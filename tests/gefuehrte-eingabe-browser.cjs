@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
 const playwright = require('playwright');
+const ui = require('./lk-ui.cjs');   // einfache Oberfläche (5.0): Geführte Eingabe und Karten-Ansicht unter „Mehr …“
 const name = process.argv[2] || 'chromium';
 (async () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
@@ -37,8 +38,10 @@ const name = process.argv[2] || 'chromium';
     const guided = page.locator('#modal-schnell'), panel = page.locator('#fokus-panel');
     const closePanel = () => panel.locator('.fokus-panel-header button').click();
     const cards = page.locator('.probe-karte'), edits = cards.locator('button.karte-bearbeiten');
-    const start = page.getByRole('button', {name: 'Geführte Eingabe', exact: true});
-    assert.equal(await start.isVisible(), true);
+    // 5.0: „Geführte Eingabe“ und „Karten-Ansicht“ stehen unter „Mehr …“ (unten links); im Leer-Zustand bleibt der große Knopf.
+    const mehrKnopf = page.locator('#lk-mehr');
+    const start = {click: () => ui.mehr(page, 'lk-m-gefuehrt')};
+    assert.equal(await mehrKnopf.isVisible(), true);
     // Leerer Einstieg nutzt unverändert openSchnell(): genau eine neue Probe.
     await page.getByRole('button', {name: 'Geführte Eingabe starten', exact: true}).click();
     assert.equal(await guided.locator('h2').textContent(), 'Geführte Eingabe');
@@ -96,7 +99,7 @@ const name = process.argv[2] || 'chromium';
     assert.match(await page.locator('#flash').textContent(), /Geführte Eingabe abgeschlossen/);
     assert.equal((await samples()).length, 3);
     assert.deepEqual((await state()).undo, before.undo, 'Die Eingabe fügt wie bisher keinen eigenen Undo-Schritt hinzu');
-    await page.locator('#btn-karten-ansicht').click();
+    await ui.mehr(page, 'lk-m-karten');
     assert.equal(await cards.count(), 3); assert.equal(await edits.count(), 3);
     for (let i = 0; i < 3; i++) {
       const p = (await samples())[i];
@@ -173,10 +176,10 @@ const name = process.argv[2] || 'chromium';
     await cards.nth(1).locator('.karte-nr').dblclick();
     assert.equal(await page.locator('#fp-z2').inputValue(), 'OG Testraum');
     await closePanel();
-    await page.locator('#btn-karten-ansicht').click();
+    await ui.mehr(page, 'lk-m-karten');
     await page.locator('#proben-tbody tr').nth(1).locator('td').nth(2).dblclick();
     assert.equal(await page.locator('#fp-z2').inputValue(), 'OG Testraum');
-    await closePanel(); await page.locator('#btn-karten-ansicht').click();
+    await closePanel(); await ui.mehr(page, 'lk-m-karten');
     // Tab-Reihenfolge (WebKit richtet native Buttons nach der Plattform-Einstellung aus).
     await edits.first().focus();
     await page.keyboard.press('Tab');
@@ -257,14 +260,14 @@ const name = process.argv[2] || 'chromium';
     await page.waitForFunction(() => projektStatus.geladen === 'Datei');   // geladen = noch nicht im Projektordner (4.50.0)
     assert.equal(importExpected, false);
     assert.deepEqual((await state()).data, written);
-    if (!(await edits.count())) await page.locator('#btn-karten-ansicht').click();
+    if (!(await edits.count())) await ui.mehr(page, 'lk-m-karten');
     await edits.nth(1).click();
     assert.equal(await page.locator('#fp-z2').inputValue(), 'OG gezielt bearbeitet');
     assert.equal(await page.locator('#fp-notiz').inputValue(), 'Nur diese Probe ändern');
     await closePanel();
     // Entfernen, Hinzufügen, Startnummer ändern: Karte und Panel bleiben an derselben Probe.
     await page.evaluate(() => {removeProbe(proben[0].id); addProbe({z2: 'Neue Testprobe'});});
-    await page.locator('#probe-startnr').fill('20');
+    await ui.mehr(page, 'lk-m-projnr'); await page.locator('#probe-startnr').fill('20'); await page.locator('#lk-dlg-projekt [data-zu]').click();   // 5.0: Dialog „Projektnummer und Startnummer“
     assert.equal(await cards.first().locator('.karte-nr').textContent(), 'Probe 20');
     await edits.first().click();
     assert.equal(await page.locator('#fokus-titel').textContent(), 'Probe 20 bearbeiten');
@@ -272,7 +275,7 @@ const name = process.argv[2] || 'chromium';
     assert.equal(await page.evaluate(() => proben[fokusIdx].id), 83);
     await closePanel();
     // Bestehendes Undo bleibt gleich: Startnummer, Hinzufügen und Entfernen rückgängig.
-    await page.locator('#btn-karten-ansicht').focus();
+    await mehrKnopf.focus();
     await page.keyboard.press('Control+z');
     assert.equal(await cards.first().locator('.karte-nr').textContent(), 'Probe 7');
     await page.keyboard.press('Control+z');
@@ -293,7 +296,7 @@ const name = process.argv[2] || 'chromium';
     for (const width of [1280, 390]) {
       await page.setViewportSize({width, height: 900});
       await page.evaluate(() => window.scrollTo({left: 0, top: scrollY}));
-      await start.scrollIntoViewIfNeeded(); await inViewport(start);
+      await inViewport(mehrKnopf);
       for (let i = 0; i < 3; i++) {
         await cards.nth(i).scrollIntoViewIfNeeded();
         await inViewport(cards.nth(i)); await inViewport(edits.nth(i));

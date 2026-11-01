@@ -1,5 +1,20 @@
 # Änderungen
 
+## 5.0.0 – 1. November 2026 · einfache Oberfläche (Spektron Schritt 3)
+
+Neue Oberfläche nach dem Entwurf „Spektron – einfache Oberfläche“ (Artboards „LabelKit“ und „Grundmuster“), Plan `labelkit-schritt3-plan.md` (Entscheidungen E1–E16). **Nur die Oberfläche** – Daten, Nummern, Exporte und die Verbindung zu den anderen Apps sind unverändert.
+
+- **Kopfband** wie in BerichtKit und FotoKit (Spektron-Leiste v3 mit `kopfband: true`); eigener App-Kopf, Wasserzeichen und die schwebende Workflow-Leiste entfallen.
+- **Drei Schritte statt 9 Reiter × 3 Unter-Reiter:** ① Proben erfassen – Probenart als große Kachel mit Zähler (erfasst · unvollständig · storniert), darunter eine Tabelle; Sonstige, Bohrkerne, PN 98 und Feldbögen unter „+ Weitere Art …“, bis sie etwas enthalten. ② Etiketten drucken – alle Arten untereinander, Hauptaktion „Alle Etiketten drucken“, Schnittpläne hier. ③ Laborauftrag abschließen – Projektprüfung, je Art „Kopieren (für Eurofins)“ · Excel · Drucken, Auftragsübersicht, Brandgeruch- und PN 98-Protokolle, Hauptaktion „Laborauftrag speichern“ (= bisher „Alle EOL + Projektdatei speichern“, dieselben Dateien).
+- **Fußleiste** mit „Mehr …“ (Vorbelegung, Geführte Eingabe, Karten-Ansicht, Vorlagen, Alle <Art> löschen, Projektnummer und Startnummer, Projektdatei laden, Archiv, Projektordner, Projektdaten neu einlesen, Projekt zurücksetzen, Druckeinstellungen, Kurzanleitung, Version; Handbuch/Rückmeldung/Alle Projekte von der Leiste), Speicherstand + „Speichern“ (Strg+S, wie bisher „Zwischenstand speichern“), gelbe Pille „n Proben unvollständig“ (springt zur nächsten gelben Stelle), einer Hauptaktion.
+- **Tabelle:** Datum, Projektnummer und (PAK/Chlorid) Matrix stehen einmal über der Tabelle, wenn sie bei allen Proben gleich sind („Spalten zeigen“ blendet sie ein); „kopieren · löschen“ als Wörter (bei fester Nummer „stornieren“); Griff und „↑ von oben“ beim Überfahren; Ampel-Punkt entfällt (gelbe Felder + Zähler).
+- **Vorbelegung** je Art als Dialog mit den bisherigen Feldern und Knöpfen; „+ 10“ geht darin auf. „Chlorid-Bohrmehl“ bleibt sichtbar über der Sonstige-Tabelle. Angehakte PAK-Proben: Leiste „→ Als Chlorid-Wischproben übernehmen“.
+- Zusammengelegt: 6× „Laden“ → „Projektdatei laden …“; „Neue Proben“/„Alle löschen“/„PAK-Proben zurücksetzen …“ → „Alle <Art> löschen …“; „☑ Alle“ → Kopf-Häkchen; „💾 Speichern“ im Feldprotokoll → „Speichern“ unten.
+- Entfallen (nur Darstellung): Panel „Erscheinungsbild“, Effekte (Ripple, Kippen, Filmkorn, Scroll-Fortschritt …), nummerierte Blöcke, Statistik-Karten, 7× „→ Abschließen“.
+- Spektron-Look v1 (byte-gleich mit BerichtKit/FotoKit), Leistenfarbe #5469b8. IBM Plex bleibt eingebettet (Feldbogendruck).
+- Kleinigkeit: fehlende Öffnungs-Tags im Changelog-Fenster ergänzt (der „Schließen“-Knopf stand sonst unten auf der Seite).
+- Projektdatei unverändert (Versionsstempel 5.0.0).
+
 ## 4.52.1 – 1. November 2026
 
 - Spektron-Leiste v3 (Block `MOSAIK-LEISTE v3`, byte-gleich mit BerichtKit): kann das neue Kopfband (`MosaikLeiste.start(…, {kopfband: true})`) und das Menü „Mehr …“ (`MosaikLeiste.mehr`). LabelKit schaltet das Kopfband **nicht** ein – Optik und Verhalten der Leiste bleiben wie 4.52.0. Projektdatei unverändert.
