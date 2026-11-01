@@ -146,6 +146,18 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
     const vorher = await page.evaluate(() => proben.length);
     await page.locator('#lk-mehr').focus(); await page.keyboard.press('Control+Enter');
     assert.equal(await page.evaluate(() => proben.length), vorher, 'Strg+Enter nur in Schritt 1');
+    // „Alle Etiketten drucken“: blockiertes Fenster zählt nicht; gedruckt gilt nur für genau diesen Stand der Proben
+    await page.evaluate(() => { window.__open = window.open; window.open = () => null; window.alert = () => {}; });
+    await page.locator('#lk-haupt').click();
+    assert.equal(await page.locator('#lk-haupt').innerText(), 'Alle Etiketten drucken →', 'blockiertes Druckfenster: noch nicht gedruckt');
+    await page.evaluate(() => { window.open = () => ({document: {open() {}, write() {}, close() {}}, focus() {}, print() {}, close() {}}); });
+    await page.locator('#lk-haupt').click();
+    assert.equal(await page.locator('#lk-haupt').innerText(), 'Weiter zum Laborauftrag →', 'nach dem Druck weiter');
+    await ui.schritt(page, 1);
+    await page.evaluate(() => { proben[0].z2 = 'EG Testraum geändert'; renderTable(); });
+    await ui.schritt(page, 2);
+    assert.equal(await page.locator('#lk-haupt').innerText(), 'Alle Etiketten drucken →', 'geänderte Probe: Etiketten wieder offen');
+    await page.evaluate(() => { window.open = window.__open; });
     // Schritt 3: Prüfung, Übergaben je Art, Weitere Unterlagen; kritische Probleme → „Erst … beheben“ + „Trotzdem speichern …“
     await page.locator('#lk-neben').click();
     await page.waitForFunction(() => document.body.dataset.lkSchritt === '3');

@@ -3993,6 +3993,7 @@ function formatZeit(d){
 }
 
 function updateProjektStatus(){
+  if(typeof lkFussNeu==='function')lkFussNeu();   // 5.0: Hauptaktion folgt dem Speicherstand (z. B. nach „Laborauftrag speichern“)
   const el=document.getElementById('header-save-status');if(!el)return;
   if(speichernAktiv||speicherHinweis){
     el.textContent=speichernAktiv?'Wird gespeichert …':speicherHinweis;
@@ -11995,7 +11996,8 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true });   // 5.0:
     if(n===1&&schritt()===1){zeichnen();return;}
     if(schritt()!==n)lkSchritt(n,{bleiben:true});
   };
-  let sichtTimer=0;
+  let sichtTimer=0,fussTimer=0;
+  window.lkFussNeu=function(){clearTimeout(fussTimer);fussTimer=setTimeout(()=>{try{fussZeichnen();}catch(e){}},0);};
   window.lkNachZeichnen=function(){
     zeichnen();
     if(schritt()!==1){clearTimeout(sichtTimer);sichtTimer=setTimeout(()=>{if(schritt()===2)schritt2();else if(schritt()===3)schritt3();zeichnen();},120);}
@@ -12127,9 +12129,9 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true });   // 5.0:
     }else if(n===2){
       const hat=etikettListen().some(([,,l])=>aktiv(l).length)||kerneAnzahl()>0;
       if(!hat){H.textContent='Weiter zum Laborauftrag →';H.onclick=()=>lkSchritt(3);}
-      else if(gedruckt!==pkey()){
+      else if(gedruckt!==etikettStand()){
         H.textContent='Alle Etiketten drucken →';H.title='Alle Etiketten aller Probenarten zusammen drucken – die Probennummern werden dabei fest';
-        H.onclick=()=>{if(alleDrucken())gedruckt=pkey();zeichnen();};
+        H.onclick=()=>{if(alleDrucken())gedruckt=etikettStand();zeichnen();};
         N.hidden=false;N.textContent='Weiter zum Laborauftrag';N.onclick=()=>lkSchritt(3);
       }else{
         H.textContent='Weiter zum Laborauftrag →';H.onclick=()=>lkSchritt(3);
@@ -12156,6 +12158,14 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true });   // 5.0:
       P.hidden=!z.offen;
       if(z.offen){P.textContent=z.offen+(z.offen===1?' Probe unvollständig':' Proben unvollständig')+' →';P.title='Zur nächsten gelben Stelle';}
     }
+  }
+  /* Fingerabdruck der Proben, die Etiketten bekommen: Projekt + alle aktiven PAK/Chlorid/Asbest/Sonstige-Proben (ohne den
+     Auswahlhaken). Ändert sich danach eine Probe, gilt „Alle Etiketten drucken“ wieder als offen. */
+  function etikettStand(){
+    try{
+      const ohne=l=>aktiv(l).map(({checked,...p})=>p);
+      return pkey()+'|'+JSON.stringify([ohne(proben),ohne(chloridProben),ohne(asbestProben),ohne(sonstigeProben)]);
+    }catch(e){return pkey();}
   }
   function alleDrucken(){   // ruft druckenAlleEtiketten unverändert auf; merkt nur, ob das Druckfenster aufging
     const o=window.open;let auf=false;
@@ -12248,7 +12258,7 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true });   // 5.0:
   // Tippen ändert Zähler und Pille, ohne die Tabelle neu zu zeichnen
   let tippTimer=0;
   document.addEventListener('input',e=>{if(e.target.closest('#lk-s1,.lk-dlg,.fokus-panel')){clearTimeout(tippTimer);tippTimer=setTimeout(()=>{kachelnZeichnen();zeilenZeichnen();fussZeichnen();},350);}});
-  document.addEventListener('change',e=>{if(e.target.closest('#proben-tbody .col-check,#lk-s1,.lk-dlg')){clearTimeout(tippTimer);tippTimer=setTimeout(()=>{kachelnZeichnen();zeilenZeichnen();fussZeichnen();},150);}});
+  document.addEventListener('change',e=>{if(e.target.closest('#proben-tbody .col-check,#lk-s1,#lk-s2,#lk-s3,.lk-dlg')){clearTimeout(tippTimer);tippTimer=setTimeout(()=>{kachelnZeichnen();zeilenZeichnen();fussZeichnen();},150);}});
   document.querySelectorAll('.lk-dlg').forEach(d=>d.addEventListener('close',()=>zeichnen()));   // Projektnummer/Vorbelegung geändert
   $('lk-pn98-rechner')?.addEventListener('toggle',e=>{if(e.target.open)ruf('renderPn98Rechner');});
   // Kopfbandhöhe für klebende Elemente (Warnung F7)
