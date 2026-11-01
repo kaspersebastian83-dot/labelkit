@@ -142,6 +142,10 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
     assert.equal(await page.locator('#lk-haupt').innerText(), 'Alle Etiketten drucken →');
     assert.equal(await page.locator('#lk-neben').innerText(), 'Weiter zum Laborauftrag');
     assert.match(await page.locator('#etiketten-output').innerText(), /26\.0911/);
+    // Strg+Enter legt außerhalb von Schritt 1 keine (unsichtbare) PAK-Probe an
+    const vorher = await page.evaluate(() => proben.length);
+    await page.locator('#lk-mehr').focus(); await page.keyboard.press('Control+Enter');
+    assert.equal(await page.evaluate(() => proben.length), vorher, 'Strg+Enter nur in Schritt 1');
     // Schritt 3: Prüfung, Übergaben je Art, Weitere Unterlagen; kritische Probleme → „Erst … beheben“ + „Trotzdem speichern …“
     await page.locator('#lk-neben').click();
     await page.waitForFunction(() => document.body.dataset.lkSchritt === '3');
@@ -174,6 +178,9 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
       const k = await page.locator('.lk-kachel').first().boundingBox();
       assert.ok(k && k.x >= 0 && k.x + k.width <= width + 1, `Kacheln erreichbar bei ${width}px`);
     }
+    // Fußleiste wird nach schmalem Fenster wieder niedrig
+    await page.setViewportSize({width: 1920, height: 900}); await page.waitForTimeout(300);
+    assert.ok((await page.locator('#lk-fuss').boundingBox()).height < 100, 'Fußleiste wieder niedrig bei 1920px');
     assert.deepEqual(errors, []);
     console.log(`OK ${name}: einfache Oberfläche – Kopfband, drei Schritte, Kacheln/Zähler, Spalten zusammengefasst, PAK→Chlorid, Vorbelegung, Sonderarten, „Mehr …“, Schritt 2/3, Teil-Druck, Breiten 1920–390`);
   } finally { await browser.close(); server.close(); }

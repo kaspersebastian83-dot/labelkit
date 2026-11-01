@@ -10,7 +10,7 @@ Neue Oberfläche nach dem Entwurf „Spektron – einfache Oberfläche“ (Artbo
 - **Tabelle:** Datum, Projektnummer und (PAK/Chlorid) Matrix stehen einmal über der Tabelle, wenn sie bei allen Proben gleich sind („Spalten zeigen“ blendet sie ein); „kopieren · löschen“ als Wörter (bei fester Nummer „stornieren“); Griff und „↑ von oben“ beim Überfahren; Ampel-Punkt entfällt (gelbe Felder + Zähler).
 - **Vorbelegung** je Art als Dialog mit den bisherigen Feldern und Knöpfen; „+ 10“ geht darin auf. „Chlorid-Bohrmehl“ bleibt sichtbar über der Sonstige-Tabelle. Angehakte PAK-Proben: Leiste „→ Als Chlorid-Wischproben übernehmen“.
 - Zusammengelegt: 6× „Laden“ → „Projektdatei laden …“; „Neue Proben“/„Alle löschen“/„PAK-Proben zurücksetzen …“ → „Alle <Art> löschen …“; „☑ Alle“ → Kopf-Häkchen; „💾 Speichern“ im Feldprotokoll → „Speichern“ unten.
-- Entfallen (nur Darstellung): Panel „Erscheinungsbild“, Effekte (Ripple, Kippen, Filmkorn, Scroll-Fortschritt …), nummerierte Blöcke, Statistik-Karten, 7× „→ Abschließen“.
+- Entfallen (nur Darstellung): Panel „Erscheinungsbild“, Effekte (Ripple, Kippen, Filmkorn, Scroll-Fortschritt …), schwebende Workflow-Leiste samt „Willkommen zurück“-Streifen (das Wiederöffnen steht unter „Mehr …“ › „Zuletzt bearbeitete Projekte“), nummerierte Blöcke, Statistik-Karten, 7× „→ Abschließen“.
 - Spektron-Look v1 (byte-gleich mit BerichtKit/FotoKit), Leistenfarbe #5469b8. IBM Plex bleibt eingebettet (Feldbogendruck).
 - Kleinigkeit: fehlende Öffnungs-Tags im Changelog-Fenster ergänzt (der „Schließen“-Knopf stand sonst unten auf der Seite).
 - Projektdatei unverändert (Versionsstempel 5.0.0).

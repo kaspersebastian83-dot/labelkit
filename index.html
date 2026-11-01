@@ -939,7 +939,8 @@ html{scroll-behavior:auto;scroll-padding-top:calc(var(--lk-kopf) + 12px);scroll-
 body:not(.lg){background:var(--sp-bg);font-family:var(--sp-font);font-size:15px;color:var(--sp-text);padding-bottom:calc(var(--lk-fuss) + 8px)}
 #wasserzeichen,.app-header[hidden],#lk-alt[hidden],.lk-stash[hidden]{display:none!important}
 body #mosaikLeiste.ml-band{position:sticky;top:0}
-.pj-warning{top:var(--lk-kopf)}
+body .pj-warning{top:var(--lk-kopf)}
+#fokus-overlay{z-index:2147483040!important}
 /* Dialoge und Seitenkarte liegen über dem Kopfband (Leiste: z-index 2147483000) */
 .modal-overlay{z-index:2147483100}
 .fokus-panel{z-index:2147483050}
@@ -1057,7 +1058,7 @@ td.col-del .btn-ghost:disabled{text-decoration:none}
 .lk-notiz{flex:1 1 360px;display:flex;flex-direction:column;gap:6px}
 .lk-notiz label{font-weight:700;font-size:14px}
 /* Fußleiste: Mehr … · Stand · Neben- und Hauptaktion */
-#lk-fuss{position:fixed;left:0;right:0;bottom:0;z-index:900;box-sizing:border-box;min-height:var(--lk-fuss);display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px;padding:12px 40px;background:var(--sp-panel);border-top:1px solid var(--sp-line);box-shadow:0 -2px 10px rgba(0,0,0,.05)}
+#lk-fuss{position:fixed;left:0;right:0;bottom:0;z-index:900;box-sizing:border-box;min-height:84px;display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px;padding:12px 40px;background:var(--sp-panel);border-top:1px solid var(--sp-line);box-shadow:0 -2px 10px rgba(0,0,0,.05)}
 #lk-mehr{height:48px;padding:0 18px;font-size:16px;display:inline-flex;align-items:center;gap:8px}
 .lk-stand{flex:1 1 280px;display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;justify-content:flex-end;min-width:0}
 #lk-fuss #header-save-status{max-width:none;white-space:normal;overflow-wrap:anywhere;font-size:14px;color:var(--sp-ok);background:none;border:0;padding:0;animation:none}
@@ -11994,8 +11995,18 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true });   // 5.0:
     if(n===1&&schritt()===1){zeichnen();return;}
     if(schritt()!==n)lkSchritt(n,{bleiben:true});
   };
-  window.lkNachZeichnen=function(){zeichnen();};
-  window.lkVorbelegung=function(k){const d=$('lk-dlg-vb-'+k);if(d&&!d.open)d.showModal();};
+  let sichtTimer=0;
+  window.lkNachZeichnen=function(){
+    zeichnen();
+    if(schritt()!==1){clearTimeout(sichtTimer);sichtTimer=setTimeout(()=>{if(schritt()===2)schritt2();else if(schritt()===3)schritt3();zeichnen();},120);}
+  };
+  function dlgAuf(d){
+    if(!d||d.open)return;
+    d.showModal();
+    const f=$('flash');if(f){d.appendChild(f);d.addEventListener('close',()=>document.body.appendChild(f),{once:true});}
+  }
+  window.lkDlgAuf=id=>dlgAuf($(id));
+  window.lkVorbelegung=function(k){dlgAuf($('lk-dlg-vb-'+k));};
   /* Drucken einer einzelnen Laborübergabe aus Schritt 3: nur dieser Abschnitt aufs Papier */
   window.lkDruckTeil=function(pid,fn){
     const ziel=$(pid);
@@ -12042,7 +12053,7 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true });   // 5.0:
       const ordner=$('projekt-ordner'),mitOrdner=ordner&&!ordner.hidden;
       fehlt.hidden=!!nr;
       if(!nr)fehlt.innerHTML='<span><b>Projektnummer fehlt.</b> Sie steht auf jedem Etikett und in der Laborübergabe.</span>'
-        +'<button type="button" class="sp-knopf" onclick="document.getElementById(\'lk-dlg-projekt\').showModal()">Projektnummer eintragen …</button>'
+        +'<button type="button" class="sp-knopf" onclick="lkDlgAuf(\'lk-dlg-projekt\')">Projektnummer eintragen …</button>'
         +(mitOrdner?'<button type="button" class="sp-knopf" onclick="document.getElementById(\'projekt-ordner\').click()">Projektordner öffnen …</button>':'');
     }
     // PAK: angehakte → Chlorid (E7)
@@ -12089,7 +12100,7 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true });   // 5.0:
       }
       const zu=!alleSpalten[k];
       if(zu)for(const [nth] of gleich)css+='#'+s.tab+' .table-wrap table tr>:nth-child('+nth+'){display:none}';
-      if(box)setzeZeile(box,'lk-z-gleich-'+k,gleich.length?'<span>Für alle Proben gleich: '+gleich.map(([,l,w])=>l+' <b>'+esc(w)+'</b>').join(' · ')+'</span>'
+      if(box)setzeZeile(box,'lk-z-gleich-'+k,gleich.length?'<span title="Stornierte Proben zählen nicht mit – ihre Werte zeigt „Spalten zeigen“">Für alle Proben gleich: '+gleich.map(([,l,w])=>l+' <b>'+esc(w)+'</b>').join(' · ')+'</span>'
         +'<button type="button" class="lk-link" data-spalten="'+k+'">'+(zu?'Spalten zeigen':'Spalten zusammenfassen')+'</button>':'','');
     }
     let st=$('lk-spalten-css');if(!st){st=document.createElement('style');st.id='lk-spalten-css';document.head.appendChild(st);}
@@ -12118,11 +12129,11 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true });   // 5.0:
       if(!hat){H.textContent='Weiter zum Laborauftrag →';H.onclick=()=>lkSchritt(3);}
       else if(gedruckt!==pkey()){
         H.textContent='Alle Etiketten drucken →';H.title='Alle Etiketten aller Probenarten zusammen drucken – die Probennummern werden dabei fest';
-        H.onclick=()=>{druckenAlleEtiketten();gedruckt=pkey();zeichnen();};
+        H.onclick=()=>{if(alleDrucken())gedruckt=pkey();zeichnen();};
         N.hidden=false;N.textContent='Weiter zum Laborauftrag';N.onclick=()=>lkSchritt(3);
       }else{
         H.textContent='Weiter zum Laborauftrag →';H.onclick=()=>lkSchritt(3);
-        N.hidden=false;N.textContent='Alle Etiketten drucken';N.onclick=()=>druckenAlleEtiketten();
+        N.hidden=false;N.textContent='Alle Etiketten drucken';N.onclick=()=>alleDrucken();
       }
     }else{
       let kritisch=[];try{kritisch=pruefeAbschlussKonsistenz().kritisch||[];}catch(e){}
@@ -12145,6 +12156,12 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true });   // 5.0:
       P.hidden=!z.offen;
       if(z.offen){P.textContent=z.offen+(z.offen===1?' Probe unvollständig':' Proben unvollständig')+' →';P.title='Zur nächsten gelben Stelle';}
     }
+  }
+  function alleDrucken(){   // ruft druckenAlleEtiketten unverändert auf; merkt nur, ob das Druckfenster aufging
+    const o=window.open;let auf=false;
+    window.open=function(){const w=o.apply(window,arguments);auf=auf||!!w;return w;};
+    try{druckenAlleEtiketten();}finally{window.open=o;}
+    return auf;
   }
   async function speichern(force){
     const vor=projektStatus.lastSavedAt;
@@ -12177,7 +12194,7 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true });   // 5.0:
       {id:'lk-m-als-vorlage',text:'Als Vorlage speichern …',hidden:!pak,onclick:()=>saveVorlage()},
       {id:'lk-m-loeschen',text:LOESCH?'Alle '+LOESCH[0]+' löschen …':'',hidden:!LOESCH||s!==1,disabled:a==='pak'&&!!$('btn-pak-reset')?.disabled,onclick:()=>{ruf(LOESCH[1]);},title:'Mit Rückfrage; Proben mit fester Nummer werden storniert, nicht gelöscht'},
       {trenner:true},
-      {id:'lk-m-projnr',text:'Projektnummer und Startnummer …',onclick:()=>$('lk-dlg-projekt').showModal()},
+      {id:'lk-m-projnr',text:'Projektnummer und Startnummer …',onclick:()=>dlgAuf($('lk-dlg-projekt'))},
       {id:'lk-m-nr-alle',text:'Projektnummer in alle Proben übernehmen',onclick:()=>projektNrInProbenUebernehmen(),title:'Aktuelle Projektnummer in alle vorhandenen Proben und Projektfelder übernehmen'},
       {id:'lk-m-heute',text:'Heute in leere Datumsfelder',onclick:()=>heuteInLeereDatumsfelder(),title:'Setzt das heutige Datum in alle leeren Datumsfelder aller Probenarten'},
       {trenner:true},
@@ -12196,9 +12213,9 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true });   // 5.0:
     _pendingDruckFn=null;
     const ok=$('druckprofil-confirm-btn'),alt=ok?ok.textContent:'';
     if(ok)ok.textContent='Verstanden';
-    $('modal-druckprofil').classList.add('open');
-    const zu=()=>{if(!$('modal-druckprofil').classList.contains('open')){if(ok)ok.textContent=alt;clearInterval(t);}};
-    const t=setInterval(zu,400);
+    const m=$('modal-druckprofil');m.classList.add('open');
+    const mo=new MutationObserver(()=>{if(!m.classList.contains('open')){if(ok)ok.textContent=alt;mo.disconnect();}});
+    mo.observe(m,{attributes:true,attributeFilter:['class']});
   }
 
   /* ---------- Verdrahtung ---------- */
@@ -12223,6 +12240,10 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true });   // 5.0:
     if(zu&&!zu.disabled){const d=zu.closest('dialog');if(d&&d.open)d.close();}
   },true);
   $('lk-mehr').addEventListener('click',e=>{e.stopPropagation();mehrOeffnen();});
+  document.addEventListener('keydown',e=>{
+    if(schritt()===1||!(e.ctrlKey||e.metaKey))return;
+    if(e.key==='Enter'||(e.shiftKey&&(e.key==='E'||e.key==='e'))){e.stopImmediatePropagation();}
+  },true);
   $('lk-pille').addEventListener('click',naechsteGelbe);
   // Tippen ändert Zähler und Pille, ohne die Tabelle neu zu zeichnen
   let tippTimer=0;
