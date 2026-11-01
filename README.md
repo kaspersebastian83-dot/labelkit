@@ -6,7 +6,7 @@ Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben
 
 ## Neu in 5.0.0 · 01.11.2026 – einfache Oberfläche
 
-Drei Schritte statt neun Reiter: **① Proben erfassen** (Probenart als Kachel, darunter eine Tabelle) → **② Etiketten drucken** → **③ Laborauftrag abschließen** („Laborauftrag speichern“ legt wie bisher alle Laborübergaben, Protokolle und die Projektdatei in „Laboraufträge“). Oben das Kopfband wie in allen Spektron-Apps, unten links „Mehr …“ für Seltenes (Vorbelegung, Geführte Eingabe, Vorlagen, Laden, Archiv, Druckeinstellungen, Handbuch). Daten und Exporte sind unverändert.
+Drei Schritte statt neun Reiter: **① Proben erfassen** (Probenart als Kachel, darunter eine Tabelle) → **② Etiketten drucken** → **③ Laborauftrag abschließen** („Laborauftrag speichern“ legt wie bisher alle Laborübergaben und Protokolle in „Laboraufträge“, die Projektdatei in „_Spektron/LabelKit“). Oben das Kopfband wie in allen Spektron-Apps, unten links „Mehr …“ für Seltenes (Vorbelegung, Geführte Eingabe, Vorlagen, Laden, Archiv, Druckeinstellungen, Handbuch). Daten und Exporte sind unverändert.
 
 ## Neu in 4.37.0 · 24.10.2026
 
