@@ -1,5 +1,9 @@
 # Änderungen
 
+## 4.52.1 – 1. November 2026
+
+- Spektron-Leiste v3 (Block `MOSAIK-LEISTE v3`, byte-gleich mit BerichtKit): kann das neue Kopfband (`MosaikLeiste.start(…, {kopfband: true})`) und das Menü „Mehr …“ (`MosaikLeiste.mehr`). LabelKit schaltet das Kopfband **nicht** ein – Optik und Verhalten der Leiste bleiben wie 4.52.0. Projektdatei unverändert.
+
 ## 4.52.0 – 1. November 2026
 
 - Spektron-Leiste v2: Schritt „BerichtKit · Brandbericht“ bzw. „· Asbestbericht“, wenn BerichtKit sich die Berichtsart des Projekts gemerkt hat (der Link öffnet genau diese); Haken bei BerichtKit nur für einen gespeicherten Bericht dieser Art, dessen Datei noch in „Mitteilungen“ liegt (Projekte ohne BerichtKit-Angaben wie bisher nach dem Dateinamen). Nach dem gespeicherten Bericht heißt der Knopf „Weiter: Ans Büro übergeben →“ (Projektzentrale, eigenes Fenster). „Weiter“ nennt im Tooltip Ziel und Grund. Keine Nummern mehr an den Schritten (✓ reicht), die eigene App ist deutlicher markiert, „Aktuelles Projekt“ im Projektmenü lädt nicht mehr neu.
