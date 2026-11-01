@@ -2,7 +2,11 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **4.52.1** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **5.0.0** (Änderungen in `CHANGELOG.md`)
+
+## Neu in 5.0.0 · 01.11.2026 – einfache Oberfläche
+
+Drei Schritte statt neun Reiter: **① Proben erfassen** (Probenart als Kachel, darunter eine Tabelle) → **② Etiketten drucken** → **③ Laborauftrag abschließen** („Laborauftrag speichern“ legt wie bisher alle Laborübergaben und Protokolle in „Laboraufträge“, die Projektdatei in „_Spektron/LabelKit“). Oben das Kopfband wie in allen Spektron-Apps, unten links „Mehr …“ für Seltenes (Vorbelegung, Geführte Eingabe, Vorlagen, Laden, Archiv, Druckeinstellungen, Handbuch). Daten und Exporte sind unverändert.
 
 ## Neu in 4.37.0 · 24.10.2026
 
@@ -48,7 +52,7 @@ Alternativ läuft die App auch als einzelne Datei: Repository herunterladen und 
 
 ## Projektordner (ab 4.24)
 
-In der **Projektzentrale** ein Projekt wählen und **„Proben erfassen → LabelKit“** klicken – oder in LabelKit oben **„📁 Projekt“** und den Projektordner (z. B. `26.0123 Köln`) wählen. Danach:
+In der **Projektzentrale** ein Projekt wählen und **„Proben erfassen → LabelKit“** klicken – oder in LabelKit unter **„Mehr …“ › „Projektordner öffnen …“** den Projektordner (z. B. `26.0123 Köln`) wählen. Danach:
 
 - Jeder Ordnerdialog entfällt: Speichern (auch Strg+S), Laborübergaben und Protokolle landen direkt im Unterordner **„Laboraufträge“** des Projekts.
 - Die Projektdatei `<Nr>_Daten.json` (ab 4.50.0 ohne Datum, siehe unten) wird beim Öffnen automatisch geladen – liegt keine feste Datei da, wie bisher die neueste `…_Daten.json`.
@@ -88,7 +92,7 @@ Das Panel übernimmt Feldeingaben weiterhin direkt; **Speichern & Schließen** b
 
 ## Zwischenstand speichern (ab 4.30.8)
 
-Oben steht in jedem Reiter **Zwischenstand speichern**. Die Schaltfläche und **Strg/⌘+S** verwenden denselben Speicherweg und speichern ausschließlich die JSON-Projektdatei – auch wenn Pflichtangaben fehlen. Es entstehen keine Laboraufträge, Druckdokumente oder Textbausteine.
+Unten rechts steht in jedem Schritt **Speichern** (bis 4.52: „Zwischenstand speichern“). Die Schaltfläche und **Strg/⌘+S** verwenden denselben Speicherweg und speichern ausschließlich die JSON-Projektdatei – auch wenn Pflichtangaben fehlen. Es entstehen keine Laboraufträge, Druckdokumente oder Textbausteine.
 
 - Mit geöffnetem Projekt wird wie bisher in **Laboraufträge** gespeichert. Sonst wird ein Speicherordner gewählt und für weitere Speicherungen wiederverwendet.
 - Ohne Ordnerzugriff startet ausschließlich der bestehende JSON-Download. Bitte den Download prüfen; der Browser kann dessen erfolgreiche Ablage nicht bestätigen. Ungespeicherte Änderungen bleiben entsprechend gekennzeichnet.

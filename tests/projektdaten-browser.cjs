@@ -49,11 +49,11 @@ const PROJ = '26.0142 Köln & Süd + 50% #Hof';
       q.onsuccess = () => { const t = q.result.transaction('kv', 'readwrite'); t.objectStore('kv').put(archiv, 'archiv'); t.oncomplete = () => res(); t.onerror = () => rej(t.error); }; q.onerror = () => rej(q.error); });
   }, PROJ);
   await page.goto(url + '?projekt=' + encodeURIComponent(PROJ));
-  await page.waitForSelector('#pj-info:not([hidden])', {timeout: 8000});
+  await page.waitForSelector('#pj-info:not([hidden])', {state: 'attached', timeout: 8000});   // 5.0: im Dialog „Projektnummer und Startnummer“
   assert.equal(new URL(page.url()).searchParams.has('projekt'), false, 'alter Query-Link bereinigt');
   assert.equal(new URLSearchParams(new URL(page.url()).hash.slice(1)).get('projekt'), PROJ);
   await page.goto(url + '?projekt=falsch&ansicht=liste#fotos&projekt=' + encodeURIComponent(PROJ));
-  await page.waitForSelector('#pj-info:not([hidden])', {timeout: 8000});
+  await page.waitForSelector('#pj-info:not([hidden])', {state: 'attached', timeout: 8000});   // 5.0: im Dialog „Projektnummer und Startnummer“
   assert.equal(new URL(page.url()).searchParams.has('projekt'), false, 'Fragment gewinnt vor altem Query-Projekt');
   assert.equal(new URL(page.url()).searchParams.get('ansicht'), 'liste');
   assert.ok(new URL(page.url()).hash.startsWith('#fotos&'), 'fremdes Fragment erhalten');
@@ -66,6 +66,7 @@ const PROJ = '26.0142 Köln & Süd + 50% #Hof';
   // Auftragsschein: nur das Objekt, nicht Auftraggeber oder Schaden-Nr.
   await page.evaluate(() => { proben.push({id: 1, datum: '2026-07-28', z1: '26.0142', z2: 'Küche', z3: 'direkt', z4: 'Glas', matrix: 'Wischprobe', cm2: '100', notiz: ''}); });
   await page.evaluate(() => { switchMainTab('auftrag'); switchTab('auftragsschein', document.getElementById('sub-auftragsschein')); });
+  await page.locator('#lk-auftragsuebersicht summary').click();   // 5.0: Schritt 3 › Weitere Unterlagen › Auftragsübersicht › „Vorschau“
   await page.waitForSelector('#auftragsschein-output');
   const schein = (await page.locator('#auftragsschein-output').textContent()).replace(/\s+/g, ' ');
   assert.match(schein, /Objekt: EFH, Musterweg 7, 52525 Heinsberg/);

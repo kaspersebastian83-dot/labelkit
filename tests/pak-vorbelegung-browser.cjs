@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 const playwright = require('playwright');
+const ui = require('./lk-ui.cjs');   // 5.0: Vorbelegung als Dialog am Tabellenkopf
 const name = process.argv[2] || 'chromium';
 (async () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
@@ -41,8 +42,12 @@ const name = process.argv[2] || 'chromium';
       const saved = JSON.parse(buildProjektSaveData().content); delete saved.gespeichertAm;
       return {saved, undo: [...undoStack], status: {...projektStatus}};
     });
-    const add = page.locator('#btn-pak-hinzufuegen'), fill = page.locator('#btn-pak-leere'), change = page.locator('#btn-pak-aendern');
+    // 5.0: Die Vorbelegung steht im Dialog „Vorbelegung …“ am Tabellenkopf; jede Aktion schließt ihn, also vorher öffnen.
+    const vbAuf = async () => { if (!(await page.locator('#lk-dlg-vb-pak').evaluate(d => d.open))) await page.locator('#tab-eingabe .lk-artknoepfe button', {hasText: 'Vorbelegung …'}).click(); };
+    const knopf = id => ({click: async () => { await vbAuf(); await page.locator(id).click(); }, isDisabled: () => page.locator(id).isDisabled()});
+    const add = knopf('#btn-pak-hinzufuegen'), fill = knopf('#btn-pak-leere'), change = knopf('#btn-pak-aendern');
     const dialog = page.locator('#modal-pak-vorbelegung');
+    await vbAuf();
     await page.locator('#vb-anzahl').fill('2');
     await page.locator('#vb-datum').fill('19.10.2026');
     await page.locator('#vb-cm2').fill('600');
@@ -116,18 +121,18 @@ const name = process.argv[2] || 'chromium';
     await page.waitForFunction(() => proben[0].z1 === '26.0999');
     assert.deepEqual((await state()).saved, after.saved);
     // Bestehende Tastenkürzel funktionieren außerhalb der Bestätigung weiterhin.
-    await page.locator('#btn-pak-hinzufuegen').focus(); await page.keyboard.press('Control+Enter');
+    await page.locator('#lk-mehr').focus(); await page.keyboard.press('Control+Enter');
     assert.equal((await state()).saved.proben.length, 4);
-    await page.locator('#btn-pak-hinzufuegen').focus(); await page.keyboard.press('Control+z');
+    await page.locator('#lk-mehr').focus(); await page.keyboard.press('Control+z');
     assert.equal((await state()).saved.proben.length, 3);
     // Schmale Ansicht: echte Schaltflächenbedienung und Bestätigung erreichbar.
     await page.setViewportSize({width: 390, height: 844});
-    await page.locator('#vb-datum').fill('20.10.2026');
+    await vbAuf(); await page.locator('#vb-datum').fill('20.10.2026');
     await change.click();
     const box = await dialog.boundingBox(); assert.ok(box.x >= 0 && box.x + box.width <= 391);
     await page.locator('#pak-vorbelegung-abbrechen').click();
     // Leere Eingaben ändern keine bestehenden Werte; Hinzufügen bei leerer Liste bleibt möglich.
-    await page.locator('#vb-datum').fill(''); await page.locator('#vb-cm2').fill('');
+    await vbAuf(); await page.locator('#vb-datum').fill(''); await page.locator('#vb-cm2').fill('');
     await page.evaluate(() => {document.getElementById('proj-nr').value = '';});
     before = await state(); await fill.click(); await change.click(); assert.deepEqual(await state(), before);
     assert.equal(await dialog.isVisible(), false);

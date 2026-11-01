@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
 const playwright = require('playwright');
+const ui = require('./lk-ui.cjs');   // 5.0: Abschluss = Schritt 3, Hauptaktion unten rechts
 const name = process.argv[2] || 'chromium';
 (async () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
@@ -34,7 +35,8 @@ const name = process.argv[2] || 'chromium';
     assert.deepEqual(nur(await speichern(null)), {pakPruefberichtNr: '', textblockLabor: '', textblockHeadings: false, textblockBrandTabelle: false}, 'neues Projekt startet leer');
 
     assert.equal(await page.locator('#main-textbausteine').count(), 0, 'Reiter entfernt');
-    assert.equal(await page.locator('#btn-abschluss-speichern').innerText(), 'Alle EOL + Projektdatei speichern');
+    await ui.schritt(page, 3);
+    assert.equal(await page.locator('#lk-haupt').innerText(), 'Laborauftrag speichern →', 'Abschluss heißt jetzt „Laborauftrag speichern“');
     assert.equal(await page.title(), await page.evaluate(() => 'LabelKit v' + APP_VERSION), 'Titel folgt APP_VERSION');
     assert.deepEqual(errors, []);
     console.log(`OK ${name}: Projektdatei behält frühere Textbaustein-Angaben, Reiter entfernt`);

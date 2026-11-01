@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
 const playwright = require('playwright');
+const ui = require('./lk-ui.cjs');   // 5.0: „Alle PAK-Proben löschen …“ und Karten-Ansicht unter „Mehr …“
 const name = process.argv[2] || 'chromium';
 (async () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
@@ -25,8 +26,9 @@ const name = process.argv[2] || 'chromium';
       document.querySelectorAll('dialog[open]').forEach(d => d.close());
       switchMainTab('pak');
     });
+    // Der bisherige Knopf hält weiter den Zustand (aktiv/gesperrt); ausgelöst wird er über „Mehr …“ › „Alle PAK-Proben löschen …“.
     const reset = page.locator('#btn-pak-reset'), dialog = page.locator('#modal-pak-reset');
-    await reset.locator('..').locator('summary').click();
+    const resetKlick = () => ui.mehr(page, 'lk-m-loeschen');
     assert.equal(await reset.isDisabled(), true);
     await page.evaluate(() => {
       document.getElementById('proj-nr').value = '26.0999';
@@ -38,7 +40,7 @@ const name = process.argv[2] || 'chromium';
     const state = () => page.evaluate(() => ({saved: JSON.parse(buildProjektSaveData().content), undo: [...undoStack], status: {...projektStatus}}));
     const before = await state();
     assert.equal(await reset.isEnabled(), true);
-    await reset.click();
+    await resetKlick();
     assert.equal(await dialog.isVisible(), true);
     assert.equal(await page.evaluate(() => document.activeElement.id), 'pak-reset-abbrechen');
     assert.match(await dialog.textContent(), /Alle 2 PAK-Proben.*26.0999/);
@@ -49,7 +51,7 @@ const name = process.argv[2] || 'chromium';
     // Vorhandene Undo-Historie: globale App-Aktionen dürfen im Resetdialog nichts auslösen.
     assert.ok(before.undo.length > 0);
     for (const modifier of ['Control', 'Meta']) {
-      await reset.click();
+      await resetKlick();
       const promptCount = prompts.length, downloadCount = downloads.length;
       for (const shortcut of ['Enter', 'z', 'Shift+E', 's']) {
         await page.keyboard.press(`${modifier}+${shortcut}`);
@@ -82,12 +84,12 @@ const name = process.argv[2] || 'chromium';
       const cancelled = await state(); delete cancelled.saved.gespeichertAm;
       assert.deepEqual(cancelled, baseline);
     }
-    await reset.click(); await page.keyboard.press('Escape');
+    await resetKlick(); await page.keyboard.press('Escape');
     const escaped = await state(); delete escaped.saved.gespeichertAm; assert.deepEqual(escaped, baseline);
-    await reset.click(); await page.keyboard.press('Enter');
+    await resetKlick(); await page.keyboard.press('Enter');
     assert.equal(await dialog.isVisible(), false, 'Enter bestätigt die vorausgewählte ungefährliche Option');
     const entered = await state(); delete entered.saved.gespeichertAm; assert.deepEqual(entered, baseline);
-    await reset.click(); await dialog.getByRole('button', {name: 'PAK-Proben jetzt zurücksetzen', exact: true}).click();
+    await resetKlick(); await dialog.getByRole('button', {name: 'PAK-Proben jetzt zurücksetzen', exact: true}).click();
     const after = await state(); assert.deepEqual(after.saved.proben, []); assert.equal(after.saved.nextId, 1);
     assert.equal(after.undo.length, before.undo.length + 1);
     for (const key of ['chloridProben','asbestProben','sonstigeProben']) {
@@ -140,7 +142,7 @@ const name = process.argv[2] || 'chromium';
     assert.equal((await state()).saved.proben.length, 1);
     assert.equal((await state()).saved.proben[0]._nr, 10);
     await page.evaluate(() => {proben[0].z2 = 'Synthetischer Raum'; renderTable();});
-    await page.locator('#btn-karten-ansicht').click(); assert.equal(await reset.isEnabled(), true);
+    await ui.mehr(page, 'lk-m-karten'); assert.equal(await reset.isEnabled(), true);
     // Tatsächliche JSON- und Laborübergabe-Downloads aus dem unveränderten Exportweg.
     for (const action of ['exportJSON', 'exportExcel']) {
       const [download] = await Promise.all([page.waitForEvent('download'), page.evaluate(fn => window[fn](), action)]);

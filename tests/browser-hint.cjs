@@ -48,30 +48,9 @@ assert.equal(supported.elements.size, 0);
 // Die öffentliche Startdatei darf keine fehlende Panel-Datei mehr benötigen.
 assert.ok(!html.includes('src="tweaks-panel.jsx"'));
 assert.ok(!html.includes('unpkg.com/'));
-const panelScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];
-const controls = {
-  'appearance-color': {value: '#2f6fbf'},
-  'appearance-density': {value: 'standard'}
-};
-for (const control of Object.values(controls)) {
-  control.addEventListener = (name, callback) => {control[name] = callback;};
-}
-const properties = {}, dataset = {};
-vm.runInNewContext(panelScript, {document: {
-  getElementById: id => controls[id], body: {dataset},
-  documentElement: {style: {setProperty: (name, value) => {properties[name] = value;}}}
-}});
-assert.equal(properties['--accent'], '#2f6fbf');
-assert.equal(properties['--gf'], undefined, 'kein Glas-Frost mehr (Liquid Glass entfernt)');
-controls['appearance-color'].value = '#3d7a4e';
-controls['appearance-color'].change();
-assert.equal(properties['--accent'], '#3d7a4e');
-controls['appearance-density'].value = 'kompakt';
-controls['appearance-density'].change();
-assert.equal(dataset.density, 'kompakt');
-controls['appearance-density'].value = 'standard';
-controls['appearance-density'].change();
-assert.equal(dataset.density, undefined);
+// Panel „Erscheinungsbild“ (Akzentfarbe, Dichte) ist mit der einfachen Oberfläche (5.0) entfallen – Farben kommen aus dem Spektron-Look.
+assert.ok(!html.includes('appearance-panel') && !html.includes('appearance-color') && !html.includes('appearance-density'), 'Erscheinungsbild-Panel entfernt');
+assert.match(html, /--sp-app:#5469b8; --sp-app-dunkel:#5469b8/, 'Leistenfarbe LabelKit nach dem Spektron-Look');
 for (const gone of ['lg-toggle', 'pak_liquid_glass', 'cf-canvas', 'body.lg', 'appearance-frost', 'lgMovePill', 'snd-toggle', 'AudioContext', 'pak_sound_muted']) assert.ok(!html.includes(gone), gone + ' ist entfernt');
 console.log('Browser-Hinweis geprüft: Firefox, lokale Datei, Webadresse, Windows und unterstützte Browser.');
-console.log('Erscheinungsbild geprüft: Akzentfarbe und Dichte ohne externe Panel-Abhängigkeiten.');
+console.log('Erscheinungsbild: Spektron-Look mit Leistenfarbe, kein eigenes Panel mehr.');

@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
 const playwright = require('playwright');
+const ui = require('./lk-ui.cjs');   // einfache Oberfläche (5.0): Kachel, Schritt, „Mehr …“
 
 const name = process.argv[2] || 'chromium';
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
@@ -52,11 +53,11 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
     assert.equal(await page.evaluate(() => PROJEKTORDNER.state.proj && PROJEKTORDNER.state.proj.nr), '26.0142', 'Projekt geöffnet');
   }
 
-  // Zum Unterreiter „Erfassen & Scans“
-  await page.locator('#main-feldboegen').click();
+  // Zu „② Ausgefüllte Bögen erfassen“
+  await ui.art(page, 'feldboegen');
   await page.locator('#fb-preview .fb-page').first().waitFor();
   if (kannAblegen) await page.waitForFunction(() => document.getElementById('fb-nr').value !== '');
-  await page.locator('#tab-feldboegen button', {hasText: 'Ausgefüllte Bögen erfassen'}).click();   // Hinweis oben im Reiter führt zur Erfassung
+  await ui.fbErfassen(page);   // Umschalter über der Karte führt zur Erfassung
   await page.locator('#fbe-neu-id').waitFor();
   assert.ok(await page.locator('#sub-fbe').evaluate(b => b.classList.contains('active')), 'Unterreiter ② aktiv');
 
@@ -192,13 +193,13 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'));
   assert.equal(await page.evaluate(() => feldprotokolle.length), 1, 'Entfernen lässt sich rückgängig machen');
 
   // PN 98 (4.27.0): aus dem PN 98-Reiter zum Feldbogen, Probenzahl aus dem Rechner, Erfassung mit Hinweisen
-  await page.locator('#main-pn98').click();
+  await ui.art(page, 'pn98');
   await page.locator('#tab-pn98 button', {hasText: 'Feldbogen PN 98'}).click();
   await page.waitForFunction(() => fbTyp() === 'pn98' && document.getElementById('tab-feldboegen').classList.contains('active'));
   await page.evaluate(() => { document.getElementById('fb-labor').value = 'Labor X'; fbPn98Oeffnen(4); });
   await page.waitForFunction(() => /2 Blätter · 4 Proben · Formular-ID .*-PN-01/.test(document.getElementById('fb-info').textContent));
   assert.match(await page.locator('#fb-preview').textContent(), /Labor X/);
-  await page.locator('#sub-tabs-feldboegen .sub-tab', {hasText: 'Erfassen'}).click();
+  await ui.fbErfassen(page);
   await page.locator('#tab-feldboegen-erfassen button', {hasText: 'Neues Feldprotokoll'}).click();
   await page.locator('input[name="fbe-neu-typ"][value="pn98"]').check();
   assert.equal(await page.locator('#fbe-neu-n-label').textContent(), 'Proben');

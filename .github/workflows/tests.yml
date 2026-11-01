@@ -84,6 +84,8 @@ jobs:
         run: node tests/feldprotokolle-ohne-ordner.cjs ${{ matrix.browser }}
       - name: Mosaik bar (project, steps, next step) in the real browser
         run: node tests/leiste-browser.cjs ${{ matrix.browser }}
+      - name: Einfache Oberfläche (Kopfband, drei Schritte, Kacheln, Mehr …) in the real browser
+        run: node tests/oberflaeche-browser.cjs ${{ matrix.browser }}
 
       - name: PAK reset with cancellation, entry and export regression checks
         run: node tests/pak-reset-browser.cjs ${{ matrix.browser }}
