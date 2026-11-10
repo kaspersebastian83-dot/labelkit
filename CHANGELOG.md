@@ -1,5 +1,10 @@
 # Änderungen
 
+## 5.0.1 – 10. November 2026 · Projektdatei an zwei Orten (Audit K1)
+
+- `spektron-ordner.js` byte-gleich mit Projektzentrale 1.43.0: liegt die Projektdatei in `_Spektron/LabelKit`, gilt sie – auch wenn in „Laboraufträge“ eine weitere `…_Daten.json` liegt (vorher schaltete die das Projekt auf „Laboraufträge“ zurück, ohne Hinweis). Laden und Speichern gehen nach `_Spektron`.
+- Neue Zeile unter dem Kopf (`#zwei-orte`, Stil wie `#pj-warning`), wenn LabelKit- oder Projektdateien an beiden Orten liegen: beide Dateien mit Datum, welche gilt; Text aus `SpektronOrdner.zweiOrteText`. Wird beim Öffnen und bei Fokus neu geprüft. Gelöscht wird nichts.
+
 ## 5.0.0 – 1. November 2026 · einfache Oberfläche (Spektron Schritt 3)
 
 Neue Oberfläche nach dem Entwurf „Spektron – einfache Oberfläche“ (Artboards „LabelKit“ und „Grundmuster“), Plan `labelkit-schritt3-plan.md` (Entscheidungen E1–E16). **Nur die Oberfläche** – Daten, Nummern, Exporte und die Verbindung zu den anderen Apps sind unverändert.
