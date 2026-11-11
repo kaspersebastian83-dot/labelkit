@@ -1,5 +1,11 @@
 # Änderungen
 
+## 5.1.1 – 11. November 2026 · LabelKit-Dateiregel in allen Apps (Audit o7, o8)
+
+- **`spektron-ordner.js` (o7):** Als LabelKit-Hauptdatei in „_Spektron/LabelKit“ zählt nur noch eine Datei dieses Projekts (Name beginnt mit der Projektnummer). Eine fremde `…_Daten.json` dort schaltet das Projekt nicht mehr um: LabelKit lädt und speichert die eigene Datei in „Laboraufträge“, die Zeile „Dateien an zwei Orten“ nennt die fremde Datei („… liegt nur „25.0100_Daten.json“ – nach dem Namen nicht von diesem Projekt; keine App liest sie.“). In der Projektzentrale holt „Umzug erneut ausführen“ die eigene Datei nach „_Spektron“, die fremde bleibt liegen.
+- **Sperre aus 5.1.0 bleibt als Sicherheitsnetz:** erreichbar nur noch bei einem unterbrochenen LabelKit-Umzug (eigene Datei nur in „_Spektron/LabelKit“, fremde am früheren Ort). Ist der Umzug vermerkt und liegt in „_Spektron/LabelKit“ nur eine fremde Datei, die eigene aber wieder am früheren Ort (ältere App-Fassung), gilt ebenfalls der frühere Ort (Codex).
+- **Leiste v3 (o8):** „Proben ✓“ nur für eine Datei dieses Projekts – byte-gleich in LabelKit, FotoKit, ResultKit, PlanKit, BerichtKit (LabelKit zuerst mergen).
+
 ## 5.1.0 – 11. November 2026 · Audit Kernkette (M6, fremde Projektdatei, gelbe Zeilen)
 
 - **M6 – angezeigte Nummern bleiben:** Sobald im Projekt eine Probennummer fest ist (`nrFest` oder `storniert`), behält jede Probe die Nummer, die sie zeigt – auch nicht gedruckte Proben anderer Arten („Nur diese drucken“, Übergabe einer Art). Wirklich neue Proben bekommen die höchste Nummer im Projekt (stornierte eingeschlossen) + 1; keine Nummer wird zweimal vergeben. Vorher rückten die nicht festen Nummern hinter einer ergänzten Probe nach (PAK 1–3 gedruckt, + 1 PAK → Chlorid 4, 5 wurde 5, 6).
