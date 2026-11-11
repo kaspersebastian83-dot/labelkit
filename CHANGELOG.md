@@ -3,7 +3,7 @@
 ## 5.1.1 – 11. November 2026 · LabelKit-Dateiregel in allen Apps (Audit o7, o8)
 
 - **`spektron-ordner.js` (o7):** Als LabelKit-Hauptdatei in „_Spektron/LabelKit“ zählt nur noch eine Datei dieses Projekts (Name beginnt mit der Projektnummer). Eine fremde `…_Daten.json` dort schaltet das Projekt nicht mehr um: LabelKit lädt und speichert die eigene Datei in „Laboraufträge“, die Zeile „Dateien an zwei Orten“ nennt die fremde Datei („… liegt nur „25.0100_Daten.json“ – nach dem Namen nicht von diesem Projekt; keine App liest sie.“). In der Projektzentrale holt „Umzug erneut ausführen“ die eigene Datei nach „_Spektron“, die fremde bleibt liegen.
-- **Sperre aus 5.1.0 bleibt als Sicherheitsnetz:** erreichbar nur noch, wenn der LabelKit-Umzug vermerkt ist und in „_Spektron/LabelKit“ nur eine fremde Datei liegt, während die eigene wieder am früheren Ort liegt (ältere App-Fassung), oder bei einem unterbrochenen Umzug.
+- **Sperre aus 5.1.0 bleibt als Sicherheitsnetz:** erreichbar nur noch bei einem unterbrochenen LabelKit-Umzug (eigene Datei nur in „_Spektron/LabelKit“, fremde am früheren Ort). Ist der Umzug vermerkt und liegt in „_Spektron/LabelKit“ nur eine fremde Datei, die eigene aber wieder am früheren Ort (ältere App-Fassung), gilt ebenfalls der frühere Ort (Codex).
 - **Leiste v3 (o8):** „Proben ✓“ nur für eine Datei dieses Projekts – byte-gleich in LabelKit, FotoKit, ResultKit, PlanKit, BerichtKit (LabelKit zuerst mergen).
 
 ## 5.1.0 – 11. November 2026 · Audit Kernkette (M6, fremde Projektdatei, gelbe Zeilen)
