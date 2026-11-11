@@ -1,5 +1,13 @@
 # Änderungen
 
+## 5.1.0 – 11. November 2026 · Audit Kernkette (M6, fremde Projektdatei, gelbe Zeilen)
+
+- **M6 – angezeigte Nummern bleiben:** Sobald im Projekt eine Probennummer fest ist (`nrFest` oder `storniert`), behält jede Probe die Nummer, die sie zeigt – auch nicht gedruckte Proben anderer Arten („Nur diese drucken“, Übergabe einer Art). Wirklich neue Proben bekommen die höchste Nummer im Projekt (stornierte eingeschlossen) + 1; keine Nummer wird zweimal vergeben. Vorher rückten die nicht festen Nummern hinter einer ergänzten Probe nach (PAK 1–3 gedruckt, + 1 PAK → Chlorid 4, 5 wurde 5, 6).
+- Löschen in einem solchen Projekt storniert (Dialog nennt den Grund; die Probe bekommt `nrFest` mit Anlass „storniert“). Nur eine **ganz leere** Zeile (nicht fest, kein Text in einem Feld; Datum, Projektnr., Matrix, cm² und Häkchen zählen nicht) wird gelöscht. Gleiches gilt für „Alle … löschen“, „PAK-Proben zurücksetzen“, „Projekt zurücksetzen“; Vorlage laden ersetzt dann keine PAK-Proben. Bohrkern-/PN-98-Aktualisieren: Proben, die es weiter gibt, behalten Zeile und Nummer, nur wirklich weggefallene werden storniert; ein Aktualisieren ohne Änderung storniert nichts. Nicht feste Zeilen bleiben verschiebbar (die Nummer wandert mit), zeigen kein 🔒, ihr Knopf heißt „stornieren“.
+- **Fremde Projektdatei (m2, K1-Punkt):** Projektdatei = Name beginnt mit der Projektnummer des Ordners (auch datierte). Andere `…_Daten.json` werden nicht geladen, überschrieben, verschoben oder gesichert; eine gelbe Zeile nennt sie. Vorher konnte eine später gespeicherte fremde Datei das Öffnen blockieren („Projektzuordnung blockiert“). Liegt am geltenden Ort keine eigene, am anderen Ort aber eine (fremde Datei in `_Spektron/LabelKit` schaltet den Bereich in `spektron-ordner.js` um): nichts geladen, Speichern und Erfassen gesperrt (`inert`, Tastenkürzel, Archiv-Autosave), Zeile mit „Neu prüfen“.
+- **Gelbe Zeilen:** `#pj-warning`, `#zwei-orte` und die neue `#fremd-daten` liegen in einem klebenden Block `#lk-warnungen` untereinander statt übereinander. Die K1-Zeile nennt bei LabelKit zuerst `<Nr>_Daten.json` (dann datierte dieses Projekts, dann fremde); „ist neuer“ vergleicht nur Hauptdateien. `spektron-ordner.js` unverändert.
+- Projektdatei-Format unverändert (nur vorhandene Felder `_nr`, `nrFest`, `storniert`; Versionsstempel 5.1.0).
+
 ## 5.0.1 – 10. November 2026 · Projektdatei an zwei Orten (Audit K1)
 
 - `spektron-ordner.js` byte-gleich mit Projektzentrale 1.43.0: liegt die Projektdatei in `_Spektron/LabelKit`, gilt sie – auch wenn in „Laboraufträge“ eine weitere `…_Daten.json` liegt (vorher schaltete die das Projekt auf „Laboraufträge“ zurück, ohne Hinweis). Laden und Speichern gehen nach `_Spektron`.

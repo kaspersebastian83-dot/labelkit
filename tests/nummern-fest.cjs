@@ -51,22 +51,67 @@ const ok = (msg) => { n++; if (process.env.VERBOSE) console.log('  ✓ ' + msg);
   c.proben.push(pak(4, 'nach dem Druck')); c.renummerieren();
   assert.deepEqual(nummern(c), [[1, 2, 3, 6], [4], [], [5]], 'neue PAK-Probe: 6, Chlorid und Sonstige bleiben');
   c.proben.splice(1, 0, pak(5, 'dazwischen')); c.renummerieren();
-  assert.deepEqual(nummern(c), [[1, 6, 2, 3, 7], [4], [], [5]], 'dazwischen eingefügt: freie Nummern in Listenreihenfolge, nur nicht feste rücken (noch nicht gedruckt)');
+  assert.deepEqual(nummern(c), [[1, 7, 2, 3, 6], [4], [], [5]], 'dazwischen eingefügt: neue Probe bekommt max + 1, die 6 (schon angezeigt) bleibt (5.1.0)');
   assert.equal(c.nummernFestlegen([c.proben], 'Etiketten', {neuZeichnen: false}), 2, 'nur die neuen werden fest');
   assert.equal(c.nummernFestlegen([c.proben], 'Etiketten', {neuZeichnen: false}), 0, 'zweiter Druck ändert nichts');
   ok('Ergänzen nach Druck');
 }
 
-// 3. Nur ein Teil fest (Chlorid gedruckt, PAK nicht): PAK nummeriert sich weiter frei, Chlorid bleibt
+// 3. Nur ein Teil fest (Chlorid gedruckt, PAK nicht): ab 5.1.0 bleibt jede angezeigte Nummer, neue bekommen max + 1
 {
   const c = welt(1);
   c.proben = [pak(1), pak(2)]; c.chloridProben = [pak(10), pak(11)]; c.asbestProben = [pak(30)];
   c.renummerieren(); c.nummernFestlegen([c.chloridProben], 'Laborübergabe', {neuZeichnen: false});
+  assert.deepEqual(nummern(c), [[1, 2], [3, 4], [5], []]);
   c.proben.push(pak(3)); c.renummerieren();
-  assert.deepEqual(nummern(c), [[1, 2, 5], [3, 4], [6], []], 'PAK springt hinter die festen Chlorid-Nummern, Asbest (nicht fest) rückt nach');
-  c.proben.splice(0, 1); c.renummerieren();
-  assert.deepEqual(nummern(c), [[1, 2], [3, 4], [5], []], 'Löschen einer nicht festen Probe wie bisher (nicht feste rücken auf); feste bleiben');
+  assert.deepEqual(nummern(c), [[1, 2, 6], [3, 4], [5], []], 'neue PAK-Probe: 6; Asbest (nicht fest, schon angezeigt) bleibt 5');
+  assert.equal(c.loeschenWirdStorno(c.proben[0]), true, 'nicht feste Probe mit Text wird storniert statt gelöscht');
+  c.probeStornieren(c.proben[0], {grund: 'doppelt'});
+  assert.ok(c.proben[0].nrFest && c.proben[0].storniert, 'storniert setzt fest voraus');
+  assert.equal(c.proben[0].nrFest.anlass, 'storniert');
+  c.asbestProben.push(pak(31)); c.renummerieren();
+  assert.deepEqual(nummern(c), [[1, 2, 6], [3, 4], [5, 7], []], 'stornierte Nummer bleibt vergeben, keine Nummer kommt zweimal');
+  // Verschieben einer nicht festen Probe: die Nummer wandert mit
+  c.proben.reverse(); c.renummerieren();
+  assert.deepEqual(nummern(c)[0], [6, 2, 1]);
   ok('teilweise fest');
+}
+
+// 3a. Audit M6: PAK 1–3, Chlorid 4–5 → nur PAK gedruckt → + 1 PAK → Chlorid bleibt 4, 5
+{
+  const c = welt(1);
+  c.proben = [pak(1), pak(2), pak(3)]; c.chloridProben = [pak(10), pak(11)];
+  c.renummerieren(); c.nummernFestlegen([c.proben], 'Etiketten', {neuZeichnen: false});
+  c.proben.push(pak(4)); c.renummerieren();
+  assert.deepEqual(nummern(c), [[1, 2, 3, 6], [4, 5], [], []], 'M6: nicht feste Chlorid-Nummern verschieben sich nicht');
+  assert.deepEqual(plain(c.chloridProben.map(p => p.chloridNr)), [4, 5]);
+  c.chloridProben.push(pak(12)); c.sonstigeProben.push(pak(20)); c.renummerieren();
+  assert.deepEqual(nummern(c), [[1, 2, 3, 6], [4, 5, 7], [], [8]]);
+  // Doppelte Nummer (nur in beschädigten Daten): die feste behält sie, die andere bekommt eine neue
+  c.chloridProben[0]._nr = 2; c.renummerieren();
+  assert.deepEqual(nummern(c)[1], [9, 5, 7]);
+  ok('M6');
+}
+
+// 3b. Ganz leere Zeile (Entscheidung B): darf gelöscht werden; jede Zeile mit Text wird storniert
+{
+  const c = welt(1);
+  const leer = (id) => ({id, datum: '2026-11-11', z1: '26.0604', z2: '', z3: ' ', z4: '', matrix: 'Wischprobe', cm2: '600', notiz: '', loeschpulverparameter: false});
+  c.proben = [pak(1), leer(2), leer(3)];
+  c.renummerieren();
+  assert.equal(c.probeGanzLeer(c.proben[1]), true);
+  assert.equal(c.loeschenWirdStorno(c.proben[1]), false, 'ohne feste Nummern: löschen wie bisher');
+  c.nummernFestlegen([[c.proben[0]]], 'Etiketten', {neuZeichnen: false});
+  assert.equal(c.loeschenWirdStorno(c.proben[1]), false, 'ganz leer: wird gelöscht');
+  c.proben[2].z4 = 'Holz';
+  assert.equal(c.probeGanzLeer(c.proben[2]), false); assert.equal(c.loeschenWirdStorno(c.proben[2]), true, 'Text in einem Feld: Storno');
+  assert.equal(c.probeGanzLeer({...leer(9), notiz: 'Chlorid Bohrmehl'}), false);
+  assert.equal(c.probeGanzLeer({...leer(9), bkGesamt: 12}), false);
+  const festLeer = leer(8); festLeer._nr = 9; festLeer.nrFest = {am: 'x'};
+  assert.equal(c.probeGanzLeer(festLeer), false, 'gedruckt/übergeben ist nie „ganz leer“');
+  c.proben.splice(1, 1); c.renummerieren();
+  assert.deepEqual(nummern(c)[0], [1, 3], 'gelöschte leere Zeile: die übrigen behalten ihre Nummer');
+  ok('ganz leere Zeile');
 }
 
 // 4. Löschen nach Druck storniert; Storno aufheben; stornierte fehlen in aktiv()
@@ -81,7 +126,9 @@ const ok = (msg) => { n++; if (process.env.VERBOSE) console.log('  ✓ ' + msg);
   assert.deepEqual(plain(c.aktiv(c.proben).map(p => p._nr)), [1, 3]);
   c.proben.push(pak(4)); c.renummerieren();
   assert.deepEqual(nummern(c)[0], [1, 2, 3, 4], 'stornierte Nummer bleibt vergeben');
-  assert.equal(c.probeStornieren(c.proben[3]), false, 'nicht feste Probe wird nicht storniert, sondern gelöscht');
+  assert.equal(c.probeStornieren(c.proben[3]), true, 'ab 5.1.0: nicht feste Probe mit Text im Projekt mit festen Nummern wird storniert');
+  assert.equal(c.proben[3].nrFest.anlass, 'storniert'); c.stornoAufheben(c.proben[3]);
+  assert.equal(c.probeStornieren(c.proben[1]), false, 'schon storniert');
   assert.equal(c.stornoAufheben(c.proben[1]), true);
   assert.equal(c.proben[1].storniert, undefined); assert.ok(c.proben[1].nrFest);
   assert.deepEqual(plain(c.aktiv(c.proben).map(p => p._nr)), [1, 2, 3, 4]);
@@ -93,10 +140,13 @@ const ok = (msg) => { n++; if (process.env.VERBOSE) console.log('  ✓ ' + msg);
   const c = welt(1);
   c.asbestProben = [pak(1), pak(2), pak(3)];
   c.nummernFestlegen([[c.asbestProben[0], c.asbestProben[2]]], 'Etiketten', {neuZeichnen: false});
-  assert.match(c.festeHinweis(c.asbestProben), /2 Proben haben schon eine feste Nummer/);
-  assert.equal(c.festeHinweis([pak(9)]), '');
+  assert.match(c.festeHinweis(c.asbestProben), /3 Proben werden nicht gelöscht, sondern storniert: Im Projekt sind schon Probennummern fest/);
+  assert.match(c.festeHinweis([c.asbestProben[0]]), /1 Probe hat schon eine feste Nummer/);
+  c.asbestProben.push({id: 4, z1: '26.0604', z2: '', matrix: ''}); c.renummerieren();
   c.asbestProben = c.listeLeeren(c.asbestProben, 'Neue Proben');
-  assert.deepEqual(plain(c.asbestProben.map(p => [p.id, p._nr, p.storniert.grund])), [[1, 1, 'Neue Proben'], [3, 3, 'Neue Proben']]);
+  assert.deepEqual(plain(c.asbestProben.map(p => [p.id, p._nr, p.storniert.grund, !!p.nrFest])), [[1, 1, 'Neue Proben', true], [2, 2, 'Neue Proben', true], [3, 3, 'Neue Proben', true]], 'ab 5.1.0: auch die nicht feste 2 storniert, die ganz leere 4 gelöscht');
+  const ohne = welt(1); ohne.asbestProben = [pak(1)]; ohne.renummerieren();
+  assert.equal(ohne.festeHinweis(ohne.asbestProben), ''); assert.equal(ohne.listeLeeren(ohne.asbestProben, 'x').length, 0, 'ohne feste Nummern: alles gelöscht');
   assert.equal(c.naechsteId(c.asbestProben), 4); assert.equal(c.naechsteId([]), 1);
   ok('Liste leeren');
 }
@@ -122,6 +172,27 @@ const ok = (msg) => { n++; if (process.env.VERBOSE) console.log('  ✓ ' + msg);
   c.renummerieren();
   assert.deepEqual(plain(c.sonstigeProben.map(p => [p.z2, p._nr, p.storniert ? p.storniert.grund : ''])),
     [['A', 1, ''], ['B zurück', 2, ''], ['C', 3, 'Kern gebrochen'], ['später angelegt', 4, ''], ['D', 5, '']]);
+  // Ab 5.1.0: Projekt mit festen Nummern, Brücken-Proben selbst nicht fest. Aktualisieren ohne Änderung → nichts storniert,
+  // Zeilen und Nummern bleiben; nur eine wirklich weggefallene wird storniert
+  {
+    const e = welt(1);
+    e.proben = [pak(1)]; e.nummernFestlegen([e.proben], 'Etiketten', {neuZeichnen: false});
+    const bk = k => ({bkId: k, z2: 'Kern ' + k, matrix: 'Bohrkern'});
+    let id = 10;
+    e.sonstigeProben = [{id: id++, ...bk('A')}, {id: id++, ...bk('B')}, {id: id++, z2: 'von Hand'}, {id: id++, ...bk('C')}];
+    e.renummerieren();
+    const vorher = plain(e.sonstigeProben.map(p => [p.id, p._nr, p.z2]));
+    const alt3 = e.sonstigeProben.filter(p => p.bkId);
+    e.sonstigeProben = e.anPlatzErsetzen(e.sonstigeProben, alt3, [bk('A'), bk('B'), bk('C')], p => p.bkId, () => id++);
+    e.renummerieren();
+    assert.deepEqual(plain(e.sonstigeProben.map(p => [p.id, p._nr, p.z2])), vorher, 'Aktualisieren ohne Änderung: gleiche Zeilen, gleiche Nummern');
+    assert.equal(e.sonstigeProben.filter(p => p.storniert).length, 0, 'keine stornierte Zeile');
+    const alt4 = e.sonstigeProben.filter(p => p.bkId);
+    e.sonstigeProben = e.anPlatzErsetzen(e.sonstigeProben, alt4, [bk('A'), bk('C'), bk('D')], p => p.bkId, () => id++);
+    e.renummerieren();
+    assert.deepEqual(plain(e.sonstigeProben.map(p => [p.z2, p._nr, p.storniert ? p.storniert.grund : ''])),
+      [['Kern A', 2, ''], ['Kern B', 3, 'beim Aktualisieren weggefallen'], ['von Hand', 4, ''], ['Kern C', 5, ''], ['Kern D', 6, '']]);
+  }
   // Ohne feste Proben wie 4.43.0: weggefallene entfallen
   const d = welt(1);
   const alt2 = [{id: 1, k: 'x'}, {id: 2, k: 'y'}];
