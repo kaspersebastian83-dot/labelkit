@@ -9941,7 +9941,6 @@ const PROJEKTORDNER=(function(){
       flash('Projekt '+dir.name+': gesperrt – fremde Projektdatei in „'+datenPfad+'“, siehe gelbe Zeile oben');
       return;
     }
-    if(typeof sperreSetzen==='function')sperreSetzen(false);
     const datenText=datei?datei.text:null;
     const vorhanden=proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length;
     let migriert=0;
@@ -9959,7 +9958,9 @@ const PROJEKTORDNER=(function(){
       if(!projektZuordnungPruefen({projekt:{nr:''}},p.nr,'Aktuelle Erfassung'))return;
     }
     if(!datei)projektStandMerken(daten,festName,{fest:null,datiert:bestand.datiert,gelesen:null});   // leerer Ordner: auch das ist ein Stand
-    state.proj={dir,lab,daten,pfad:datenPfad,name:dir.name,nr:p.nr,ort:p.ort};state.pj=null;void ladePj();if(typeof zweiOrteZeigen==='function')void zweiOrteZeigen();if(typeof fremdeDatenZeigen==='function')void fremdeDatenZeigen();   // K1-Zeile (fehlt in Test-Ausschnitten)
+    state.proj={dir,lab,daten,pfad:datenPfad,name:dir.name,nr:p.nr,ort:p.ort};state.pj=null;
+    if(typeof sperreSetzen==='function')sperreSetzen(false);   // Sperre erst lösen, wenn das neue Projekt wirklich übernommen ist (Codex P1)
+    void ladePj();if(typeof zweiOrteZeigen==='function')void zweiOrteZeigen();if(typeof fremdeDatenZeigen==='function')void fremdeDatenZeigen();   // K1-Zeile (fehlt in Test-Ausschnitten)
     undoStack=[];  // Rückgängig nie über einen Projektwechsel hinweg
     if(typeof letzterSpeicherOrdner!=='undefined')letzterSpeicherOrdner=lab;
     const nrEl=document.getElementById('proj-nr');if(nrEl&&!nrEl.value.trim()){nrEl.value=p.nr;}
