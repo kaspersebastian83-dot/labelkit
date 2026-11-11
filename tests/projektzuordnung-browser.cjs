@@ -17,7 +17,8 @@ const playwright=require('playwright'),engine=process.argv[2]||'chromium';
     document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));document.querySelectorAll('dialog[open]').forEach(d=>d.close());
     applyProjektData({projekt:{nr:'26.0101'},proben:[{id:9,z2:'BISHERIGE PROBE',matrix:'Wischprobe'}]});markSaved('alt_Daten.json','Laboraufträge');
     const data={proben:[{id:1,z2:'FREMDES PROJEKT',matrix:'Wischprobe'}]};if(nr!==null)data.projekt={nr};
-    const file=new File([JSON.stringify(data)],'26.0999_Daten.json',{lastModified:1});
+    // Name wie dieses Projekt, Inhalt evtl. eines anderen: der Inhalt wird geprüft (eine Datei mit fremder Nummer im Namen lädt LabelKit ab 5.1.0 gar nicht)
+    const file=new File([JSON.stringify(data)],'26.0101_Daten.json',{lastModified:1});
     const lab={name:'Laboraufträge',async *values(){yield{kind:'file',name:file.name,getFile:async()=>file};}};
     const dir={name:'26.0101 Muster',getDirectoryHandle:async()=>lab,getFileHandle:async()=>{throw new DOMException('synthetisch','NotFoundError');}};
     const previous={nr:'26.0101',name:dir.name,lab,dir};PROJEKTORDNER.state.proj=previous;

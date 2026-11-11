@@ -99,7 +99,7 @@ const name = process.argv[2] || 'chromium';
     assert.ok((await excel()).includes('Raum B'), 'nach Aufheben wieder in der Übergabe');
     assert.equal(await page.locator('#main-pak .tab-badge').textContent(), '4');
 
-    // Nicht feste Probe wird weiter direkt gelöscht
+    // Ganz leere, nicht feste Zeile (neu, kein Text) wird auch mit festen Nummern direkt gelöscht (5.1.0, Entscheidung B)
     await page.locator('button[onclick="addProbe()"]').first().click();
     assert.deepEqual(await nr(), {pak: [1, 2, 3, 5, 6], cl: [4]});
     const vorher = prompts.length;
@@ -146,7 +146,35 @@ const name = process.argv[2] || 'chromium';
     assert.equal(await page.evaluate(() => festeNummernVorhanden()), false);
     assert.equal(await page.locator('#probe-startnr').isDisabled(), false);
 
+    // Audit M6 (5.1.0): nur PAK gedruckt → + 1 PAK → Chlorid behält 4, 5; nicht feste Probe mit Text wird storniert; Rundreise
+    await page.evaluate(() => {
+      applyProjektData({projekt: {nr: '26.0999'}, proben: [], chloridProben: [], asbestProben: [], sonstigeProben: []}, '26.0999');
+      switchMainTab('pak');
+      addProbe({z2: 'EG Küche'}); addProbe({z2: 'EG Flur'}); addProbe({z2: 'OG Bad'});
+      addChloridProbe(); chloridProben[0].z2 = 'EG Küche'; addChloridProbe(); chloridProben[1].z2 = 'KG Heizung';
+      renummerieren(); renderTable(); renderChloridTable();
+    });
+    assert.deepEqual(await nr(), {pak: [1, 2, 3], cl: [4, 5]});
+    await page.evaluate(() => drucken());
+    assert.deepEqual(await page.evaluate(() => [proben.every(p => p.nrFest), chloridProben.some(p => p.nrFest)]), [true, false], 'nur PAK fest');
+    await page.locator('button[onclick="addProbe()"]').first().click();
+    assert.deepEqual(await nr(), {pak: [1, 2, 3, 6], cl: [4, 5]}, 'M6: Chlorid verschiebt sich nicht, neue PAK-Probe bekommt 6');
+    await page.evaluate(() => { switchMainTab('chlorid'); renderChloridTable(); });
+    const clZeile = page.locator('#chlorid-tbody tr').nth(1);
+    assert.equal(await clZeile.locator('.nr-fest').count(), 0, 'kein Schloss an nicht gedruckter Probe');
+    assert.match(await clZeile.textContent(), /stornieren/, 'Knopf heißt „stornieren“');
+    await clZeile.locator('button[onclick^="removeChlorid"]').click();
+    assert.equal(await dlg.isVisible(), true);
+    assert.match(await dlg.textContent(), /Probe 5 \(„KG Heizung“\) ist noch nicht gedruckt oder übergeben – im Projekt sind aber schon Nummern fest\. Damit die 5 nie an eine andere Probe geht/);
+    await page.locator('#storno-ok').click();
+    assert.deepEqual(await page.evaluate(() => [chloridProben.length, !!chloridProben[1].storniert, chloridProben[1].nrFest.anlass]), [2, true, 'storniert']);
+    await page.evaluate(() => { addChloridProbe(); chloridProben[2].z2 = 'OG Flur'; renderChloridTable(); });
+    assert.deepEqual(await nr(), {pak: [1, 2, 3, 6], cl: [4, 5, 7]}, 'die stornierte 5 kommt nie wieder');
+    const runde = await page.evaluate(() => JSON.parse(buildProjektSaveData().content));
+    await page.evaluate(d => { applyProjektData(d, '26.0999'); }, runde);
+    assert.deepEqual(await nr(), {pak: [1, 2, 3, 6], cl: [4, 5, 7]}, 'Rundreise: alle angezeigten Nummern bleiben');
+
     assert.deepEqual(errors, []);
-    console.log(`Feste Probennummern (${name}): Druck, Ergänzen, Storno, Ausgaben ohne Storno, Storno aufheben, Löschen, Neue Proben, Rundreise und Migration bestanden.`);
+    console.log(`Feste Probennummern (${name}): Druck, Ergänzen, Storno, Ausgaben ohne Storno, Storno aufheben, Löschen, Neue Proben, Rundreise, Migration und M6 (Teildruck) bestanden.`);
   } finally { if (browser) await browser.close(); server.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });
