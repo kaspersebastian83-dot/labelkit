@@ -2,8 +2,8 @@
 
 ## Unveröffentlicht · Kompakte Probenart-Leiste (nur Layout)
 
-- **Kacheln „Welche Proben hast du genommen?“ → Leiste:** Die Probenarten sind 44 px hohe Knöpfe statt 92 px hoher Kacheln; Name und Zähler stehen in einer Zeile. Leere Arten zeigen nur den Namen („noch keine“ bleibt im DOM, wird nur nicht angezeigt), Arten mit Proben eine grüne Zählerpille. Die gewählte Art ist hell hinterlegt mit dunklem Rand. „+ Weitere Art …“ bleibt gestrichelt und kürzt die Liste der übrigen Arten mit „…“, bevor die Reihe umbricht.
-- Nur CSS in `index.html`: `kachelnZeichnen()`, Klicklogik und Markup unverändert. Bei 1190 px Breite mit allen Arten und 5 PAK-Proben: Kachelblock 215 → 94 px, Tabelle beginnt rund 125 px höher.
+- **Kacheln „Welche Proben hast du genommen?“ → Leiste:** Die Probenarten sind 44 px hohe Knöpfe statt 92 px hoher Kacheln; Name und Zähler stehen in einer Zeile. Leere Arten zeigen nur den Namen („noch keine“ steht nur noch für Screenreader da), Zusatzangaben wie „1 Wandblatt“ bei Bohrkernen ohne Kerne bleiben sichtbar; Arten mit Proben bekommen eine grüne Zählerpille. Die gewählte Art ist hell hinterlegt mit dunklem Rand. „+ Weitere Art …“ bleibt gestrichelt und kürzt die Liste der übrigen Arten mit „…“, bevor die Reihe umbricht.
+- Layout in `index.html`: CSS und in `kachelnZeichnen()` nur das Markup einer Kachel („noch keine“ in eigenem Element `.lk-k-leer`); Zählung, Klicklogik und Datenfluss unverändert. Bei 1190 px Breite mit allen Arten und 5 PAK-Proben: Kachelblock 215 → 94 px, Tabelle beginnt rund 125 px höher.
 
 ## 5.1.1 – 11. November 2026 · LabelKit-Dateiregel in allen Apps (Audit o7, o8)
 
