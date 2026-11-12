@@ -964,20 +964,23 @@ body .pj-warning{top:var(--lk-kopf)}
 .lk-leer{background:var(--sp-panel);border-radius:var(--sp-radius);padding:22px;color:var(--sp-muted);font-size:15px;box-shadow:var(--sp-schatten)}
 .lk-leer[hidden]{display:none}
 /* Kacheln „Welche Proben hast du genommen?“ */
-.lk-kacheln{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:18px}
-.lk-kachel{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:92px;padding:16px 18px;border-radius:var(--sp-radius);border:2px solid var(--sp-line2);background:var(--sp-panel);color:var(--sp-text);font:inherit;text-align:left;cursor:pointer}
+.lk-kacheln{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin-bottom:12px}
+.lk-kachel{position:relative;display:inline-flex;flex-direction:row;align-items:center;flex-wrap:wrap;gap:2px 8px;min-height:44px;padding:5px 11px;border-radius:var(--sp-radius-k);border:2px solid var(--sp-line2);background:var(--sp-panel);color:var(--sp-text);font:inherit;text-align:left;cursor:pointer}
 .lk-kachel.hat{border-color:var(--sp-app)}
 .lk-kachel.weitere{border-style:dashed;background:transparent;color:var(--sp-muted)}
 .lk-kachel:hover{border-color:var(--sp-app-dunkel)}
-.lk-kachel[aria-pressed="true"]{border-color:var(--sp-panel);box-shadow:0 0 0 3px var(--sp-app);background:#f6f7fc;cursor:default}
+.lk-kachel[aria-pressed="true"]{border-color:var(--sp-app-dunkel);box-shadow:0 0 0 1px var(--sp-app-dunkel);background:#eef0f9;cursor:default}
 .lk-kachel:focus-visible{outline:3px solid var(--sp-text);outline-offset:3px}
-.lk-kachel strong{font-size:18px;font-weight:700;line-height:1.2}
-.lk-kachel .lk-k-n{font-size:14px;font-weight:600;color:var(--sp-muted)}
-.lk-kachel .lk-k-n.ok{color:var(--sp-ok)}
-.lk-kachel .lk-k-offen{font-size:13px;font-weight:600;color:var(--lk-gelb-text)}
-.lk-kachel .lk-k-storno{font-size:13px;font-weight:600;color:var(--lk-orange)}
-.lk-kachel.weitere strong{font-size:17px}
-.lk-kachel.weitere .lk-k-n{font-weight:400}
+.lk-kachel strong{font-size:15px;font-weight:700;line-height:1.2;white-space:nowrap}
+.lk-kachel .lk-k-n{font-size:13px;font-weight:600;color:var(--sp-muted)}
+/* „noch keine“ steht nur noch im Quelltext: eine leere Art ist die Marke ohne Zähler */
+.lk-kachel:not(.hat):not(.weitere) .lk-k-n{display:none}
+.lk-kachel .lk-k-n.ok{color:var(--sp-ok);background:#e7f3ec;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.lk-kachel .lk-k-offen{font-size:13px;font-weight:600;color:var(--lk-gelb-text);white-space:nowrap}
+.lk-kachel .lk-k-storno{font-size:13px;font-weight:600;color:var(--lk-orange);white-space:nowrap}
+/* „+ Weitere Art …“ gibt als Erste nach: die Liste der übrigen Arten wird gekürzt, bevor die Reihe umbricht */
+.lk-kachel.weitere{flex:1 1 140px;max-width:max-content;min-width:0;flex-wrap:nowrap}
+.lk-kachel.weitere .lk-k-n{font-weight:400;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* Karte der gewählten Art: Kopf + Zeilen + Tabelle */
 #lk-s1 .tab-content>.container,#lk-s2 .tab-content>.container,#lk-s3 .lk-teil>.container{background:var(--sp-panel);border-radius:var(--sp-radius);box-shadow:var(--sp-schatten);padding:16px 22px 18px}
 #lk-s2 .tab-content>.container,#lk-s3 .lk-teil>.container{margin-bottom:14px}
@@ -1086,7 +1089,7 @@ td.col-del .btn-ghost:disabled{text-decoration:none}
 .lk-pjinfo .pj-info{margin-left:0}
 @media (max-width:1100px){ #lk-app{padding:16px 20px 24px} #lk-fuss{padding:10px 20px} }
 @media (max-width:760px){
-  .lk-frage{font-size:23px} .lk-kacheln{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px} .lk-kachel{min-height:76px;padding:12px}
+  .lk-frage{font-size:23px}
   .lk-schritt .lk-sname{display:none} .lk-schritt[aria-current="step"] .lk-sname{display:inline}
   #lk-haupt{flex:1 1 100%;font-size:17px} #lk-fuss{padding:10px 16px} #lk-app{padding:14px 16px 20px}
   #lk-s1 .table-wrap{max-height:none}

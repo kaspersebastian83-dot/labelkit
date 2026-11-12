@@ -1,5 +1,10 @@
 # Änderungen
 
+## Unveröffentlicht · Kompakte Probenart-Leiste (nur Layout)
+
+- **Kacheln „Welche Proben hast du genommen?“ → Leiste:** Die Probenarten sind 44 px hohe Knöpfe statt 92 px hoher Kacheln; Name und Zähler stehen in einer Zeile. Leere Arten zeigen nur den Namen („noch keine“ bleibt im DOM, wird nur nicht angezeigt), Arten mit Proben eine grüne Zählerpille. Die gewählte Art ist hell hinterlegt mit dunklem Rand. „+ Weitere Art …“ bleibt gestrichelt und kürzt die Liste der übrigen Arten mit „…“, bevor die Reihe umbricht.
+- Nur CSS in `index.html`: `kachelnZeichnen()`, Klicklogik und Markup unverändert. Bei 1190 px Breite mit allen Arten und 5 PAK-Proben: Kachelblock 215 → 94 px, Tabelle beginnt rund 125 px höher.
+
 ## 5.1.1 – 11. November 2026 · LabelKit-Dateiregel in allen Apps (Audit o7, o8)
 
 - **`spektron-ordner.js` (o7):** Als LabelKit-Hauptdatei in „_Spektron/LabelKit“ zählt nur noch eine Datei dieses Projekts (Name beginnt mit der Projektnummer). Eine fremde `…_Daten.json` dort schaltet das Projekt nicht mehr um: LabelKit lädt und speichert die eigene Datei in „Laboraufträge“, die Zeile „Dateien an zwei Orten“ nennt die fremde Datei („… liegt nur „25.0100_Daten.json“ – nach dem Namen nicht von diesem Projekt; keine App liest sie.“). In der Projektzentrale holt „Umzug erneut ausführen“ die eigene Datei nach „_Spektron“, die fremde bleibt liegen.
