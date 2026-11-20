@@ -1,11 +1,27 @@
 # Änderungen
 
-## Unveröffentlicht · Kompakte Probenart-Leiste (nur Layout)
+## 5.2.0 – 20. November 2026 · Audit Feldarbeit (Lauf 1)
+
+Plan `claude/spektron-audit-2026-11-1-feld-plan.md`, Befunde A3, A5, A6, A7, A8, A10, A12, A13, A14, A16, A20, A21.
+
+- **Ortstermin als Probenahmedatum (A12):** Neue Proben (PAK, Chlorid, Asbest, Sonstige – „+ Probe“, „+ 5“, Geführte Eingabe) bekommen das Datum der vorigen Probe der Liste, sonst den **Ortstermin** aus `_Projekt.json`, sonst heute (bisher: vorige oder heute). Vorbelegungs-Dialoge, Bohrkern-Datum und die erste Brandgeruch-Probe ebenso; „Mehr …“ › „Ortstermin/heute in leere Datumsfelder“. Vorhandene Proben werden nie geändert (`ortsterminISO`, `neuesProbenDatum`).
+- **„Excel“ in Schritt 3 (A7):** `excelSpeichern(art)` – mit Projektordner über `alleUebergabenSpeichernMitWord({nurArt})` nach „Laboraufträge“: dieselbe Datei und dieselbe Rückfrage bei vorhandener Datei wie „Laborauftrag speichern“, Projektdatei zuerst (die Nummern werden fest). Ohne Projektordner Download unter demselben Namen (`uebergabeDateiname`).
+- **Kopieren (für Eurofins) (A3):** über `inZwischenablage` mit Fehlerzweig – scheitert die Zwischenablage, Rückfrage-Fenster und Meldung „Nicht kopiert“, Nummern werden nicht fest.
+- **Kein „nicht gespeichert“ ohne Eingaben (A5):** `nichtsZuSichern()` – nichts erfasst, nie gespeichert/geladen → Status „Noch nichts erfasst“, keine Rückfrage beim Verlassen.
+- **Probenart springt nicht zurück (A6):** das 1-s-Intervall ist weg; `PROJEKTORDNER.oeffnen` ruft `lkProjektGeoeffnet()`, sobald das Projekt übernommen ist. Damit ist `tests/feldprotokolle-browser.cjs` nicht mehr zeitabhängig.
+- **Speicherort richtig genannt (A8):** Meldung und Status nach „Laborauftrag speichern“: „✓ 2 Dateien in „Laboraufträge“, Projektdatei in „_Spektron/LabelKit“ gespeichert“; „Speichern“ nennt „_Spektron/LabelKit“ statt „Projektordner“.
+- **Schritt 3 (A14):** Projektprüfung nur mit Arten, die Proben haben; „unvollständig“ nennt die Felder („Es fehlt: cm² (Proben 4, 5)“, `fehlendeFelder`).
+- **„+ Probe“ (A16):** Cursor im Feld Raum/Ort der neuen Zeile.
+- **RTF (A10):** Zeilenumbrüche in Notizen als `\line`. **Download ohne Ordnerzugriff (A13):** Meldung nennt den Weg ins Projekt („Mehr …“ › „Projektdatei laden …“).
+- **CI (A20, A21):** `tests.yml` auch bei `push` auf `main`; `wandblatt-bohrkerne.cjs` bekommt `AIDKIT_DIR` (der AidKit-Teil lief in der Node-Stufe nie).
+- Projektdatei-Format, Eurofins-Reihenfolge, feste Nummern, `spektron-ordner.js`, Leiste und Look unverändert.
+
+### Kompakte Probenart-Leiste (nur Layout, #65)
 
 - **Kacheln „Welche Proben hast du genommen?“ → Leiste:** Die Probenarten sind 44 px hohe Knöpfe statt 92 px hoher Kacheln; Name und Zähler stehen in einer Zeile. Leere Arten zeigen nur den Namen („noch keine“ steht nur noch für Screenreader da), Zusatzangaben wie „1 Wandblatt“ bei Bohrkernen ohne Kerne bleiben sichtbar; Arten mit Proben bekommen eine grüne Zählerpille. Die gewählte Art ist hell hinterlegt mit dunklem Rand. „+ Weitere Art …“ bleibt gestrichelt und kürzt die Liste der übrigen Arten mit „…“, bevor die Reihe umbricht.
 - Layout in `index.html`: CSS und in `kachelnZeichnen()` nur das Markup einer Kachel („noch keine“ in eigenem Element `.lk-k-leer`); Zählung, Klicklogik und Datenfluss unverändert. Bei 1190 px Breite mit allen Arten und 5 PAK-Proben: Kachelblock 215 → 94 px, Tabelle beginnt rund 125 px höher.
 
-## Unveröffentlicht · Schmalere Leisten oben und unten (nur Layout)
+### Schmalere Leisten oben und unten (nur Layout, #66, #67)
 
 - **Kopfband kompakt:** LabelKit startet die Spektron-Leiste mit `kompakt: true` (56 statt 84 px) – der gemeinsame Block MOSAIK-LEISTE v3 bleibt byte-gleich, nur der Aufruf ändert sich.
 - **Drei Schritte und Frage:** Kreise 28 statt 40 px, Schrift 15 statt 17 px; „Welche Proben hast du genommen?“ 22 statt 28 px; weniger Abstand über und unter beiden.
