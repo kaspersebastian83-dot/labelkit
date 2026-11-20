@@ -1,5 +1,15 @@
 # Änderungen
 
+## 5.3.0 – 20. November 2026 · Browser-Kopie der Eingaben (Audit A2)
+
+Plan `claude/spektron-audit-2026-11-1-feld-plan.md`, PR 4; Entscheidung Basti 20.11.2026 („ja“). E8 bleibt: in den Projektordner wird nichts automatisch geschrieben.
+
+- **Kopie im Browser:** `markUnsaved` → `entwurfVormerken` → nach 0,8 s (sofort bei `visibilitychange: hidden`/`pagehide`) `entwurfSchreiben`: vollständiger Stand (`buildProjektSaveData().content`) in `localStorage` unter `lk-entwurf:ordner:<Projektordner>|<Sitzung>` bzw. `lk-entwurf:nr:<Projektnummer>|<Sitzung>`, mit Zeit, Anzahl, `basis` (= `gespeichertAm` der Projektdatei, auf der die Sitzung aufsetzt; gesetzt beim Öffnen und in `projektdateiSpeichern`). Zurückgelesen; nichts erfasst → keine Kopie; gesperrtes Projekt → keine Kopie. Höchstens 12 Einträge, gesicherte nach 14 Tagen weg.
+- **Gesichert:** `markSaved` (Projektordner) und der Download ohne Ordnerzugriff markieren die Kopie dieser Sitzung als gesichert. Kopien früherer Sitzungen bleiben, bis sie angeboten und übernommen oder verworfen sind – je Sitzung ein eigener Eintrag, eine angebotene Kopie wird nie überschrieben.
+- **Angebot:** beim Öffnen eines Projekts (`PROJEKTORDNER.oeffnen`) bzw. beim Start ohne Projekt im Link die neueste ungesicherte Kopie einer früheren Sitzung: gelbe Zeile `#lk-entwurf` in `#lk-warnungen` – „Wiederherstellen“ (nur wenn `basis` = Projektdatei; Rückfrage, wenn schon Proben angezeigt werden; `projektZuordnungPruefen`; danach „nicht gespeichert“) · „Verwerfen“ (Rückfrage). Wurde die Projektdatei seitdem gespeichert: nur „Als Datei herunterladen“ (`<Nr>_ungespeichert_<Zeit>_Daten.json`) · „Verwerfen“. Gleicher Inhalt wie geladen → still entfernt.
+- **Speicher voll/nicht beschreibbar:** rote Zeile „⚠ Eingaben NICHT im Browser gesichert (…). Bitte bald speichern …“.
+- Neu `tests/browser-kopie-browser.cjs` (in CI). Projektdatei-Format unverändert.
+
 ## 5.2.0 – 20. November 2026 · Audit Feldarbeit (Lauf 1)
 
 Plan `claude/spektron-audit-2026-11-1-feld-plan.md`, Befunde A3, A5, A6, A7, A8, A10, A12, A13, A14, A16, A20, A21.

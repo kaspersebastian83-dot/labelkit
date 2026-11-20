@@ -130,6 +130,8 @@ jobs:
         run: node tests/projektdatei-altwerte-browser.cjs ${{ matrix.browser }}
       - name: Audit 2026-11 Lauf 1 – Ortstermin, Kopieren-Fehler, Excel nach „Laboraufträge“, Speicherort, Projektprüfung
         run: node tests/feld-audit-browser.cjs ${{ matrix.browser }}
+      - name: Browser-Kopie der Eingaben – Neuladen ohne Speichern, Wiederherstellen, Verwerfen, fremder Stand, Speicher voll
+        run: node tests/browser-kopie-browser.cjs ${{ matrix.browser }}
       - name: Wandblatt Bohrkerne – drucken, übertragen, Proben anlegen
         run: node tests/wandblatt-bohrkerne-browser.cjs ${{ matrix.browser }}
         env:
