@@ -1,5 +1,11 @@
 # Änderungen
 
+## 5.3.1 – 20. November 2026 · Tabellenbreiten (Audit A15, nur CSS)
+
+- Raum/Ort-Spalte (`th.col-ort`) in Schritt 1: `width:32%`, mindestens 240 px; Notiz (`th.col-notiz`) 14 %, mindestens 100 px. Bei 1190 px ist „EG Küche Brandraum Decke“ ganz sichtbar (vorher „… Decl“).
+- Bis 960 px Breite (iPad hoch): „kopieren · löschen“ klebt nicht mehr rechts, sondern scrollt mit (verdeckte Oberflächenart, cm², Notiz); Raum/Ort mindestens 200 px; Übergabetabellen in Schritt 3 ohne `min-width:950px` der Erfassungstabellen, Zellen brechen um (Probenreferenz nicht), Karte scrollt seitlich, falls nötig – das Probenahmedatum ist bei 820 px sichtbar.
+- Nur CSS und zwei Klassen an Kopfzellen; Logik, Daten, Leiste und Look unverändert.
+
 ## 5.3.0 – 20. November 2026 · Browser-Kopie der Eingaben (Audit A2)
 
 Plan `claude/spektron-audit-2026-11-1-feld-plan.md`, PR 4; Entscheidung Basti 20.11.2026 („ja“). E8 bleibt: in den Projektordner wird nichts automatisch geschrieben.
