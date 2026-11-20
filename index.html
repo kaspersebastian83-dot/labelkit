@@ -10198,8 +10198,9 @@ function fbSeiten(o){
   const pre=x=>x?'<span class="fb-pre">'+fbEsc(x)+'</span>':ln();
   const cb=(label,cls)=>'<span class="'+(cls||'fb-opt')+'"><span class="fb-cb"></span>'+label+'</span>';
   const f=(label,val,extra)=>'<div class="fb-f'+(extra?' '+extra:'')+'"><span class="fb-lab">'+label+'</span>'+(val===undefined?ln():pre(val))+'</div>';
-  const logo=o.logo?'<img src="'+fbEsc(o.logo)+'" alt="">':'';
-  const wm=o.logo?'<img class="fb-wm" src="'+fbEsc(o.logo)+'" alt="" aria-hidden="true">':'';
+  // '<'+'img …': Chromium 141 las den Quelltext sonst als Bild-Adresse vor (Konsolenfehler ERR_FILE_NOT_FOUND im CI)
+  const logo=o.logo?'<'+'img src="'+fbEsc(o.logo)+'" alt="">':'';
+  const wm=o.logo?'<'+'img class="fb-wm" src="'+fbEsc(o.logo)+'" alt="" aria-hidden="true">':'';
   const co='<div class="fb-co">'+logo+'<b>'+fbEsc(FB_FIRMA.name)+'</b><span>· '+fbEsc(FB_FIRMA.zeile)+'</span></div>';
   const idBox=(blatt,gross)=>'<div class="fb-id">'+(gross?'<span>Formular-ID</span>':'')+'<b>'+fbEsc(id)+'</b><span'+(gross?' style="margin-top:4px"':'')+'>Blatt '+blatt+' von '+total+'</span></div>';
   const fuss='<div class="fb-foot"><span>Vorgedrucktes stammt aus dem Projekt. Korrekturen: durchstreichen, nicht überschreiben.</span><b>'+fbEsc(id)+'</b></div>';
