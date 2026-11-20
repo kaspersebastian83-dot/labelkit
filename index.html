@@ -12540,8 +12540,10 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true, kompakt: tru
   document.addEventListener('click',e=>{
     const b=e.target.closest&&e.target.closest('.lk-artknoepfe .sp-knopf-app');if(!b||!/\+ Probe/.test(b.textContent))return;
     const tab=b.closest('.tab-content');if(!tab)return;
-    setTimeout(()=>{const zeilen=tab.querySelectorAll('tbody tr');const z=zeilen[zeilen.length-1];if(!z)return;
-      const f=z.querySelector('input[oninput*="\'z2\'"]');if(f&&!f.disabled&&f.offsetParent){f.focus();try{f.select();}catch(x){}}},0);
+    // gleich (die Zeile steht schon – onclick am Knopf lief vorher), sonst nach dem Zeichnen
+    const fokus=()=>{const zeilen=tab.querySelectorAll('tbody tr');const z=zeilen[zeilen.length-1];if(!z)return false;
+      const f=z.querySelector('input[oninput*="\'z2\'"]');if(f&&!f.disabled&&f.offsetParent){f.focus();try{f.select();}catch(x){}return true;}return false;};
+    if(!fokus())setTimeout(fokus,0);
   });
   // Tippen ändert Zähler und Pille, ohne die Tabelle neu zu zeichnen
   let tippTimer=0;
