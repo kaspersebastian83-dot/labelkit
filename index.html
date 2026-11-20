@@ -891,7 +891,7 @@ body:not(.lg) .btn-secondary:hover{border-color:var(--accent);color:var(--accent
   --bg:var(--sp-bg); --surface:var(--sp-panel); --surface2:var(--sp-panel2); --border:var(--sp-line); --border-strong:var(--sp-line2);
   --text:var(--sp-text); --text-muted:var(--sp-muted); --accent:var(--sp-app-dunkel); --accent-light:var(--sp-app); --accent-bg:#eef0f9;
   --sans:var(--sp-font); --radius:10px; --shadow:var(--sp-schatten); --grad-accent:var(--sp-app-dunkel); --hdr:#17222c; --blue-light:var(--sp-app);
-  --lk-kopf:84px; --lk-fuss:84px; --lk-gelb:#e4c04a; --lk-gelb-bg:#fff9e0; --lk-gelb-text:#8a6d00; --lk-orange:#8a5600;
+  --lk-kopf:56px; --lk-fuss:60px; --lk-gelb:#e4c04a; --lk-gelb-bg:#fff9e0; --lk-gelb-text:#8a6d00; --lk-orange:#8a5600;
 }
 /* ===== SPEKTRON-LOOK v1 – gemeinsames Aussehen der Spektron-Apps (byte-gleich in jeder App; Prüfung: tests/leiste.cjs) =====
    Nur Tokens (--sp-*) und allgemeine Bausteine, keine App-Farbe: jede App setzt --sp-app / --sp-app-dunkel AUSSERHALB dieses
@@ -946,19 +946,19 @@ body .pj-warning{top:var(--lk-kopf)}
 .fokus-panel{z-index:2147483050}
 .flash{z-index:2147483200;bottom:calc(var(--lk-fuss) + 16px)}
 .projekt-hinweis{z-index:2147483150}
-#lk-app{max-width:1500px;margin:0 auto;padding:22px 40px 28px}
+#lk-app{max-width:1500px;margin:0 auto;padding:12px 40px 24px}
 #lk-app .container{max-width:none;margin:0;padding:0}
 /* drei Schritte */
-.lk-schritte{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-.lk-schritt{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:4px 6px;border-radius:12px;font:inherit;font-size:17px;color:var(--sp-muted);cursor:pointer}
-.lk-kreis{width:40px;height:40px;flex:none;border-radius:50%;border:2px solid var(--sp-line2);display:inline-flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--sp-muted);background:var(--sp-panel)}
+.lk-schritte{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.lk-schritt{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:2px 6px;border-radius:12px;font:inherit;font-size:15px;color:var(--sp-muted);cursor:pointer}
+.lk-kreis{width:28px;height:28px;flex:none;border-radius:50%;border:2px solid var(--sp-line2);display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--sp-muted);background:var(--sp-panel)}
 .lk-schritt[aria-current="step"]{color:var(--sp-text);font-weight:700;cursor:default}
 .lk-schritt[aria-current="step"] .lk-kreis{background:var(--sp-app-dunkel);border-color:var(--sp-app-dunkel);color:#fff}
 .lk-schritt:not([aria-current]):hover .lk-kreis{border-color:var(--sp-app);color:var(--sp-text)}
 .lk-schritt:focus-visible{outline:3px solid var(--sp-text);outline-offset:2px}
 .lk-strich{width:36px;height:2px;background:var(--sp-line2);flex:none}
 .lk-sicht[hidden]{display:none!important}
-.lk-frage{margin:0 0 14px;font-size:28px;font-weight:700;line-height:1.2;color:var(--sp-text)}
+.lk-frage{margin:0 0 10px;font-size:22px;font-weight:700;line-height:1.2;color:var(--sp-text)}
 .lk-satz{margin:-6px 0 14px;font-size:14px;color:var(--sp-muted)}
 .lk-zwischen{margin:22px 0 8px;font-size:19px;font-weight:700}
 .lk-leer{background:var(--sp-panel);border-radius:var(--sp-radius);padding:22px;color:var(--sp-muted);font-size:15px;box-shadow:var(--sp-schatten)}
@@ -1061,8 +1061,8 @@ td.col-del .btn-ghost:disabled{text-decoration:none}
 .lk-notiz{flex:1 1 360px;display:flex;flex-direction:column;gap:6px}
 .lk-notiz label{font-weight:700;font-size:14px}
 /* Fußleiste: Mehr … · Stand · Neben- und Hauptaktion */
-#lk-fuss{position:fixed;left:0;right:0;bottom:0;z-index:900;box-sizing:border-box;min-height:84px;display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px;padding:12px 40px;background:var(--sp-panel);border-top:1px solid var(--sp-line);box-shadow:0 -2px 10px rgba(0,0,0,.05)}
-#lk-mehr{height:48px;padding:0 18px;font-size:16px;display:inline-flex;align-items:center;gap:8px}
+#lk-fuss{position:fixed;left:0;right:0;bottom:0;z-index:900;box-sizing:border-box;min-height:60px;display:flex;align-items:center;flex-wrap:wrap;gap:6px 16px;padding:7px 40px;background:var(--sp-panel);border-top:1px solid var(--sp-line);box-shadow:0 -2px 10px rgba(0,0,0,.05)}
+#lk-mehr{height:40px;padding:0 16px;font-size:15px;display:inline-flex;align-items:center;gap:8px}
 .lk-stand{flex:1 1 280px;display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;justify-content:flex-end;min-width:0}
 #lk-fuss #header-save-status{max-width:none;white-space:normal;overflow-wrap:anywhere;font-size:14px;color:var(--sp-ok);background:none;border:0;padding:0;animation:none}
 #lk-fuss #header-save-status.unsaved{color:var(--lk-gelb-text);font-weight:600}
@@ -1070,8 +1070,8 @@ td.col-del .btn-ghost:disabled{text-decoration:none}
 #lk-fuss .sp-pille{height:36px}
 #lk-fuss .sp-pille[hidden]{display:none}
 #lk-neben[hidden]{display:none}
-#lk-neben{height:48px;font-size:16px}
-#lk-haupt{height:var(--sp-h-gross);padding:0 28px;font-size:19px;white-space:nowrap}
+#lk-neben{height:40px;font-size:15px}
+#lk-haupt{height:44px;padding:0 24px;font-size:17px;white-space:nowrap}
 #lk-haupt:disabled{opacity:.45;cursor:not-allowed}
 /* Dialoge „Vorbelegung …“ und „Projektnummer und Startnummer“ (native <dialog>, alte Feld-IDs) */
 .lk-dlg{margin:auto;border:0;border-radius:var(--sp-radius);padding:20px 22px;width:min(860px,94vw);color:var(--sp-text);box-shadow:0 12px 40px rgba(20,40,70,.25);font-family:var(--sp-font)}
@@ -1087,11 +1087,11 @@ td.col-del .btn-ghost:disabled{text-decoration:none}
 .lk-dlg-klein{flex-basis:100%;font-size:13px;color:var(--sp-muted);margin:4px 0 0}
 .lk-pjinfo{margin-top:8px;font-size:14px}
 .lk-pjinfo .pj-info{margin-left:0}
-@media (max-width:1100px){ #lk-app{padding:16px 20px 24px} #lk-fuss{padding:10px 20px} }
+@media (max-width:1100px){ #lk-app{padding:12px 20px 20px} #lk-fuss{padding:7px 20px} }
 @media (max-width:760px){
-  .lk-frage{font-size:23px}
+  .lk-frage{font-size:20px}
   .lk-schritt .lk-sname{display:none} .lk-schritt[aria-current="step"] .lk-sname{display:inline}
-  #lk-haupt{flex:1 1 100%;font-size:17px} #lk-fuss{padding:10px 16px} #lk-app{padding:14px 16px 20px}
+  #lk-haupt{flex:1 1 100%;font-size:17px} #lk-fuss{padding:7px 16px} #lk-app{padding:10px 16px 18px}
   #lk-s1 .table-wrap{max-height:none}
 }
 @media print{
@@ -12049,7 +12049,7 @@ if(document.readyState!=='loading')fbeEventsBinden();
   window.MosaikLeiste = { start: start, aktualisieren: aktualisieren, oeffnen: projektNavigation, mehr: mehr };
 })();
 /* ===== Ende MOSAIK-LEISTE v3 ===== */
-MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true });   // 5.0: Kopfband (Leiste v3)
+MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true, kompakt: true });   // 5.0: Kopfband (Leiste v3)
 </script>
 <!-- MOSAIK-LEISTE:END -->
 <script>
