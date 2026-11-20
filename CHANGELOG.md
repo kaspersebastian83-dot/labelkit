@@ -10,7 +10,8 @@
 - **Kopfband kompakt:** LabelKit startet die Spektron-Leiste mit `kompakt: true` (56 statt 84 px) – der gemeinsame Block MOSAIK-LEISTE v3 bleibt byte-gleich, nur der Aufruf ändert sich.
 - **Drei Schritte und Frage:** Kreise 28 statt 40 px, Schrift 15 statt 17 px; „Welche Proben hast du genommen?“ 22 statt 28 px; weniger Abstand über und unter beiden.
 - **Fußleiste:** 60 statt 84 px (Knöpfe 40/44 statt 48/56 px).
-- Bei 1190 × 760 px beginnt die Probentabelle rund 73 px höher, unten sind 24 px mehr frei – zusammen knapp 100 px mehr Arbeitsfläche. Nur CSS und der eine Aufruf; Logik, Daten und Tests unverändert.
+- **Frage und Schritte in einer Zeile:** ab 1150 px Fensterbreite steht die Frage links, die drei Schritte stehen rechts daneben (alle drei Schritte); schmaler bleibt es untereinander wie bisher.
+- Bei 1190 × 760 px beginnt die Probentabelle rund 105 px höher, unten sind 24 px mehr frei – zusammen knapp 130 px mehr Arbeitsfläche. Nur CSS und der eine Aufruf; Logik, Daten und Tests unverändert.
 
 ## 5.1.1 – 11. November 2026 · LabelKit-Dateiregel in allen Apps (Audit o7, o8)
 
