@@ -4,6 +4,7 @@
 // B  mit Projektordner: Neuladen ohne Speichern → Wiederherstellen; Kopie einer früheren Sitzung wird beim Weiterarbeiten nie
 //    überschrieben; Projektdatei inzwischen von woanders gespeichert → nur „Als Datei herunterladen“ / „Verwerfen“, nichts übernommen;
 //    nach dem Speichern keine Zeile.
+// D  Projektwechsel im selben Fenster: die Kopie des vorigen Projekts bleibt ungespeichert (Codex).
 // C  Speicher voll → rote Zeile „Eingaben NICHT im Browser gesichert“.
 // Nie wird in den Projektordner geschrieben, ohne dass gespeichert wird. Nur erfundene Daten.
 'use strict';
@@ -80,6 +81,19 @@ const P = '26.0613 Kopieweg Teststadt Dr.Ka';
   await neuLaden();
   assert.equal(await zeile(), '', 'verworfen bleibt verworfen');
   assert.equal(await page.evaluate(() => Object.values(localStorage).some(v => /KG Keller/.test(v))), false, 'Kopie entfernt');
+  // Codex: Kopie von 26.0612 angeboten, inzwischen 26.0700 eingetragen → Wiederherstellen blockiert, nichts übernommen
+  await ui.projNr(page, '26.0612');
+  await plusProbe(); await page.keyboard.type('KG Heizraum');
+  await page.waitForTimeout(1100);
+  await neuLaden();
+  assert.match(await zeile(), /\(1 Probe · Projekt 26\.0612\)/);
+  await ui.projNr(page, '26.0700');
+  dialoge.length = 0;
+  await page.locator('#lk-entwurf button', {hasText: 'Wiederherstellen'}).click();
+  assert.match(dialoge.at(-1) || '', /Projektzuordnung blockiert: „Browser-Kopie“ gehört zu Projekt 26\.0612/);
+  assert.equal(await page.evaluate(() => proben.length), 0, 'nichts übernommen');
+  assert.equal(await page.evaluate(() => document.getElementById('proj-nr').value), '26.0700');
+  await page.locator('#lk-entwurf button', {hasText: 'Verwerfen'}).click();
 
   // ---------- B: mit Projektordner ----------
   await page.evaluate(() => { sessionStorage.removeItem('ohne-ordner'); Object.keys(localStorage).filter(k => k.startsWith('lk-entwurf:')).forEach(k => localStorage.removeItem(k)); });
@@ -133,6 +147,27 @@ const P = '26.0613 Kopieweg Teststadt Dr.Ka';
   await page.waitForFunction(() => /^Gespeichert:/.test(document.getElementById('header-save-status').textContent));
   await neuLaden(); await oeffnen();
   assert.equal(await zeile(), '', 'gespeichert → keine Zeile');
+
+  // ---------- D: Projektwechsel im selben Fenster (Codex) ----------
+  // Ungespeicherte Kopie von P bleibt ungespeichert, wenn danach das gespeicherte Projekt Q geöffnet wird
+  const Q = '26.0614 Zweitweg Teststadt Dr.Ka';
+  const oeffnenQ = () => page.evaluate(async proj => { const root = await navigator.storage.getDirectory(); const dir = await root.getDirectoryHandle(proj, {create: true}); await dir.getDirectoryHandle('Laboraufträge', {create: true}); await PROJEKTORDNER.oeffnen(dir); }, Q);
+  await oeffnenQ();
+  await plusProbe(); await page.keyboard.type('Q Probe');
+  await page.evaluate(() => { const p = proben.at(-1); p.z3 = BEAUFSCHLAGUNG[0]; p.z4 = OBERFLAECHEN[0]; renderTable(); });
+  await page.keyboard.press('Control+s');
+  await page.waitForFunction(() => /^Gespeichert:/.test(document.getElementById('header-save-status').textContent));
+  await oeffnen();
+  await plusProbe(); await page.keyboard.type('P ungespeichert');
+  await page.waitForTimeout(1100);
+  await oeffnenQ();
+  assert.equal(await page.evaluate(() => PROJEKTORDNER.state.proj.nr), '26.0614');
+  const kopieP = await page.evaluate(proj => Object.keys(localStorage).filter(k => k.startsWith('lk-entwurf:ordner:' + proj + '|')).map(k => JSON.parse(localStorage.getItem(k))).find(o => /P ungespeichert/.test(o.daten)), P);
+  assert.ok(kopieP, 'Kopie von P noch da');
+  assert.equal(kopieP.gespeichert, false, 'Öffnen von Q markiert die Kopie von P nicht als gespeichert');
+  await neuLaden(); await oeffnen();
+  assert.match(await zeile(), /Projekt 26\.0613\) – sie wurden nicht gespeichert\./);
+  await page.locator('#lk-entwurf button', {hasText: 'Verwerfen'}).click();
 
   // ---------- C: Speicher voll ----------
   await page.evaluate(() => { const o = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { if (String(k).startsWith('lk-entwurf:')) throw new DOMException('voll', 'QuotaExceededError'); return o.call(this, k, v); }; });
