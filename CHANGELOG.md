@@ -5,6 +5,13 @@
 - **Kacheln „Welche Proben hast du genommen?“ → Leiste:** Die Probenarten sind 44 px hohe Knöpfe statt 92 px hoher Kacheln; Name und Zähler stehen in einer Zeile. Leere Arten zeigen nur den Namen („noch keine“ steht nur noch für Screenreader da), Zusatzangaben wie „1 Wandblatt“ bei Bohrkernen ohne Kerne bleiben sichtbar; Arten mit Proben bekommen eine grüne Zählerpille. Die gewählte Art ist hell hinterlegt mit dunklem Rand. „+ Weitere Art …“ bleibt gestrichelt und kürzt die Liste der übrigen Arten mit „…“, bevor die Reihe umbricht.
 - Layout in `index.html`: CSS und in `kachelnZeichnen()` nur das Markup einer Kachel („noch keine“ in eigenem Element `.lk-k-leer`); Zählung, Klicklogik und Datenfluss unverändert. Bei 1190 px Breite mit allen Arten und 5 PAK-Proben: Kachelblock 215 → 94 px, Tabelle beginnt rund 125 px höher.
 
+## Unveröffentlicht · Schmalere Leisten oben und unten (nur Layout)
+
+- **Kopfband kompakt:** LabelKit startet die Spektron-Leiste mit `kompakt: true` (56 statt 84 px) – der gemeinsame Block MOSAIK-LEISTE v3 bleibt byte-gleich, nur der Aufruf ändert sich.
+- **Drei Schritte und Frage:** Kreise 28 statt 40 px, Schrift 15 statt 17 px; „Welche Proben hast du genommen?“ 22 statt 28 px; weniger Abstand über und unter beiden.
+- **Fußleiste:** 60 statt 84 px (Knöpfe 40/44 statt 48/56 px).
+- Bei 1190 × 760 px beginnt die Probentabelle rund 73 px höher, unten sind 24 px mehr frei – zusammen knapp 100 px mehr Arbeitsfläche. Nur CSS und der eine Aufruf; Logik, Daten und Tests unverändert.
+
 ## 5.1.1 – 11. November 2026 · LabelKit-Dateiregel in allen Apps (Audit o7, o8)
 
 - **`spektron-ordner.js` (o7):** Als LabelKit-Hauptdatei in „_Spektron/LabelKit“ zählt nur noch eine Datei dieses Projekts (Name beginnt mit der Projektnummer). Eine fremde `…_Daten.json` dort schaltet das Projekt nicht mehr um: LabelKit lädt und speichert die eigene Datei in „Laboraufträge“, die Zeile „Dateien an zwei Orten“ nennt die fremde Datei („… liegt nur „25.0100_Daten.json“ – nach dem Namen nicht von diesem Projekt; keine App liest sie.“). In der Projektzentrale holt „Umzug erneut ausführen“ die eigene Datei nach „_Spektron“, die fremde bleibt liegen.
