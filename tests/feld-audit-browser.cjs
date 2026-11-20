@@ -64,6 +64,17 @@ const P = '26.0612 Feldweg Teststadt Dr.Ka';
   // A5: nichts erfasst → kein „nicht gespeichert“, keine Rückfrage
   assert.equal(await status(), 'Noch nichts erfasst');
   assert.equal(await beforeunloadVerhindert(), false, 'keine Rückfrage beim Verlassen ohne Eingaben');
+  // Codex: auch ohne Proben ist eine Eingabe eine Eingabe (Projektnummer, Startnummer, PN 98-Kopf …) – wieder zurückgesetzt: nichts mehr
+  const nrTippen = v => page.evaluate(v => { const el = document.getElementById('proj-nr'); el.value = v; el.dispatchEvent(new Event('input', {bubbles: true})); }, v);
+  await nrTippen('26.0612 Feldweg 1');
+  assert.match(await status(), /^Änderungen noch nicht gespeichert/);
+  assert.equal(await beforeunloadVerhindert(), true, 'geänderte Projektnummer: Rückfrage beim Verlassen');
+  await page.evaluate(() => { probenStartNr = 7; updateProjektStatus(); });
+  await nrTippen('26.0612');
+  assert.match(await status(), /^Änderungen noch nicht gespeichert/, 'Startnummer geändert');
+  await page.evaluate(() => { probenStartNr = 1; updateProjektStatus(); });
+  assert.equal(await status(), 'Noch nichts erfasst', 'alles wieder wie beim Öffnen');
+  assert.equal(await beforeunloadVerhindert(), false);
 
   // A12 + A16: „+ Probe“ → Ortstermin, Cursor im Raum/Ort
   await page.locator('#tab-eingabe .lk-artknoepfe button', {hasText: '+ Probe'}).click();

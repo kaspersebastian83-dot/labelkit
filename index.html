@@ -4092,6 +4092,7 @@ function formatZeit(d){
 }
 
 function updateProjektStatus(){
+  if(!projektStatus.dirty&&typeof leerStandMerken==='function')leerStandMerken();
   if(typeof lkFussNeu==='function')lkFussNeu();   // 5.0: Hauptaktion folgt dem Speicherstand (z. B. nach „Laborauftrag speichern“)
   const el=document.getElementById('header-save-status');if(!el)return;
   if(speichernAktiv||speicherHinweis){
@@ -4119,8 +4120,15 @@ function updateProjektStatus(){
 /** Audit 2026-11 A5: Noch nichts erfasst und nie gespeichert/geladen – dann gibt es nichts, was verloren gehen könnte
     (vorher stand gleich beim Öffnen eines neuen Projekts „Änderungen noch nicht gespeichert“ samt Rückfrage beim Verlassen). */
 function nichtsZuSichern(){
-  return !projektStatus.lastSavedAt&&!projektStatus.geladen&&!(proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length);
+  return !projektStatus.lastSavedAt&&!projektStatus.geladen&&!anzahlErfasst()&&leerStand!==null&&inhaltOhneZeit()===leerStand;
 }
+/** Codex-Hinweis zu A5: Auch ohne Proben kann schon etwas erfasst sein (Projektnummer, Startnummer, PN 98-Kopf, Brandgeruch-Ort …).
+    Verglichen wird der Inhalt der Projektdatei (ohne Zeitstempel und Ansicht) mit dem Stand, als noch nichts erfasst war:
+    beim Start, nach dem Öffnen eines Projektordners ohne Projektdatei und solange nichts als ungespeichert gilt. */
+let leerStand=null;
+function anzahlErfasst(){return proben.length+chloridProben.length+asbestProben.length+sonstigeProben.length+brandgeruchProben.length+pn98Proben.length+feldprotokolle.length;}
+function inhaltOhneZeit(){try{const d=JSON.parse(buildProjektSaveData().content);delete d.gespeichertAm;delete d.version;delete d.ui;return JSON.stringify(d);}catch(e){return null;}}
+function leerStandMerken(){leerStand=anzahlErfasst()?null:inhaltOhneZeit();}
 function markUnsaved(){
   speicherHinweis='';
   projektStatus.dirty=true;
@@ -10047,7 +10055,7 @@ const PROJEKTORDNER=(function(){
       undoStack=[];
       const nrEl=document.getElementById('proj-nr');if(nrEl)nrEl.value=p.nr;
       projektStatus.dirty=false;
-      updateProjekt();zeigen();
+      updateProjekt();if(typeof leerStandMerken==='function'){leerStandMerken();updateProjektStatus();}zeigen();
       try{PROJEKT_URL.setzen(dir.name);}catch(e){}
       try{window.MosaikLeiste&&MosaikLeiste.aktualisieren();}catch(e){}
       try{window.lkProjektGeoeffnet&&lkProjektGeoeffnet();}catch(e){}
@@ -10083,7 +10091,7 @@ const PROJEKTORDNER=(function(){
     namenAuswahl('ma-namen',personen);
     let kzHinweis='';
     if(!fbeKuerzel()){const v=kuerzelVorschlag(personen);if(v){fbeKuerzelSetzen(v);const kz=document.getElementById('fbe-kuerzel');if(kz)kz.value=v;kzHinweis=' · Ihr Kürzel „'+v+'“ aus der Projektzentrale („Ich bin …“) übernommen';}}
-    if(datei)markSaved(datei.name,datenPfad);
+    if(datei)markSaved(datei.name,datenPfad);else if(typeof leerStandMerken==='function'){leerStandMerken();updateProjektStatus();}   // neues Projekt: Nummer und PN 98-Kopf aus dem Ordner zählen nicht als Eingabe
     if(migriert)markUnsaved(); // fest gewordene Nummern müssen noch in die Projektdatei
     zeigen();
     try{PROJEKT_URL.setzen(dir.name);}catch(e){}
