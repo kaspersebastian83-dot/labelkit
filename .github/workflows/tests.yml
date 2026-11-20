@@ -2,6 +2,8 @@ name: Automated tests
 
 on:
   pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -48,6 +50,8 @@ jobs:
       - run: node tests/project-data.cjs
       - run: node tests/ordnername.cjs
       - run: node tests/wandblatt-bohrkerne.cjs
+        env:
+          AIDKIT_DIR: aidkit
       - run: node tests/hilfe-links.cjs
         env:
           AIDKIT_DIR: aidkit
@@ -124,6 +128,8 @@ jobs:
         run: node tests/pn98-bruecke-browser.cjs ${{ matrix.browser }}
       - name: Projektdatei behält frühere Textbaustein-Angaben
         run: node tests/projektdatei-altwerte-browser.cjs ${{ matrix.browser }}
+      - name: Audit 2026-11 Lauf 1 – Ortstermin, Kopieren-Fehler, Excel nach „Laboraufträge“, Speicherort, Projektprüfung
+        run: node tests/feld-audit-browser.cjs ${{ matrix.browser }}
       - name: Wandblatt Bohrkerne – drucken, übertragen, Proben anlegen
         run: node tests/wandblatt-bohrkerne-browser.cjs ${{ matrix.browser }}
         env:
