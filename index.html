@@ -10032,6 +10032,7 @@ const PROJEKTORDNER=(function(){
     if(!await permission(dir,true)){flash('Ohne Schreibrecht auf den Projektordner kann LabelKit dort nicht speichern.');return;}
     const personen=await maPersonenAus(await archiv());
     const p=parse(dir.name,personen);if(!p){flash('„'+dir.name+'“ ist kein Projektordner (erwartet z. B. „26.0123 Köln“).');return;}
+    if(typeof entwurfVorWechsel==='function')entwurfVorWechsel();   // Browser-Kopie des bisherigen Projekts erst fertig schreiben (5.3.0)
     let lab=await subdir(dir,LAB_DIR,false);
     if(!lab){if(!confirm('Im Projekt „'+dir.name+'“ gibt es keinen Unterordner „'+LAB_DIR+'“. Jetzt anlegen?'))return;lab=await subdir(dir,LAB_DIR,true);}
     // Spektron-Ordner (spektron-ordner.js): …_Daten.json in „Laboraufträge“ oder künftig „_Spektron/LabelKit“; ohne Modul wie bisher.
@@ -12631,12 +12632,15 @@ function entwurfSchreiben(){
   const bisher=entwurfLesen(k);if(bisher&&bisher.gespeichert&&entwurfVergleich(bisher.daten)===entwurfVergleich(pd.content)){entwurfLetzterSchluessel=k;return;}
   const rec={format:1,app:'LabelKit',version:APP_VERSION,zeit:new Date().toISOString(),sitzung:ENTWURF_SITZUNG,
     ordner:p&&p.name||'',nr:pd.projnr||'',basis:entwurfBasis,gespeichert:false,anzahl:entwurfAnzahl(JSON.parse(pd.content)),daten:pd.content};
+  if(!rec.anzahl&&!(bisher&&bisher.sitzung===ENTWURF_SITZUNG))return;   // ohne Proben nur eine schon vorhandene eigene Kopie nachführen
   try{
     const text=JSON.stringify(rec);
     localStorage.setItem(k,text);
     if(localStorage.getItem(k)!==text)throw new Error('Rücklesen stimmt nicht');
-    // dieselbe Sitzung unter anderem Schlüssel (z. B. Projektnummer erst später eingetragen): alte Kopie weg
-    if(entwurfLetzterSchluessel&&entwurfLetzterSchluessel!==k){const alt=entwurfLesen(entwurfLetzterSchluessel);if(alt&&alt.sitzung===ENTWURF_SITZUNG)localStorage.removeItem(entwurfLetzterSchluessel);}
+    // dieselbe Sitzung unter anderem Schlüssel, weil die Projektnummer erst später eingetragen oder ergänzt wurde: alte Kopie weg.
+    // Ein anderes Projekt (anderer Ordner, andere Nummer) behält seine Kopie (Codex-Hinweis).
+    if(entwurfLetzterSchluessel&&entwurfLetzterSchluessel!==k){const alt=entwurfLesen(entwurfLetzterSchluessel);
+      if(alt&&alt.sitzung===ENTWURF_SITZUNG&&!alt.ordner&&!rec.ordner&&(!alt.nr||alt.nr==='PAK'||(typeof gleichesProjekt==='function'&&gleichesProjekt(alt.nr,rec.nr))))localStorage.removeItem(entwurfLetzterSchluessel);}
     entwurfLetzterSchluessel=k;
     entwurfAufraeumen(k);
     if(entwurfFehler){entwurfFehler='';entwurfZeile();}
@@ -12652,16 +12656,19 @@ function entwurfAufraeumen(behalten){
   const rest=entwurfAlle().filter(([k])=>k!==behalten).sort((a,b)=>(a[1].gespeichert===b[1].gespeichert?0:a[1].gespeichert?-1:1)||Date.parse(a[1].zeit)-Date.parse(b[1].zeit));
   while(rest.length>ENTWURF_MAX-1){const [k]=rest.shift();try{localStorage.removeItem(k);}catch(e){}}
 }
-/** Nach dem Speichern (Projektordner) oder Herunterladen: die Kopie dieser Sitzung gilt als gesichert. */
+/** Nach dem Speichern (Projektordner) oder Herunterladen: die Kopie dieser Sitzung zu DIESEM Projekt gilt als gesichert –
+    nie die eines vorher im selben Fenster bearbeiteten Projekts (Codex-Hinweis: Öffnen von B markierte sonst A als gespeichert). */
 function entwurfGespeichert(wie){
   if(entwurfTimer)entwurfSchreiben();
-  const k=entwurfLetzterSchluessel||entwurfSchluessel(),o=entwurfLesen(k);
+  const k=entwurfSchluessel(),o=entwurfLesen(k);
   if(!o||o.sitzung!==ENTWURF_SITZUNG)return;   // Kopie einer früheren Sitzung bleibt, bis sie angeboten wurde
   o.gespeichert=wie||true;if(entwurfBasis!==null&&wie!=='heruntergeladen')o.basis=entwurfBasis;
   try{localStorage.setItem(k,JSON.stringify(o));}catch(e){}
 }
 function entwurfVergleich(text){try{const d=JSON.parse(text);delete d.gespeichertAm;delete d.version;return JSON.stringify(d);}catch(e){return text;}}
 let entwurfAngebot=null;
+/** Vor dem Wechsel in einen anderen Projektordner: noch ausstehende Änderungen des bisherigen Projekts sichern. */
+function entwurfVorWechsel(){if(entwurfTimer)entwurfSchreiben();}
 /** Beim Öffnen eines Projekts (bzw. ohne Projekt beim Start): offene Kopie einer früheren Sitzung anbieten. */
 function entwurfAnbieten(){
   entwurfAngebot=null;
@@ -12715,7 +12722,9 @@ function entwurfWiederherstellen(){
   let data;try{data=JSON.parse(a.o.daten);}catch(e){alert('Die Browser-Kopie ist nicht lesbar: '+e.message);return;}
   const vorhanden=entwurfAnzahl({proben,chloridProben,asbestProben,sonstigeProben,brandgeruchProben,pn98Proben,feldprotokolle});
   if(vorhanden&&!confirm('Ungespeicherte Eingaben vom '+new Date(a.o.zeit).toLocaleString('de-DE')+' wiederherstellen?\n\nDie jetzt angezeigte Erfassung ('+vorhanden+(vorhanden===1?' Probe':' Proben')+') wird dadurch ersetzt.'))return;
-  if(p&&!projektZuordnungPruefen(data,p.nr,'Browser-Kopie'))return;
+  // Projektzuordnung: mit Ordner gegen den Ordner, ohne Ordner (Safari/iPad) gegen die eingetragene Projektnummer (Codex-Hinweis)
+  const ziel=p?p.nr:((document.getElementById('proj-nr')||{}).value||'').trim();
+  try{if(!projektZuordnungPruefen(data,ziel,'Browser-Kopie'))return;}catch(e){alert(e.message);return;}
   try{applyProjektData(data,p?p.nr:'');}catch(e){alert('Wiederherstellen nicht möglich: '+e.message);return;}
   entwurfAngebot=null;entwurfZeile();
   markUnsaved();
