@@ -39,7 +39,7 @@ const P = '26.0613 Kopieweg Teststadt Dr.Ka';
   const zeile = () => page.evaluate(() => { const e = document.getElementById('lk-entwurf'); return e && !e.hidden ? e.textContent : ''; });
   const kopien = () => page.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('lk-entwurf:')).length);
   const neuLaden = async () => { await page.reload(); await page.waitForSelector('#mosaikLeiste.ml-band', {timeout: 8000}); if (await page.evaluate(() => typeof window.showDirectoryPicker === 'undefined')) await page.waitForSelector('#modal-browser-hinweis[open]', {timeout: 3000}).catch(() => {}); await zu(); };
-  const plusProbe = async () => { await ui.art(page, 'pak'); await page.locator('#tab-eingabe .lk-artknoepfe button', {hasText: '+ Probe'}).click(); };
+  const plusProbe = async () => { await ui.art(page, 'pak'); await page.locator('#tab-eingabe .lk-artknoepfe button', {hasText: '+ Probe'}).click(); await page.waitForFunction(() => /'z2'/.test(document.activeElement && document.activeElement.getAttribute('oninput') || '')); };
 
   // ---------- A: ohne Ordnerzugriff ----------
   await page.goto(url);
