@@ -1,5 +1,14 @@
 # Änderungen
 
+## 5.3.2 – 21. November 2026 · Raumkürzel KIZ/TRH auf dem Wandblatt (Audit Lauf 4, D14 – 5/5)
+
+Plan `claude/spektron-audit-2026-11-4-text-plan.md`, PR 6e; Weg (a), Entscheidung Basti 20.11.2026. Die Raumliste selbst kommt seit AidKit 0.31.0 (#43) aus `konventionen.js`.
+
+- **Legende** auf Blatt 1 des Bohrkern-Wandblatts: „mehrere gleiche Räume: KIZ1, KIZ2 …“ statt „KZ1, KZ2 …“. Die Liste davor ist `RAEUME` aus AidKit (nur neue Schreibweise).
+- **Doppelte Wandkennung bei gemischt alt/neu:** `fbeBohrkernPlausi` fasst mit AidKit `RAEUME_ALT` die Kennungen nach der neuen Schreibweise zusammen (KZ→KIZ, TH→TRH, Nummer bleibt: KZ2→KIZ2) – wie PlanKit 2.6.1 die Wandansichten. `EG-KZ-B` und `EG-KIZ-B` auf zwei Wandblättern → „Wandkennung EG-KZ-B / EG-KIZ-B steht auf mehreren Wandblättern (Wand 1, 2). KZ ist die frühere Schreibweise von KIZ – beides ist derselbe Raum.“ Vorher kein Hinweis.
+- Unverändert: Kennungen und Kern-IDs werden nie umgeschrieben; reine Alt- oder Neudateien melden wie bisher; ohne AidKit (nicht geladen) wird wie bisher der genaue Text verglichen; KZ und KZ2 bleiben verschiedene Räume.
+- Test `wandblatt-bohrkerne.cjs` (neuer Fall „KIZ/TRH …“) auf `main` rot.
+
 ## 5.3.1 – 20. November 2026 · Tabellenbreiten (Audit A15, nur CSS)
 
 - Raum/Ort-Spalte (`th.col-ort`) in Schritt 1: `width:32%`, mindestens 240 px; Notiz (`th.col-notiz`) 14 %, mindestens 100 px. Bei 1190 px ist „EG Küche Brandraum Decke“ ganz sichtbar (vorher „… Decl“).

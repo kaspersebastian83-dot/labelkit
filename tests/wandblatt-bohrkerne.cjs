@@ -75,4 +75,22 @@ ok('Hinweise: doppelte Wandkennung, Lage außerhalb der Wand, Raumkürzel nicht 
   assert.match(h, /EG-XYZ-B steht auf mehreren Wandblättern/); assert.match(h, /größer als die Wandlänge/);
   if (ctx.SpektronKonventionen) assert.match(h, /„XYZ“ steht nicht in der Liste/);
 });
+ok('KIZ/TRH (Audit Lauf 4, D14): Legende mit KIZ1, KIZ2; alte und neue Schreibweise derselben Wand = doppelte Wandkennung', () => {
+  const s = A.fbSeiten({typ: 'bohrkern', n: 1, lfd: '1', nr: '26.0142', leer: false}).join('');
+  assert.equal(s.includes('KZ1, KZ2'), false, 'Legende ohne alte Schreibweise KZ1, KZ2');
+  if (!ctx.SpektronKonventionen) return;
+  assert.match(s, /mehrere gleiche Räume: KIZ1, KIZ2 …/);
+  assert.match(s, /KIZ Kinderzimmer/); assert.match(s, /TRH Treppenhaus/);
+  const zwei = (r0, r1) => {
+    const rec = neu();
+    Object.assign(rec.mp[0].w, {geschoss: 'EG', raum: r0, flaeche: 'B'}); Object.assign(rec.mp[1].w, {geschoss: 'EG', raum: r1, flaeche: 'B'});
+    return P(A.fbePlausi(rec).map(x => x.text).filter(t => /mehreren Wandblättern/.test(t)));
+  };
+  assert.match(zwei('KZ', 'KIZ').join(), /EG-KZ-B \/ EG-KIZ-B steht auf mehreren Wandblättern \(Wand 1, 2\).*KZ ist die frühere Schreibweise von KIZ/);
+  assert.match(zwei('kiz2', 'KZ2').join(), /EG-KIZ2-B \/ EG-KZ2-B steht auf mehreren Wandblättern/);
+  assert.match(zwei('TH', 'TRH').join(), /EG-TH-B \/ EG-TRH-B .*TH ist die frühere Schreibweise von TRH/);
+  assert.deepEqual(zwei('KZ', 'KZ'), ['Wandkennung EG-KZ-B steht auf mehreren Wandblättern (Wand 1, 2).'], 'reine Altdatei wie bisher');
+  assert.deepEqual(zwei('KZ', 'KZ2'), [], 'Kinderzimmer und Kinderzimmer 2 sind verschiedene Räume');
+  assert.deepEqual(zwei('KIZ', 'WZ'), []);
+});
 console.log(`OK Wandblatt: ${n} Fälle${ctx.SpektronKonventionen ? ' (mit AidKit-Regeln)' : ' (ohne AidKit)'}`);
