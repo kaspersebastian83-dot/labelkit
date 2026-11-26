@@ -1,5 +1,15 @@
 # Änderungen
 
+## 5.4.0 – 26. November 2026 · Brandgeruch: Weg zur Anlage für den Bericht
+
+Rückmeldung R-20261126-135349-SK; Plan `claude/brandgeruch-tabelle-plan.md`, Teil A; Entscheidungen Basti 26.11.2026 (ungespeichert: Variante 2 – gesperrt, kein Dialog, kein automatisches Speichern). Nur `index.html`.
+
+- **„Anlage für den Bericht erstellen →“** (`#bg-anlage-knopf`, Reiter Brandgeruch › Export): öffnet `../Projektzentrale/#projekt=<Ordnername>` (`encodeURIComponent`) über `MosaikLeiste.oeffnen` im Fenster „projektzentrale“ – wie die Sprünge der Leiste. LabelKit erzeugt keine Anlage; die Projektzentrale erstellt sie aus der gespeicherten Projektdatei in „Mitteilungen“.
+- **Zeile darunter** (`#bg-anlage-satz`, `bgAnlageStand`, Reihenfolge fest): ohne Projektordner kein Knopf, nur „Die Anlage für den Bericht erstellt die Projektzentrale.“ · Blind-Modus → Knopf gesperrt, „Erst „Ergebnisse aufdecken“ und speichern – verdeckt kann die Projektzentrale keine Anlage erstellen.“ · ungespeichert (`projektStatus.dirty`, dieselbe Quelle wie „Weiter: Fotos →“) → gesperrt, „Erst speichern – die Projektzentrale liest nur den gespeicherten Stand.“ · sonst aktiv, „Die Projektzentrale erstellt daraus die Word-Anlage in „Mitteilungen“ – BerichtKit hängt sie an den Bericht.“ Kein Dialog, nichts wird still gespeichert oder verworfen. Neu gezeichnet aus `updateProjektStatus`, `updateBgBlindUi` und `renderBrandgeruchExport` – nach dem Speichern ohne Neuladen aktiv.
+- **„Nur Tabelle (RTF)“** (früher „Als Word (RTF)“), Zusatz „nicht die Anlage für den Bericht“, als Nebenknopf. Speicherdialog mit `startIn` = „Laboraufträge“ des Projekts, sonst Projektordner; ohne Projektordner wie bisher; lehnt der Browser den Startordner ab, Dialog ohne `startIn`. Meldung „Brandgeruch-Tabelle (RTF) gespeichert in „Laboraufträge“ ✓“ (Ordner über `resolve`, nur innerhalb des Projekts; sonst ohne Ordner). Download-Rückfall, Inhalt und Dateiname unverändert (RTF gegen `main` bytegleich geprüft).
+- Unverändert: `_Daten.json`, alle Dateiformate und Dateinamen, Laborübergabe, „Alle EOL + Projektdateien speichern“, `spektron-ordner.js`.
+- Neu `tests/brandgeruch-anlage-browser.cjs` (in CI).
+
 ## 5.3.2 – 21. November 2026 · Raumkürzel KIZ/TRH auf dem Wandblatt (Audit Lauf 4, D14 – 5/5)
 
 Plan `claude/spektron-audit-2026-11-4-text-plan.md`, PR 6e; Weg (a), Entscheidung Basti 20.11.2026. Die Raumliste selbst kommt seit AidKit 0.31.0 (#43) aus `konventionen.js`.

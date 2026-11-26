@@ -2,7 +2,11 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **5.3.2** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **5.4.0** (Änderungen in `CHANGELOG.md`)
+
+## Neu in 5.4.0 · 26.11.2026 – Brandgeruch: Weg zur Anlage für den Bericht
+
+Im Laborauftrag (Schritt ③) › Brandgeruch-Protokoll führt **„Anlage für den Bericht erstellen →“** zur Projektzentrale beim Projekt. Sie erstellt aus der gespeicherten Projektdatei die Word-Anlage „Sensorische Prüfung auf Brandgeruch“ in „Mitteilungen“, die BerichtKit an den Bericht hängt. Gesperrt, solange die Ergebnisse verdeckt (Blind-Modus) oder Änderungen nicht gespeichert sind; ohne Projektordner steht dort nur ein Satz. **„Nur Tabelle (RTF)“** (früher „Als Word (RTF)“) bleibt als Nebenknopf: Speicherdialog startet in „Laboraufträge“, Inhalt und Dateiname wie bisher.
 
 ## Neu in 5.0.0 · 01.11.2026 – einfache Oberfläche
 
