@@ -123,6 +123,8 @@ jobs:
         run: node tests/raumorte-browser.cjs ${{ matrix.browser }}
       - name: Laborübergabe – Datum maskiert, Kopie ohne zusätzliche Zeilen
         run: node tests/laboruebergabe-browser.cjs ${{ matrix.browser }}
+      - name: Brandgeruch › Export – Anlage für den Bericht (Projektzentrale), gesperrt bei verdeckt/ungespeichert, RTF-Startordner
+        run: node tests/brandgeruch-anlage-browser.cjs ${{ matrix.browser }}
       - name: AidKit (Raumkürzel und ID-Regeln, liegt auf GitHub Pages unter ../aidkit/)
         uses: actions/checkout@v6
         with:
