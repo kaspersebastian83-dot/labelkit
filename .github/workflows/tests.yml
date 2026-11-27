@@ -47,6 +47,7 @@ jobs:
       - run: node tests/kuerzel.cjs
       - run: node tests/pak-reset.cjs
       - run: node tests/nummern-fest.cjs
+      - run: node tests/nachauftrag.cjs
       - run: node tests/pak-vorbelegung.cjs
       - run: node tests/projektzuordnung.cjs
       - run: node tests/project-data.cjs
@@ -102,6 +103,8 @@ jobs:
         run: node tests/nummern-fest-browser.cjs ${{ matrix.browser }}
       - name: Fixed sample numbers from order overview and cutting plan in the real browser
         run: node tests/nummern-fest-druck-browser.cjs ${{ matrix.browser }}
+      - name: Nachauftrag (5.5.0) – nur neue Proben, Auftrag-2-Dateien, Rückfragen, Datei aus 5.4.0, Versionssperre, zwei Fenster
+        run: node tests/nachauftrag-browser.cjs ${{ matrix.browser }}
 
       - name: PAK defaults with separate add, fill and confirmed update actions
         run: node tests/pak-vorbelegung-browser.cjs ${{ matrix.browser }}

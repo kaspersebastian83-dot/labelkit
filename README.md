@@ -2,7 +2,11 @@
 
 Deutschsprachige Browser-App für Probenerfassung, Etiketten und Laborübergaben – Schritt ① der Büro-App-Suite **Spektron** (Projektzentrale, LabelKit, FotoKit, PlanKit, BelegKit, SpesenKit; Übersicht im [README der Projektzentrale](https://github.com/kaspersebastian83-dot/Projektzentrale#readme)).
 
-**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **5.4.0** (Änderungen in `CHANGELOG.md`)
+**App öffnen:** https://kaspersebastian83-dot.github.io/labelkit/ · aktuelle Version **5.5.0** (Änderungen in `CHANGELOG.md`)
+
+## Neu in 5.5.0 · 27.11.2026 – Nachauftrag
+
+Kommt nach einem Laborauftrag eine zweite Probenrunde dazu, gehen nur die **neuen Proben** ans Labor: LabelKit fragt einmal, welche Proben schon beim Labor sind (Vorschlag aus den Laborübergaben), zeigt in Schritt ② und ③ vorgewählt „Nachauftrag: nur die neuen“ („alle Proben“ mit Rückfrage) und merkt sich an jeder Probe, mit welchem Auftrag sie hinausging (`auftrag: "a2"`, Liste `weitereAuftraege`, `auftragZaehler`, `auftrag1` – erst ab dem zweiten Auftrag). Laborübergaben ab dem zweiten Auftrag heißen `…_22.8.2026_Auftrag-2_Laborübergabe.xls`. Neue Proben bekommen bei mehreren Ortsterminen das Datum des neuesten; eine Projektdatei einer neueren Fassung wird nur angezeigt. Ein Projekt mit einem Laborauftrag bleibt wie bisher.
 
 ## Neu in 5.4.0 · 26.11.2026 – Brandgeruch: Weg zur Anlage für den Bericht
 
