@@ -252,7 +252,7 @@ const ok = (msg) => { n++; if (process.env.VERBOSE) console.log('  ✓ ' + msg);
     'exportExcel', 'exportChloridExcel', 'exportAsbestExcel', 'exportSonstigeExcel',
     'copyUebergabe', 'copyChloridUebergabe', 'copyAsbestUebergabe', 'copySonstigeUebergabe', 'alleUebergabenSpeichernMitWord', 'renderAbschlussStatus']) {
     const i = html.indexOf('function ' + f + '('); assert.ok(i >= 0, f);
-    assert.match(html.slice(i, i + 400), /=aktiv\((proben|chloridProben|asbestProben|sonstigeProben)\)/, f + ' filtert stornierte Proben');
+    assert.match(html.slice(i, i + 400), /=(aktiv|ausw|auswahl)\((proben|chloridProben|asbestProben|sonstigeProben)\)/, f + ' filtert stornierte Proben');   // 5.5.0: auswahl() = aktiv() der gewählten Ansicht
   }
   assert.match(html, /nrSchutz:1, \/\/ ab 4\.49\.0/);
   ok('Ausgaben und Speichern');
