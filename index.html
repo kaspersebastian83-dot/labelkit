@@ -1958,9 +1958,10 @@ td.col-del .btn-ghost:disabled{text-decoration:none}
   <h3 id="lk-dlg-auftrag1-t">Welche Proben sind schon beim Labor?</h3>
   <p class="m">Es gibt neue Proben neben einem früheren Laborauftrag. Damit nichts doppelt ans Labor geht, hält LabelKit einmal fest, welche Proben schon dort sind. Vorschlag laut <b id="lk-a1-quelle"></b>:</p>
   <div id="lk-a1-vorschlag" class="lk-artzeilen"></div>
+  <div id="lk-a1-unsicher" class="lk-zeile lk-gelb" hidden><span><b>Nicht sicher:</b> Es gibt keine Laborübergabe-Datei. LabelKit weiß nur, dass diese Nummern schon fest sind (z. B. Etiketten gedruckt, dann für Eurofins kopiert). Bitte die Haken prüfen – oder „Noch nichts beim Labor“.</span></div>
   <details id="lk-a1-aendern" class="lk-aufklapp"><summary>ändern …</summary><p class="m">Haken = schon beim Labor. Ohne Haken = neu, geht mit dem Nachauftrag hinaus.</p><div id="lk-a1-liste" class="lk-a1-liste"></div></details>
   <p class="m">Gespeichert wird das erst zusammen mit dem Nachauftrag – sobald die neuen Proben kopiert, als Excel gespeichert, gedruckt oder mit „Laborauftrag speichern“ übergeben werden.</p>
-  <div class="btns"><button type="button" class="sp-knopf" data-zu>Später</button><button type="button" class="sp-knopf sp-knopf-app" id="lk-a1-ok">Übernehmen</button></div>
+  <div class="btns"><button type="button" class="sp-knopf" data-zu>Später</button><button type="button" class="sp-knopf" id="lk-a1-keine">Noch nichts beim Labor</button><button type="button" class="sp-knopf sp-knopf-app" id="lk-a1-ok">Übernehmen</button></div>
 </dialog>
 <dialog class="lk-dlg" id="lk-dlg-projekt" aria-labelledby="lk-dlg-projekt-t">
   <h3 id="lk-dlg-projekt-t">Projektnummer und Startnummer</h3>
@@ -4049,6 +4050,7 @@ let lkSichtWahl=null;           // 'neu' | 'a1' … | 'alle' – null = Vorwahl
 let alleBestaetigt=false;       // „alle Proben“ trotz früherem Auftrag bestätigt (gilt bis zur nächsten Wahl)
 let auftragBefund={dateien:[],festBeimLaden:[]};   // beim Öffnen gelesen: Laborübergabe-Dateien und damals feste Nummern
 let auftragRueckfrageGezeigt=false,auftragBestandAus=false;   // Rückfrage gezeigt / „keine Probe ist schon beim Labor“ festgehalten
+let auftraegeDieseSitzung=new Set(),auftragNochmalBestaetigt=new Set(),vermutlichBestaetigt=new WeakSet();   // Rückfragen vor dem erneuten Übergeben
 let laborTexte=new Map();       // N10: Eurofins-Zeile je Probe, als sie beim Labor war (nur diese Sitzung)
 let lkVersionSperre='';         // N8: Projektdatei einer neueren Fassung → nur ansehen
 const AUFTRAG_FELDER=['weitereAuftraege','auftragZaehler','auftrag1'];
@@ -4059,7 +4061,7 @@ const PROJEKT_FELDER=new Set(['version','gespeichertAm','nrSchutz','projekt','ui
   'brandgeruchDatum','bgBlind','pn98NextId','pn98Projekt','feldprotokolle',...AUFTRAG_FELDER,
   'format','asbestProjektNr','auftragsscheinNotiz','bohrmehlAktiv','brandgeruchProjektNr','chloridLoeschpulverparameter','chloridProjektNr',
   'eiligeProben','pakPruefberichtNr','sonstigeProjektNr','textblockBrandTabelle','textblockHeadings','textblockLabor']);
-const UEBERGABE_ANLAESSE=new Set(['Kopieren','Laborübergabe','Laborübergabe (Drucken)','Abschluss','Bestand']);
+const UEBERGABE_ANLAESSE=new Set(['Kopieren','Laborübergabe','Laborübergabe (Drucken)','Abschluss','Bestand','Nachauftrag']);
 
 function auftragNr(id){const m=/^a(\d+)$/.exec(String(id||''));return m?Number(m[1]):0;}
 function alleNummerierten(){return nummerierteListen().flat();}
@@ -4105,7 +4107,7 @@ function auftraegeBekannt(){
   return [...m.values()].sort((x,y)=>auftragNr(x.id)-auftragNr(y.id));
 }
 /** Mehr als ein Auftrag steht fest (in der Datei) – dann zeigt Schritt ① „A1/A2“. */
-function mehrereAuftraege(){return alleNummerierten().some(p=>auftragMerkmalGilt(p)&&auftragNr(p.auftrag)>=2);}
+function mehrereAuftraege(){return (weitereAuftraege||[]).some(a=>a&&auftragNr(a.id)>=2&&Array.isArray(a.proben)&&a.proben.length);}   // über die Liste: je Zeile billig
 function neueProbenListen(){return nummerierteListen().map(l=>aktiv(l).filter(p=>!auftragVon(p)));}
 function anzahlNeu(){return neueProbenListen().reduce((n,l)=>n+l.length,0);}
 function naechsteAuftragNr(){
@@ -4128,7 +4130,9 @@ function sichtOptionen(){
 function mitteilungAuftrag(){
   try{
     const id=typeof PROJEKT_URL!=='undefined'?PROJEKT_URL.mitteilung:null;if(!id)return null;
-    const pj=typeof PROJEKTORDNER!=='undefined'?PROJEKTORDNER.state.pj:null;
+    const proj=typeof PROJEKTORDNER!=='undefined'?PROJEKTORDNER.state.proj:null;
+    if(!proj||!PROJEKT_URL.projekt||String(proj.name).normalize('NFC')!==String(PROJEKT_URL.projekt).normalize('NFC'))return null;   // nur das Projekt aus dem Link
+    const pj=PROJEKTORDNER.state.pj;
     const m=pj&&Array.isArray(pj.weitereMitteilungen)?pj.weitereMitteilungen.find(x=>x&&String(x.id)===String(id)):null;
     const l=m&&Array.isArray(m.auftraege)?m.auftraege.filter(auftragNr):[];
     return l.length===1?l[0]:null;   // leer → Vorwahl (neue Proben); mehrere → Vorwahl
@@ -4160,6 +4164,7 @@ function auftragKurz(id,o){const a=(o||auftraegeBekannt()).find(x=>x.id===id);re
 function sichtWaehlen(id){
   if(id==='alle'&&!alleBestaetigt){const t=schonBeimLaborText();if(t&&!confirm(t+'\n\nTrotzdem alle noch einmal übergeben?\n\nOK = alle Proben · Abbrechen = bei der bisherigen Wahl bleiben'))return false;alleBestaetigt=true;}
   if(id!=='alle')alleBestaetigt=false;
+  auftragNochmalBestaetigt.delete(id);
   lkSichtWahl=id;
   if(typeof lkNachZeichnen==='function')lkNachZeichnen();
   return true;
@@ -4172,7 +4177,7 @@ function schonBeimLaborText(nur){
   if(!je.size){
     const v=auftragBestandVorschlag();if(!v)return '';
     const nrs=new Set(alleNummerierten().filter(dabei).map(p=>Number(p._nr))),l=v.auftraege.flatMap(a=>a.proben).filter(n=>nrs.has(n));
-    return l.length?nrListeText(l)+(l.length===1?' ist':' sind')+' laut '+v.quelle+' schon beim Labor.':'';
+    return l.length?nrListeText(l)+(l.length===1?' ist':' sind')+' laut '+v.quelle+(v.unsicher?' vermutlich':'')+' schon beim Labor.':'';
   }
   const o=auftraegeBekannt(),teile=[...je].sort((a,b)=>auftragNr(a[0])-auftragNr(b[0])).map(([id,nrs])=>nrListeText(nrs)+' ('+auftragKurz(id,o)+')');
   return (teile.length>1?teile.slice(0,-1).join(', ')+' und '+teile[teile.length-1]:teile[0])+' '+([...je.values()].flat().length===1?'ist':'sind')+' schon beim Labor.';
@@ -4181,18 +4186,44 @@ function schonBeimLaborText(nur){
 /* ---------- Vor jeder Übergabe ans Labor (Kopieren, Excel, Drucken der Übergabe, Laborauftrag speichern) ---------- */
 function nachauftragVorAusgabe(listen){
   if(lkVersionSperre){flash(lkVersionSperre);return false;}
-  if(sicht()==='alle'&&!alleBestaetigt){
-    const t=schonBeimLaborText(listen?new Set(listen.flat()):null);   // nur fragen, wenn davon etwas hinausgeht
+  const s=sicht(),raus=listen?listen.flat():null;
+  if(s==='alle'&&!alleBestaetigt){
+    const t=schonBeimLaborText(raus?new Set(raus):null);   // nur fragen, wenn davon etwas hinausgeht
     if(t){if(!confirm(t+'\n\nTrotzdem alle Proben noch einmal ans Labor übergeben?\n\nOK = alle übergeben · Abbrechen = nichts übergeben (oben bei „Welche Proben?“ wählen)'))return false;alleBestaetigt=true;}
   }
+  // Ein früherer Auftrag (nicht in dieser Sitzung fest geworden) ist schon beim Labor – noch einmal übergeben nur mit Rückfrage (Review 4)
+  if(auftragNr(s)&&!auftraegeDieseSitzung.has(s)&&!auftragNochmalBestaetigt.has(s)){
+    const nrs=(raus||nummerierteListen().flat()).filter(p=>inSicht(p,s)).map(p=>p._nr);
+    if(nrs.length){
+      if(!confirm(nrListeText(nrs)+(nrs.length===1?' ist':' sind')+' schon beim Labor ('+auftragKurz(s)+').\n\nNoch einmal ans Labor übergeben?'+(anzahlNeu()?'\n\nNeue Proben ('+nrListeText(neueProbenListen().flat().map(p=>p._nr))+') gehen nur mit „Welche Proben?“ › „Neu“ hinaus.':'')+'\n\nOK = noch einmal übergeben · Abbrechen = nichts übergeben'))return false;
+      auftragNochmalBestaetigt.add(s);
+    }
+  }
+  // Ohne Auftrag, aber die Nummer wurde schon bei einer Übergabe fest, bevor der letzte Auftrag festgehalten wurde (z. B. Merkmal von einem
+  // älteren LabelKit-Fenster entfernt) – vermutlich schon beim Labor (Review 5)
+  if(s==='neu'||s==='alle'){
+    const v=(raus||nummerierteListen().flat()).filter(vermutlichBeimLabor).filter(p=>!vermutlichBestaetigt.has(p));
+    if(v.length){
+      if(!confirm(nrListeText(v.map(p=>p._nr))+(v.length===1?' gehört':' gehören')+' zu keinem festgehaltenen Laborauftrag, '+(v.length===1?'ihre':'ihre')+' Nummer wurde aber schon bei einer Übergabe fest (vermutlich schon beim Labor).\n\nTrotzdem übergeben?\n\nOK = übergeben · Abbrechen = nichts übergeben'))return false;
+      v.forEach(p=>vermutlichBestaetigt.add(p));
+    }
+  }
   return true;
+}
+/** Neue Probe, deren Nummer schon bei einer Übergabe fest wurde – spätestens am Tag des letzten festgehaltenen Auftrags. */
+function vermutlichBeimLabor(p){
+  if(!p||istStorniert(p)||auftragVon(p)||!p.nrFest||!UEBERGABE_ANLAESSE.has(String(p.nrFest.anlass||'')))return false;
+  let grenze='';for(const q of alleNummerierten())if(auftragMerkmalGilt(q)&&q.nrFest){const t=tagIso(q.nrFest.am);if(t>grenze)grenze=t;}
+  return !!grenze&&tagIso(p.nrFest.am)<=grenze;
 }
 /** N2: Kopieren, Excel, Drucken der Übergabe oder „Laborauftrag speichern“ in der Ansicht „neue Proben“ macht den Nachauftrag fest –
     für alle neuen Proben des Projekts (nicht nur die gerade kopierte Art). Rückgabe {id,nrs} oder null. */
 function nachauftragFestmachen(anlass){
-  if(sicht()!=='neu')return null;
+  const s0=sicht();
+  // „alle Proben“ (bestätigt) mit früheren Aufträgen: die neuen gehen mit hinaus – auch sie werden ein Auftrag (Review 3)
+  if(!(s0==='neu'||(s0==='alle'&&auftraegeBekannt().length)))return null;
   const neu=neueProbenListen();if(!neu.some(l=>l.length))return null;
-  nummernFestlegen(neu,anlass,{neuZeichnen:false});   // ein Merkmal gilt nur mit fester Nummer
+  nummernFestlegen(neu,'Nachauftrag',{neuZeichnen:false,archiv:false});   // ein Merkmal gilt nur mit fester Nummer (die kopierte Art trägt schon ihren Anlass)
   const k=naechsteAuftragNr(),id='a'+k;
   // in der Rückfrage bestätigte frühere Aufträge (4.4) jetzt an die Proben schreiben – zusammen mit dem Nachauftrag
   for(const v of auftragVorschlag||[]){
@@ -4205,10 +4236,11 @@ function nachauftragFestmachen(anlass){
   nrs.sort((a,b)=>a-b);
   (weitereAuftraege=weitereAuftraege||[]).push({id,am:tagIso(new Date()),von:aktuellesKuerzel(),proben:nrs});
   auftragZaehler=Math.max(Number(auftragZaehler)||0,k);
-  laborTexteMerken();
+  laborTexteMerken();auftraegeDieseSitzung.add(id);
   if(typeof undoStack!=='undefined')undoStack=[];   // Rückgängig nie über das Festwerden eines Auftrags hinweg
-  lkSichtWahl=id;alleBestaetigt=false;
+  if(s0==='neu'){lkSichtWahl=id;alleBestaetigt=false;}
   if(typeof markUnsaved==='function')markUnsaved();
+  if(typeof projektArchivAutoSave==='function'){try{projektArchivAutoSave();}catch(e){}}   // Browser-Archiv mit den Merkmalen (Review 7)
   tabellenNeuZeichnen();if(typeof lkNachZeichnen==='function')lkNachZeichnen();
   return {id,k,nrs};
 }
@@ -4248,10 +4280,11 @@ function auftraegePruefen(){
   if(!mit.length)return;
   const je=new Map();for(const p of mit){if(!je.has(p.auftrag))je.set(p.auftrag,[]);je.get(p.auftrag).push(Number(p._nr));}
   const fehlt=[];
-  if(je.has('a1')&&!auftrag1){auftrag1={am:'',quelle:'neu aufgebaut',proben:je.get('a1').sort((a,b)=>a-b)};fehlt.push('a1');}
+  const tagVon=id=>mit.filter(p=>p.auftrag===id&&p.nrFest&&p.nrFest.am).map(p=>tagIso(p.nrFest.am)).sort().pop()||'';   // spätester Tag einer festen Nummer
+  if(je.has('a1')&&!auftrag1){auftrag1={am:tagVon('a1'),quelle:'neu aufgebaut',proben:je.get('a1').sort((a,b)=>a-b)};fehlt.push('a1');}
   for(const [id,nrs] of je){
     if(id==='a1'||(weitereAuftraege||[]).some(a=>a&&a.id===id))continue;
-    (weitereAuftraege=weitereAuftraege||[]).push({id,am:'',von:'',proben:nrs.sort((a,b)=>a-b),quelle:'neu aufgebaut'});fehlt.push(id);
+    (weitereAuftraege=weitereAuftraege||[]).push({id,am:tagVon(id),von:'',proben:nrs.sort((a,b)=>a-b),quelle:'neu aufgebaut'});fehlt.push(id);
   }
   if(weitereAuftraege)weitereAuftraege.sort((a,b)=>auftragNr(a.id)-auftragNr(b.id));
   const max=Math.max(0,...[...je.keys()].map(auftragNr),...(weitereAuftraege||[]).map(a=>auftragNr(a.id)));
@@ -4270,6 +4303,7 @@ function auftraegeAnwenden(data){
   const v=String(data.version||'');
   lkVersionSperre=v&&versionVergleich(v,APP_VERSION)>0?'Diese Projektdatei stammt von LabelKit '+v+' – neuer als dieses Fenster ('+APP_VERSION+'). Nur ansehen: LabelKit speichert und übergibt hier nichts, damit nichts von der neueren Fassung verloren geht. Bitte die Seite neu laden (Strg+F5).':'';
   auftragVorschlag=null;lkSichtWahl=null;alleBestaetigt=false;auftragRueckfrageGezeigt=false;auftragBestandAus=false;
+  auftraegeDieseSitzung=new Set();auftragNochmalBestaetigt=new Set();vermutlichBestaetigt=new WeakSet();
   // Laborübergabe-Dateien bleiben (gelesen beim Öffnen des Projekts – auch nach „Wiederherstellen“ oder „Projektdatei laden“ dieselben)
   auftragBefund={dateien:auftragBefund&&auftragBefund.dateien||[],festBeimLaden:[]};
   auftraegePruefen();
@@ -4288,12 +4322,12 @@ function auftraegeFuerDatei(){
 /** Laborübergabe-Dateien des Projekts in „Laboraufträge“ lesen (beim Öffnen): Datum aus dem Namen, Probennummern aus Spalte 1. */
 async function auftragDateienLesen(lab,nr){
   const out=[];if(!lab||typeof lab.values!=='function')return out;
-  const pnr=projektNummer(nr);
+  const pnrs=[nr,...['asbest-proj-nr','sonstige-proj-nr'].map(id=>{try{return document.getElementById(id).value;}catch(e){return '';}})].map(projektNummer).filter(Boolean),pnr=pnrs[0]||'';
   try{
     for await(const h of lab.values()){
       const name=String(h.name).normalize('NFC');
-      if(h.kind!=='file'||!/_Laborübergabe\.xlsx?$/i.test(name))continue;
-      if(pnr&&!(name.startsWith(pnr)&&!/^\d/.test(name.slice(pnr.length))))continue;   // fremdes Projekt
+      if(h.kind!=='file'||!/_Laborübergabe(?: \(\d+\))?\.xlsx?$/i.test(name))continue;
+      if(pnr&&!pnrs.some(n=>name.startsWith(n)&&!/^\d/.test(name.slice(n.length))))continue;   // fremdes Projekt (abweichende Nummer einer Art zählt mit)
       const m=/_(\d{1,2})\.(\d{1,2})\.(\d{4})(?:_Auftrag-\d+)?_Laborübergabe/i.exec(name);if(!m)continue;
       const datum=m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
       let nummern=null;
@@ -4311,7 +4345,16 @@ function auftragBestandVorschlag(){
   const b=auftragBefund||{dateien:[],festBeimLaden:[]},lesbar=b.dateien.filter(d=>d.nummern);
   const uebergabeTage=b.festBeimLaden.filter(f=>UEBERGABE_ANLAESSE.has(f.anlass)&&f.tag).map(f=>f.tag);
   const tage=[...new Set([...b.dateien.map(d=>d.datum),...uebergabeTage])].sort();
-  if(!tage.length)return null;
+  if(!tage.length){
+    // (3) Weder Laborübergabe-Datei noch eine Übergabe an den festen Nummern (Etiketten gedruckt, dann nur „Kopieren“ – der Anlass
+    // bleibt „Etiketten“): Nummern, die beim Öffnen schon fest waren, als Vorschlag – unsicher, die Rückfrage zeigt die Haken (Review 1).
+    const f=b.festBeimLaden.filter(x=>x.tag&&alleNummerierten().some(p=>Number(p._nr)===x.nr&&nrIstFest(p)&&!istStorniert(p)));
+    if(!f.length)return null;
+    const nrs=new Set(f.map(x=>x.nr)),neu=nummerierteListen().flat().filter(p=>!istStorniert(p)&&!nrs.has(Number(p._nr)));
+    if(!neu.length)return null;
+    const am=f.map(x=>x.tag).sort().pop(),quelle='festen Probennummern (fest seit '+[...new Set(f.map(x=>x.tag))].sort().map(tagLang).join(', ')+')';
+    return {auftraege:[{id:'a1',am,quelle,proben:[...nrs].sort((a,b)=>a-b)}],neu:neu.map(p=>Number(p._nr)),quelle,unlesbar:[],unsicher:true};
+  }
   const vorhanden=new Map(alleNummerierten().filter(nrIstFest).map(p=>[Number(p._nr),p])),tagVon=new Map();
   for(const d of lesbar)for(const n of d.nummern)if(vorhanden.has(n)&&!tagVon.has(n))tagVon.set(n,d.datum);
   const zumTag=t=>tage.find(x=>x>=t);
@@ -4329,6 +4372,12 @@ function auftragBestandVorschlag(){
     :'festen Probennummern (übergeben am '+[...new Set(uebergabeTage)].sort().map(tagLang).join(', ')+')';
   const auftraege=[...jeTag].sort((a,b)=>a[0]<b[0]?-1:1).map(([t,nrs],i)=>({id:'a'+(i+1),am:t,quelle,proben:nrs.sort((a,b)=>a-b)}));
   return {auftraege,neu:neu.map(p=>Number(p._nr)),quelle,unlesbar:b.dateien.filter(d=>!d.nummern).map(d=>d.name)};
+}
+/** Nach einem vollständigen „Laborauftrag speichern“ (alle Arten): Was jetzt fest ist und in „Laboraufträge“ liegt, ist ab hier ein
+    früherer Auftrag – kommen in derselben Sitzung neue Proben dazu, fragt LabelKit wieder (vorher erst nach dem nächsten Öffnen). */
+function nachauftragNachAbschluss(){
+  festBeimLadenMerken();auftragRueckfrageGezeigt=false;
+  if(typeof window!=='undefined'&&typeof window.lkAuftragBefundLesen==='function')void window.lkAuftragBefundLesen();
 }
 /** „Übernehmen“: bestätigte Zuordnung merken – geschrieben wird sie erst mit dem Nachauftrag (N2). */
 function auftragVorschlagUebernehmen(auftraege){
@@ -4694,8 +4743,8 @@ function projektNrInProbenUebernehmen(){
 /** Vorbelegungs-Dialoge (PAK, Asbest, Sonstige): steht dort noch der Startwert (heute), den Ortstermin eintragen (Audit 2026-11 A12). */
 function vorbelegungDatumOrtstermin(){
   const o=ortsterminVorschlag();if(!o)return;   // 5.5.0 (N7): bei mehreren Terminen der neueste bis heute
-  const heute=fmtDatum(today());
-  ['vb-datum','avb-datum','svb-datum'].forEach(id=>{const el=document.getElementById(id);if(el&&(!el.value||el.value===heute)&&el!==document.activeElement)el.value=fmtDatum(o);});
+  const heute=fmtDatum(today()),termine=ortstermineAlle().map(fmtDatum);   // 5.5.0: auch ein eingetragener früherer Termin wird ersetzt
+  ['vb-datum','avb-datum','svb-datum'].forEach(id=>{const el=document.getElementById(id);if(el&&(!el.value||el.value===heute||termine.includes(el.value))&&el!==document.activeElement)el.value=fmtDatum(o);});
 }
 function heuteInLeereDatumsfelder(){
   const o=ortsterminVorschlag(),d=o||today();   // mit Ortstermin aus den Projektdaten dieser, sonst heute (Audit 2026-11 A12); 5.5.0: bei mehreren Terminen der neueste bis heute
@@ -6714,6 +6763,7 @@ function renderAbschlussStatus(){
 
 function pruefeAbschlussKonsistenz(){
   renummerieren();
+  const sv=typeof sicht==='function'?sicht():'alle',inSv=p=>typeof inSicht==='function'?inSicht(p,sv):!istStorniert(p);   // 5.5.0: Ansicht einmal bestimmen
   const kritisch=[], warnungen=[];
   const hauptGruppen=[
     {name:'PAK', key:'pak', list:proben},
@@ -6726,7 +6776,7 @@ function pruefeAbschlussKonsistenz(){
   // Stornierte Proben zählen nicht (Indizes bleiben die der vollen Liste, für „Zur Probe springen“)
   hauptGruppen.forEach(g=>{
     g.list.forEach((p,i)=>{
-      if(!inSicht(p)) return;   // 5.5.0: nur die gewählten Proben („Welche Proben?“)
+      if(!inSv(p)) return;   // 5.5.0: nur die gewählten Proben („Welche Proben?“)
       const ref={typ:g.key, idx:i, nr:probeNr(p)};
       const isBK=p.matrix==='Bohrkern';
       if(!(p.z1&&String(p.z1).trim())) ohneProjNr.push(ref);
@@ -6748,16 +6798,16 @@ function pruefeAbschlussKonsistenz(){
   }
   // Warnung: mögliche Duplikate (gleiche Eckdaten)
   hauptGruppen.forEach(g=>{
-    if(!auswahl(g.list).length) return;
-    const dupIds=pruefeAufDuplikate(auswahl(g.list));
+    if(!g.list.filter(inSv).length) return;
+    const dupIds=pruefeAufDuplikate(aktiv(g.list));   // über alle aktiven Proben – auch gleich wie eine, die schon beim Labor ist
     if(dupIds.size){
-      const refs=[]; g.list.forEach((p,i)=>{ if(inSicht(p)&&dupIds.has(probeIdentity(p))) refs.push({typ:g.key, idx:i, nr:probeNr(p)}); });
+      const refs=[]; g.list.forEach((p,i)=>{ if(inSv(p)&&dupIds.has(probeIdentity(p))) refs.push({typ:g.key, idx:i, nr:probeNr(p)}); });
       warnungen.push({titel:g.name+': mögliche Duplikate ('+refs.length+')', refs:refs, detail:'gleiche Eckdaten, evtl. versehentlich kopiert.'});
     }
   });
   // Warnung: unvollständige Proben (Ampel nicht grün) – mit den fehlenden Feldern (Audit 2026-11 A14)
   hauptGruppen.forEach(g=>{
-    const refs=[],fehlt=new Map(); g.list.forEach((p,i)=>{ if(inSicht(p)&&ampelKlasse(p)!=='ampel-gruen'){ refs.push({typ:g.key, idx:i, nr:probeNr(p)}); fehlendeFelder(p,g.key).forEach(f=>{if(!fehlt.has(f))fehlt.set(f,[]);fehlt.get(f).push(probeNr(p));}); } });
+    const refs=[],fehlt=new Map(); g.list.forEach((p,i)=>{ if(inSv(p)&&ampelKlasse(p)!=='ampel-gruen'){ refs.push({typ:g.key, idx:i, nr:probeNr(p)}); fehlendeFelder(p,g.key).forEach(f=>{if(!fehlt.has(f))fehlt.set(f,[]);fehlt.get(f).push(probeNr(p));}); } });
     const detail=fehlt.size?'Es fehlt: '+[...fehlt].map(([f,nrs])=>f+' ('+(nrs.length===1?'Probe ':'Proben ')+nrs.join(', ')+')').join(' · ')+'.':'fehlende Detail-/Analysefelder.';
     if(refs.length) warnungen.push({titel:g.name+': unvollständig ('+refs.length+')', refs:refs, detail});
   });
@@ -10035,6 +10085,7 @@ async function alleUebergabenSpeichernMitWord(options){
         // Audit 2026-11 A8: die Projektdatei liegt oft nicht in „Laboraufträge“, sondern in „_Spektron/LabelKit“ – beide Orte nennen
         const pdZiel=ziele.find(z=>/_Daten\.json$/i.test(z.name)),pdOrt=pdZiel?speicherOrtName(pdZiel.dir,dir):dir.name,andere=files.length-1;
         markSaved(projDaten.filename,pdOrt);
+        if(!nur&&typeof nachauftragNachAbschluss==='function')nachauftragNachAbschluss();   // 5.5.0: ab jetzt gilt dieser Laborauftrag als früherer (Review 2)
         flash('✓ '+(andere?andere+(andere===1?' Datei':' Dateien')+' in „'+dir.name+'“, ':'')+'Projektdatei in „'+pdOrt+'“ gespeichert'+(daneben.length?' · neu daneben: '+daneben.join(', '):'')+festText+meldungAnhang());
         projektArchivAutoSave();
       }else{
@@ -10056,6 +10107,7 @@ async function alleUebergabenSpeichernMitWord(options){
     },i*400));
     projektStatus.filename=projDaten.downloadName;
     updateProjektStatus();
+    if(!nur&&typeof nachauftragNachAbschluss==='function')nachauftragNachAbschluss();
     flash('Downloads gestartet – bitte Dateien prüfen. Die Projektdatei kommt am PC ins Projekt: LabelKit mit dem Projekt öffnen, „Mehr …“ › „Projektdatei laden …“, dann „Speichern“.');   // Audit 2026-11 A13
   }
   }finally{projektSpeichernBeenden();}
@@ -13144,11 +13196,13 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true, kompakt: tru
     for(const [i,l] of nummerierteListen().entries())for(const p of l)if(nrIstFest(p))festNrs.set(Number(p._nr),{p,art:NAME[['pak','chlorid','asbest','sonstige'][i]]});
     const zuAuftrag=new Map();v.auftraege.forEach(a=>a.proben.forEach(n=>zuAuftrag.set(n,a.id)));
     $('lk-a1-quelle').textContent=v.quelle;
+    const uns=$('lk-a1-unsicher');if(uns)uns.hidden=!v.unsicher;
     $('lk-a1-vorschlag').innerHTML=v.auftraege.map(a=>'<div class="lk-zeile lk-blau"><span><b>Schon beim Labor'+(v.auftraege.length>1?' – Auftrag '+auftragNr(a.id):'')+' ('+esc(tagLang(a.am))+'):</b> '+esc(nrListeText(a.proben))+'</span></div>').join('')
       +'<div class="lk-zeile"><span><b>Neu für den Nachauftrag:</b> '+esc(nrListeText(v.neu))+'</span></div>'
       +(v.unlesbar.length?'<div class="lk-zeile lk-gelb"><span>Nicht lesbar (vermutlich in Excel umgespeichert): '+esc(v.unlesbar.join(', '))+' – bitte unter „ändern …“ prüfen.</span></div>':'');
     $('lk-a1-liste').innerHTML=[...festNrs].sort((a,b)=>a[0]-b[0]).map(([n,{p,art}])=>'<label class="lk-a1-probe"><input type="checkbox" data-nr="'+n+'"'+(zuAuftrag.has(n)?' checked':'')+'> <b>P'+n+'</b> '+esc(art)+' · '+esc([p.z2,p.z3,p.z4].filter(Boolean).join(', ')||'–')+(p.datum?' · '+esc(fmtDatum(p.datum)):'')+(istStorniert(p)?' · storniert':'')+(zuAuftrag.has(n)&&v.auftraege.length>1?' · Auftrag '+auftragNr(zuAuftrag.get(n)):'')+'</label>').join('');
-    const auf=$('lk-a1-aendern');if(auf)auf.open=false;
+    const auf=$('lk-a1-aendern');if(auf)auf.open=!!v.unsicher;   // unsicher: Haken gleich zeigen
+    $('lk-a1-keine').onclick=()=>{auftragBestandAus=true;d.close();zeichnen();flash('Festgehalten: noch keine Probe ist beim Labor – alle gelten als neu');};
     $('lk-a1-ok').onclick=()=>{
       const an=new Set([...d.querySelectorAll('#lk-a1-liste input:checked')].map(i=>Number(i.dataset.nr)));
       const auftraege=v.auftraege.map(a=>({...a,proben:a.proben.filter(n=>an.has(n))}));

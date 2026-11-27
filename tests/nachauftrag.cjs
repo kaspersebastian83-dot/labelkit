@@ -123,7 +123,7 @@ let n = 0; const ok = m => { n++; if (process.env.VERBOSE) console.log('  ✓ ' 
   vm.runInContext('auftraegeAnwenden({proben});festBeimLadenMerken()', d);
   assert.match(d.__get('auftragAufgebaut'), /neu aufgebaut: Auftrag 1 P1 · Auftrag 3 P2\./);
   assert.equal(d.__get('auftragZaehler'), 3);
-  assert.deepEqual(plain(d.auftraegeFuerDatei().weitereAuftraege), [{id: 'a3', am: '', von: '', proben: [2], quelle: 'neu aufgebaut'}]);
+  assert.deepEqual(plain(d.auftraegeFuerDatei().weitereAuftraege), [{id: 'a3', am: '2026-08-22', von: '', proben: [2], quelle: 'neu aufgebaut'}], 'Tag aus der festen Nummer');
   assert.equal(d.naechsteAuftragNr(), 4, 'auch ungültige Merkmale zählen für die Kennung');
   ok('Merkmal-Regeln, Kopie, Liste neu aufgebaut');
 }
@@ -213,7 +213,8 @@ weiter.push((async () => {
 // 7. Link „mitteilung=“ wählt den Auftrag der Mitteilung vor; Versionsvergleich
 {
   const pj = {ortstermin: '2026-08-12', weitereMitteilungen: [{id: 'm2', auftraege: ['a2']}, {id: 'm3', auftraege: []}]};
-  const c = welt({pj, url: {mitteilung: 'm2'}});
+  const c = welt({pj, url: {projekt: '26.0999 Teststadt Ka', mitteilung: 'm2'}});
+  c.PROJEKTORDNER.state.proj = {name: '26.0999 Teststadt Ka'};
   c.proben = [pak(1, {nrFest: fest('2026-08-14', 'x'), auftrag: 'a1'}), pak(2, {nrFest: fest('2026-08-22', 'x'), auftrag: 'a2'})];
   vm.runInContext(`auftraegeAnwenden({proben,weitereAuftraege:[{id:'a2',am:'2026-08-22',von:'',proben:[2]}],auftragZaehler:2,auftrag1:{am:'2026-08-14',proben:[1]}});festBeimLadenMerken()`, c);
   assert.equal(c.sicht(), 'a2');
@@ -233,6 +234,63 @@ weiter.push((async () => {
   assert.equal(c.nachauftragVorAusgabe(), false, 'Versionssperre');
   assert.deepEqual(plain(c.__get('projektUnbekannt')), {kuenftig: 1}, 'unbekannte Felder gemerkt, ältere Angaben (ui) nicht');
   ok('mitteilung=, Rückfrage alle, Versionssperre');
+}
+
+// 8. Review: nichts doppelt, nichts still
+{
+  // (1) Etiketten gedruckt, dann nur „Kopieren“ (Anlass bleibt „Etiketten“), keine Datei → unsicherer Vorschlag mit Haken
+  const a = welt();
+  a.proben = [pak(1, {nrFest: fest('2026-08-14', 'Etiketten')}), pak(2, {nrFest: fest('2026-08-14', 'Etiketten')}), pak(3)];
+  vm.runInContext('auftraegeAnwenden({proben});festBeimLadenMerken()', a);
+  const v = a.auftragBestandVorschlag();
+  assert.equal(v.unsicher, true);
+  assert.deepEqual(plain(v.auftraege.map(x => [x.am, x.proben])), [['2026-08-14', [1, 2]]]);
+  assert.match(a.schonBeimLaborText(), /^P1–P2 sind laut festen Probennummern \(fest seit 14\.08\.2026\) vermutlich schon beim Labor\./);
+  a.antworten.push(false);
+  assert.equal(a.nachauftragVorAusgabe([a.proben]), false, '„alle“ fragt, auch ohne Datei');
+  // (2) in derselben Sitzung nach vollständigem „Laborauftrag speichern“: ab dann früherer Auftrag
+  const b = welt();
+  b.proben = [pak(1), pak(2)];
+  vm.runInContext('auftraegeAnwenden({proben});festBeimLadenMerken()', b);
+  b.proben.forEach(p => { p.nrFest = fest('2026-08-22', 'Abschluss'); });
+  b.nachauftragNachAbschluss();
+  b.proben.push(pak(3));
+  assert.deepEqual(plain(b.auftragBestandVorschlag().neu), [3]);
+  // (3) „alle“ bestätigt: neue Proben, die mitgehen, werden ein Auftrag
+  const c = welt();
+  c.proben = [pak(1, {nrFest: fest('2026-08-14', 'x'), auftrag: 'a1'}), pak(2, {nrFest: fest('2026-08-20', 'x'), auftrag: 'a2'}), pak(3)];
+  vm.runInContext(`auftraegeAnwenden({proben,weitereAuftraege:[{id:'a2',am:'2026-08-20',von:'',proben:[2]}],auftragZaehler:2,auftrag1:{am:'2026-08-14',proben:[1]}});festBeimLadenMerken()`, c);
+  c.__set('lkSichtWahl', 'alle');
+  assert.equal(c.nachauftragVorAusgabe([c.proben]), true);
+  assert.match(c.fragen.pop(), /P1 \(Auftrag 1 vom 14\.08\.\) und P2 \(Auftrag 2 vom 20\.08\.\) sind schon beim Labor/);
+  const r = c.nachauftragFestmachen('Kopieren');
+  assert.deepEqual(plain(r.nrs), [3]); assert.equal(r.id, 'a3');
+  assert.equal(c.sicht(), 'alle', 'Ansicht bleibt „alle“');
+  assert.equal(c.proben[2].nrFest.anlass, 'Nachauftrag');
+  // (4) einen früheren Auftrag noch einmal übergeben: Rückfrage – nicht für den in dieser Sitzung festgemachten
+  c.__set('lkSichtWahl', 'a2');
+  c.antworten.push(false);
+  assert.equal(c.nachauftragVorAusgabe([c.proben.filter(p => p.auftrag === 'a2')]), false);
+  assert.match(c.fragen.pop(), /^P2 ist schon beim Labor \(Auftrag 2 vom 20\.08\.\)\.\n\nNoch einmal ans Labor übergeben\?/);
+  c.__set('lkSichtWahl', 'a3');
+  assert.equal(c.nachauftragVorAusgabe([[c.proben[2]]]), true);
+  assert.equal(c.fragen.length, 0, 'Auftrag aus dieser Sitzung: Art für Art ohne Rückfrage');
+  // Link nur für das Projekt aus dem Link
+  const pj = {weitereMitteilungen: [{id: 'm2', auftraege: ['a2']}]};
+  const d = welt({pj, url: {projekt: '26.0999 Anderes', mitteilung: 'm2'}});
+  d.PROJEKTORDNER.state.proj = {name: '26.0999 Teststadt Ka'};
+  assert.equal(d.mitteilungAuftrag(), null);
+  // (5) Merkmal fehlt (älteres Fenster), Nummer schon bei einer Übergabe fest → vermutlich beim Labor, Rückfrage
+  const e = welt();
+  e.proben = [pak(1, {nrFest: fest('2026-08-14', 'Abschluss'), auftrag: 'a1'}), pak(2, {nrFest: fest('2026-08-20', 'Kopieren'), auftrag: 'a2'}),
+    pak(3, {nrFest: fest('2026-08-14', 'Abschluss')}), pak(4, {nrFest: fest('2026-08-23', 'Kopieren')}), pak(5)];
+  vm.runInContext(`auftraegeAnwenden({proben,weitereAuftraege:[{id:'a2',am:'2026-08-20',von:'',proben:[2]}],auftragZaehler:2,auftrag1:{am:'2026-08-14',proben:[1]}});festBeimLadenMerken()`, e);
+  assert.deepEqual(e.proben.map(e.vermutlichBeimLabor), [false, false, true, false, false]);
+  assert.equal(e.sicht(), 'neu');
+  e.antworten.push(false);
+  assert.equal(e.nachauftragVorAusgabe([e.auswahl(e.proben)]), false);
+  assert.match(e.fragen.pop(), /^P3 gehört zu keinem festgehaltenen Laborauftrag/);
+  ok('Review: ohne Datei, gleiche Sitzung, „alle“, früherer Auftrag, Link, Merkmal fehlt');
 }
 Promise.all(weiter).then(() => console.log('OK Nachauftrag: ' + n + ' Prüfgruppen (Ansicht, Festwerden, Kennung, Merkmal, Vorschlag, Dateien, Datum, Zurücknehmen, Link, Version)'))
   .catch(e => { console.error(e); process.exitCode = 1; });
