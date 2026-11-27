@@ -43,7 +43,7 @@ let n = 0; const ok = m => { n++; if (process.env.VERBOSE) console.log('  ✓ ' 
 {
   const c = welt();
   c.proben = [1, 2, 3].map(i => pak(i, {nrFest: fest('2026-08-14', 'Abschluss')}));
-  vm.runInContext('auftraegeAnwenden({proben})', c);
+  vm.runInContext('auftraegeAnwenden({proben});festBeimLadenMerken()', c);
   assert.equal(c.sichtOptionen(), null);
   assert.equal(c.sicht(), 'alle');
   assert.deepEqual(plain(c.auftraegeFuerDatei()), {}, 'kein neues Feld');
@@ -58,7 +58,7 @@ let n = 0; const ok = m => { n++; if (process.env.VERBOSE) console.log('  ✓ ' 
   const c = welt();
   c.proben = [1, 2, 3].map(i => pak(i, {nrFest: fest('2026-08-14', 'Etiketten')})).concat([pak(4), pak(5)]);
   c.asbestProben = [pak(6, {z2: 'Putz'})];
-  vm.runInContext('auftraegeAnwenden({proben})', c);
+  vm.runInContext('auftraegeAnwenden({proben});festBeimLadenMerken()', c);
   c.__get('auftragBefund').dateien = [{name: '26.0999_PAK_14.8.2026_Laborübergabe.xls', datum: '2026-08-14', nummern: [1, 2, 3]}];
   const v = c.auftragBestandVorschlag();
   assert.deepEqual(plain(v.auftraege), [{id: 'a1', am: '2026-08-14', quelle: 'Laborübergabe vom 14.08.2026', proben: [1, 2, 3]}]);
@@ -110,7 +110,7 @@ let n = 0; const ok = m => { n++; if (process.env.VERBOSE) console.log('  ✓ ' 
   const c = welt();
   c.proben = [pak(1, {nrFest: fest('2026-08-14', 'Abschluss'), auftrag: 'a1'}), pak(2, {nrFest: fest('2026-08-22', 'Kopieren'), auftrag: 'a2'}),
     pak(3, {auftrag: 'a1'}), pak(4, {nrFest: fest('2026-08-22', 'Etiketten'), auftrag: 'a2'})];
-  vm.runInContext(`auftraegeAnwenden({proben,weitereAuftraege:[{id:'a2',am:'2026-08-22',von:'Ka',proben:[2]}],auftragZaehler:2,auftrag1:{am:'2026-08-14',quelle:'x',proben:[1]}})`, c);
+  vm.runInContext(`auftraegeAnwenden({proben,weitereAuftraege:[{id:'a2',am:'2026-08-22',von:'Ka',proben:[2]}],auftragZaehler:2,auftrag1:{am:'2026-08-14',quelle:'x',proben:[1]}});festBeimLadenMerken()`, c);
   assert.equal(c.__get('auftragAufgebaut'), '', 'nichts fehlt');
   assert.deepEqual(plain(c.proben.map(p => c.auftragVon(p))), ['a1', 'a2', null, null], 'ohne feste Nummer (P3) oder nicht in der Liste (P4): neu');
   assert.deepEqual(plain(c.ungueltigeMerkmale('pak').map(p => p._nr)), [3, 4]);
@@ -120,7 +120,7 @@ let n = 0; const ok = m => { n++; if (process.env.VERBOSE) console.log('  ✓ ' 
   // Datei aus 5.4.0: Liste und Zähler fehlen, Merkmale bleiben
   const d = welt();
   d.proben = [pak(1, {nrFest: fest('2026-08-14', 'Abschluss'), auftrag: 'a1'}), pak(2, {nrFest: fest('2026-08-22', 'Kopieren'), auftrag: 'a3'}), pak(3, {auftrag: 'a2'})];
-  vm.runInContext('auftraegeAnwenden({proben})', d);
+  vm.runInContext('auftraegeAnwenden({proben});festBeimLadenMerken()', d);
   assert.match(d.__get('auftragAufgebaut'), /neu aufgebaut: Auftrag 1 P1 · Auftrag 3 P2\./);
   assert.equal(d.__get('auftragZaehler'), 3);
   assert.deepEqual(plain(d.auftraegeFuerDatei().weitereAuftraege), [{id: 'a3', am: '', von: '', proben: [2], quelle: 'neu aufgebaut'}]);
@@ -132,7 +132,7 @@ let n = 0; const ok = m => { n++; if (process.env.VERBOSE) console.log('  ✓ ' 
 {
   const c = welt();
   c.proben = [1, 2].map(i => pak(i, {nrFest: fest('2026-08-14', 'Etiketten')})).concat([3, 4].map(i => pak(i, {nrFest: fest('2026-08-22', 'Etiketten')})), [pak(5)]);
-  vm.runInContext('auftraegeAnwenden({proben})', c);
+  vm.runInContext('auftraegeAnwenden({proben});festBeimLadenMerken()', c);
   c.__get('auftragBefund').dateien = [{name: '26.0999_PAK_14.8.2026_Laborübergabe.xls', datum: '2026-08-14', nummern: [1, 2]}, {name: '26.0999_PAK_22.8.2026_Laborübergabe.xls', datum: '2026-08-22', nummern: [1, 2, 3, 4]}];
   const v = c.auftragBestandVorschlag();
   assert.deepEqual(plain(v.auftraege.map(a => [a.id, a.am, a.proben])), [['a1', '2026-08-14', [1, 2]], ['a2', '2026-08-22', [3, 4]]], 'früheste Datei je Probe');
@@ -144,7 +144,7 @@ let n = 0; const ok = m => { n++; if (process.env.VERBOSE) console.log('  ✓ ' 
   // keine Datei: feste Nummern beim Öffnen (Kopieren am 14.08., Etiketten am selben Tag) – später gedruckte zählen als neu
   const k = welt();
   k.proben = [pak(1, {nrFest: fest('2026-08-14', 'Kopieren')}), pak(2, {nrFest: fest('2026-08-13', 'Etiketten')}), pak(3, {nrFest: fest('2026-08-21', 'Etiketten')}), pak(4)];
-  vm.runInContext('auftraegeAnwenden({proben})', k);
+  vm.runInContext('auftraegeAnwenden({proben});festBeimLadenMerken()', k);
   const w = k.auftragBestandVorschlag();
   assert.deepEqual(plain(w.auftraege.map(a => [a.am, a.proben])), [['2026-08-14', [1, 2]]]);
   assert.equal(w.quelle, 'festen Probennummern (übergeben am 14.08.2026)');
@@ -152,13 +152,13 @@ let n = 0; const ok = m => { n++; if (process.env.VERBOSE) console.log('  ✓ ' 
   // in dieser Sitzung fest geworden (Kopieren gerade eben) → kein früherer Auftrag (derselbe Laborauftrag, Art für Art kopiert)
   const s = welt();
   s.proben = [pak(1), pak(2)];
-  vm.runInContext('auftraegeAnwenden({proben})', s);
+  vm.runInContext('auftraegeAnwenden({proben});festBeimLadenMerken()', s);
   s.proben[0].nrFest = fest('2026-08-22', 'Kopieren');
   assert.equal(s.auftragBestandVorschlag(), null);
   // unlesbare Datei (in Excel umgespeichert): Tag aus dem Namen, Proben nach festen Nummern
   const u = welt();
   u.proben = [pak(1, {nrFest: fest('2026-08-14', 'Etiketten')}), pak(2)];
-  vm.runInContext('auftraegeAnwenden({proben})', u);
+  vm.runInContext('auftraegeAnwenden({proben});festBeimLadenMerken()', u);
   u.__get('auftragBefund').dateien = [{name: '26.0999_PAK_14.8.2026_Laborübergabe.xls', datum: '2026-08-14', nummern: null}];
   const x = u.auftragBestandVorschlag();
   assert.deepEqual(plain(x.auftraege.map(a => a.proben)), [[1]]);
@@ -167,7 +167,7 @@ let n = 0; const ok = m => { n++; if (process.env.VERBOSE) console.log('  ✓ ' 
   // keine neuen Proben → keine Rückfrage, nichts ändert sich
   const g = welt();
   g.proben = [pak(1, {nrFest: fest('2026-08-14', 'Abschluss')})];
-  vm.runInContext('auftraegeAnwenden({proben})', g);
+  vm.runInContext('auftraegeAnwenden({proben});festBeimLadenMerken()', g);
   g.__get('auftragBefund').dateien = [{name: '26.0999_PAK_14.8.2026_Laborübergabe.xls', datum: '2026-08-14', nummern: [1]}];
   assert.equal(g.auftragBestandVorschlag(), null);
   // „keine Probe ist beim Labor“ festgehalten → kein Vorschlag mehr
@@ -215,7 +215,7 @@ weiter.push((async () => {
   const pj = {ortstermin: '2026-08-12', weitereMitteilungen: [{id: 'm2', auftraege: ['a2']}, {id: 'm3', auftraege: []}]};
   const c = welt({pj, url: {mitteilung: 'm2'}});
   c.proben = [pak(1, {nrFest: fest('2026-08-14', 'x'), auftrag: 'a1'}), pak(2, {nrFest: fest('2026-08-22', 'x'), auftrag: 'a2'})];
-  vm.runInContext(`auftraegeAnwenden({proben,weitereAuftraege:[{id:'a2',am:'2026-08-22',von:'',proben:[2]}],auftragZaehler:2,auftrag1:{am:'2026-08-14',proben:[1]}})`, c);
+  vm.runInContext(`auftraegeAnwenden({proben,weitereAuftraege:[{id:'a2',am:'2026-08-22',von:'',proben:[2]}],auftragZaehler:2,auftrag1:{am:'2026-08-14',proben:[1]}});festBeimLadenMerken()`, c);
   assert.equal(c.sicht(), 'a2');
   c.PROJEKT_URL.mitteilung = 'm3';
   assert.equal(c.sicht(), 'alle', 'leere Liste: Vorwahl');
@@ -228,7 +228,7 @@ weiter.push((async () => {
   assert.equal(c.versionVergleich('5.10.0', '5.5.0'), 1);
   assert.equal(c.versionVergleich('5.5.0', '5.5.0'), 0);
   assert.equal(c.versionVergleich('5.4.0', '5.5.0'), -1);
-  vm.runInContext(`auftraegeAnwenden({proben,version:'5.6.0',kuenftig:1,textblockLabor:'x'})`, c);
+  vm.runInContext(`auftraegeAnwenden({proben,version:'5.6.0',kuenftig:1,textblockLabor:'x'});festBeimLadenMerken()`, c);
   assert.match(c.__get('lkVersionSperre'), /LabelKit 5\.6\.0 – neuer als dieses Fenster \(5\.5\.0\)/);
   assert.equal(c.nachauftragVorAusgabe(), false, 'Versionssperre');
   assert.deepEqual(plain(c.__get('projektUnbekannt')), {kuenftig: 1}, 'unbekannte Felder gemerkt, ältere Angaben (ui) nicht');

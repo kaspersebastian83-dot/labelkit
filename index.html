@@ -4270,7 +4270,8 @@ function auftraegeAnwenden(data){
   const v=String(data.version||'');
   lkVersionSperre=v&&versionVergleich(v,APP_VERSION)>0?'Diese Projektdatei stammt von LabelKit '+v+' – neuer als dieses Fenster ('+APP_VERSION+'). Nur ansehen: LabelKit speichert und übergibt hier nichts, damit nichts von der neueren Fassung verloren geht. Bitte die Seite neu laden (Strg+F5).':'';
   auftragVorschlag=null;lkSichtWahl=null;alleBestaetigt=false;auftragRueckfrageGezeigt=false;auftragBestandAus=false;
-  auftragBefund={dateien:[],festBeimLaden:alleNummerierten().filter(p=>p&&p.nrFest&&!istStorniert(p)).map(p=>({nr:Number(p._nr),tag:tagIso(p.nrFest.am),anlass:String(p.nrFest.anlass||'')}))};
+  // Laborübergabe-Dateien bleiben (gelesen beim Öffnen des Projekts – auch nach „Wiederherstellen“ oder „Projektdatei laden“ dieselben)
+  auftragBefund={dateien:auftragBefund&&auftragBefund.dateien||[],festBeimLaden:[]};
   auftraegePruefen();
   laborTexte=new Map();   // N10: neu gemerkt am Ende von applyProjektData (nach Nummern und Ansicht)
 }
@@ -4344,6 +4345,11 @@ function eurofinsZeile(p,art){
     return [b,p.matrix||'',p.datum||''].join('\u0001');
   }catch(e){return '';}
 }
+/** Am Ende von applyProjektData (nach der Übernahme älterer Dateien): welche Nummern beim Laden schon fest waren – nur sie können
+    zu einem früheren Laborauftrag gehören; was in dieser Sitzung fest wird, ist derselbe Auftrag (Art für Art kopiert). */
+function festBeimLadenMerken(){
+  auftragBefund.festBeimLaden=alleNummerierten().filter(p=>p&&p.nrFest&&!istStorniert(p)).map(p=>({nr:Number(p._nr),tag:tagIso(p.nrFest.am),anlass:String(p.nrFest.anlass||'')}));
+}
 function laborTexteMerken(neuAnfangen){
   if(neuAnfangen)laborTexte=new Map();
   nummerierteListen().forEach((l,i)=>{for(const p of l)if(auftragMerkmalGilt(p)){const k=AUFTRAG_ART[i]+':'+p._nr;if(!laborTexte.has(k))laborTexte.set(k,eurofinsZeile(p,AUFTRAG_ART[i]));}});
@@ -4352,6 +4358,11 @@ function laborTexteMerken(neuAnfangen){
 function geaenderteLaborProben(art){
   const l=nummerierteListen()[AUFTRAG_ART.indexOf(art)]||[];
   return aktiv(l).filter(p=>{const k=art+':'+p._nr;return auftragMerkmalGilt(p)&&laborTexte.has(k)&&laborTexte.get(k)!==eurofinsZeile(p,art);});
+}
+/** Nummer steht in der Liste eines Auftrags, das Merkmal an der Probe fehlt (z. B. ein älteres Fenster hat überschrieben) – gilt als neu. */
+function listeOhneMerkmal(art){
+  const l=nummerierteListen()[AUFTRAG_ART.indexOf(art)]||[],ids=auftraegeBekannt().filter(a=>!(auftragVorschlag||[]).some(v=>v.id===a.id));
+  return aktiv(l).filter(p=>!auftragVon(p)).map(p=>{const a=ids.find(x=>(auftragListe(x.id)||[]).includes(Number(p._nr)));return a?{p,id:a.id}:null;}).filter(Boolean);
 }
 /** Merkmal da, gilt aber nicht (ohne feste Nummer – z. B. mit einer älteren Fassung kopiert – oder nicht in der Liste). */
 function ungueltigeMerkmale(art){
@@ -5241,7 +5252,7 @@ function applyProjektData(data,fallbackNr,optionen){
   const bgDatEl=document.getElementById('bg-datum');if(bgDatEl)bgDatEl.value=brandgeruchDatum;
   setPn98ProjektFelderUi();
   updateProjekt();renummerieren();
-  if(typeof laborTexteMerken==='function')laborTexteMerken(true);   // 5.5.0 (N10): Eurofins-Zeilen der Proben, die schon beim Labor sind
+  if(typeof laborTexteMerken==='function'){laborTexteMerken(true);festBeimLadenMerken();}   // 5.5.0 (N10, 4.4): Eurofins-Zeilen der Proben, die schon beim Labor sind
   renderTable();renderChloridTable();renderAsbestTable();renderSonstigeTable();
   renderBrandgeruchTable();renderBrandgeruchExport();
   renderPn98Cards();renderPn98Export();
@@ -13114,7 +13125,8 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true, kompakt: tru
         +esc(ohne.slice(0,8).map(p=>'P'+p._nr+' '+fmtDatum(p.datum)).join(', '))+(ohne.length>8?' und '+(ohne.length-8)+' weitere':'')+'. Bitte prüfen – Termine stehen in der Projektzentrale.</span>':'','lk-gelb');
       const ge=geaenderteLaborProben(k);
       setzeZeile(box,'lk-z-labortext-'+k,ge.length?'<span><b>Schon beim Labor – im Eurofins-Portal steht der alte Text:</b> '+esc(ge.map(p=>'P'+p._nr+' ('+auftragKurz(auftragVon(p))+')').join(', '))+' – nach dem Auftrag geändert. Bitte im Portal angleichen oder hier zurückändern; der Prüfbericht nennt sonst den alten Text.</span>':'','lk-gelb');
-      const ug=ungueltigeMerkmale(k);
+      const ug=ungueltigeMerkmale(k),lo=listeOhneMerkmal(k).filter(x=>!ug.includes(x.p));
+      setzeZeile(box,'lk-z-liste-'+k,lo.length?'<span><b>Gilt als neue Probe:</b> '+esc(lo.map(x=>'P'+x.p._nr+' (steht in '+auftragKurz(x.id)+')').join(', '))+' – das Merkmal an der Probe fehlt (vermutlich hat ein älteres LabelKit-Fenster gespeichert). Sie geht mit dem nächsten Nachauftrag hinaus; war sie schon beim Labor, in Schritt ③ „Welche Proben?“ auf den Auftrag stellen und nicht noch einmal übergeben.</span>':'','lk-gelb');
       setzeZeile(box,'lk-z-merkmal-'+k,ug.length?'<span><b>Gilt als neue Probe:</b> '+esc(ug.map(p=>'P'+p._nr+(nrIstFest(p)?'':' (keine feste Nummer – vermutlich mit einer älteren LabelKit-Fassung kopiert)')).join(', '))+' trägt ein Auftrags-Merkmal, das nicht zur Liste der Aufträge passt. Sie geht mit dem nächsten Nachauftrag hinaus.</span>':'','lk-gelb');
     }
     // oben unter dem Kopfband: Liste neu aufgebaut (R3), Versionssperre (N8)
@@ -13153,7 +13165,8 @@ MosaikLeiste.start('label', { version: APP_VERSION, kopfband: true, kompakt: tru
   /** Beim Öffnen eines Projekts: Laborübergabe-Dateien in „Laboraufträge“ lesen (für den Vorschlag zu Auftrag 1). */
   window.lkAuftragBefundLesen=async function(){
     const proj=typeof PROJEKTORDNER!=='undefined'?PROJEKTORDNER.state.proj:null;if(!proj||!proj.lab)return;
-    const dateien=await auftragDateienLesen(proj.lab,($('proj-nr')||{}).value||proj.nr);
+    auftragBefund.dateien=[];
+  const dateien=await auftragDateienLesen(proj.lab,($('proj-nr')||{}).value||proj.nr);
     if(PROJEKTORDNER.state.proj!==proj)return;
     auftragBefund.dateien=dateien;
     zeichnen();if(schritt()!==1)auftragRueckfrage();
